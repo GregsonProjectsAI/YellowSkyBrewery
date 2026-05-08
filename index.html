@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yellow Sky Brewery</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body class="no-scroll">
+
+    <!-- Age Gate Overlay -->
+    <div id="age-gate" class="age-gate">
+        <div class="age-gate__content">
+            <img src="assets/beer branding and names/transparent_logo.png" alt="Yellow Sky Brewery Logo" class="age-gate__logo">
+            <h1 class="age-gate__title">Are you 18 or older?</h1>
+            <p class="age-gate__text">You must be of legal drinking age to enter this site.</p>
+            <div class="age-gate__buttons">
+                <button id="btn-yes" class="btn btn--primary">Yes, I am</button>
+                <button id="btn-no" class="btn btn--secondary">No, I'm not</button>
+            </div>
+            <p id="age-error" class="age-gate__error" style="display: none;">You must be 18+ to enter.</p>
+        </div>
+    </div>
+
+    <div id="loading">Loading Assets... 0%</div>
+
+    <!-- Fixed Overlay Logo -->
+    <div class="overlay-content" id="demo-content">
+        <a href="#"><img src="assets/beer branding and names/transparent_logo.png" alt="Yellow Sky Brewery Logo" class="brand-logo"></a>
+    </div>
+
+    <div class="scroll-container">
+        <div class="sticky-wrapper">
+            <canvas id="animation-canvas"></canvas>
+            <div class="scroll-hint" id="scroll-hint">Scroll to explore ⬇</div>
+        </div>
+    </div>
+
+
+
+    <!-- JavaScript -->
+    <script src="js/main.js"></script>
+    <script src="js/scroll-animation.js"></script>
+</body>
+</html>

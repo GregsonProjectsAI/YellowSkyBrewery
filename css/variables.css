@@ -1,0 +1,29 @@
+:root {
+    /* Brand Colors */
+    --color-brand-primary: #d4af37; /* Gold */
+    --color-brand-primary-hover: #e5c45b;
+    --color-bg-dark: #0d0d0d;
+    --color-bg-darker: #050505;
+    --color-bg-overlay: rgba(5, 5, 5, 0.95);
+    
+    /* Text Colors */
+    --color-text-light: #ffffff;
+    --color-text-muted: rgba(255, 255, 255, 0.7);
+    --color-text-dark: #000000;
+    --color-error: #ff4d4d;
+
+    /* Typography */
+    --font-primary: 'Helvetica Neue', Arial, sans-serif;
+    
+    /* Spacing */
+    --space-sm: 10px;
+    --space-md: 20px;
+    --space-lg: 40px;
+    --space-xl: 80px;
+
+    /* Borders & Shadows */
+    --border-radius-sm: 4px;
+    --border-radius-lg: 30px;
+    --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.5);
+    --shadow-drop: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
+}
