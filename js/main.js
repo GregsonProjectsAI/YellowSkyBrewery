@@ -33,4 +33,23 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'https://www.google.com';
         }, 2000);
     });
+
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.2 // Trigger when 20% of the element is visible
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target); // Only animate once
+            }
+        });
+    }, observerOptions);
+
+    const fadeUpElements = document.querySelectorAll('.fade-up');
+    fadeUpElements.forEach(el => observer.observe(el));
 });
