@@ -1,4 +1,5 @@
-        body, html {
+        body,
+        html {
             margin: 0;
             padding: 0;
             background-color: var(--color-bg-dark);
@@ -7,7 +8,7 @@
         /* The container that creates the scroll space */
         /* 600vh allows 500vh for the video animation, and 100vh extra to scroll past and move the logo */
         .scroll-container {
-            height: 600vh; 
+            height: 600vh;
             position: relative;
         }
 
@@ -30,7 +31,7 @@
             max-width: 100%;
             max-height: 100%;
             /* This ensures the video fills the screen nicely without stretching */
-            object-fit: cover; 
+            object-fit: cover;
             width: 100%;
             height: 100vh;
             opacity: 0;
@@ -43,7 +44,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: #d4af37; /* A subtle gold/brewery color */
+            color: #d4af37;
+            /* A subtle gold/brewery color */
             font-family: 'Helvetica Neue', Arial, sans-serif;
             font-size: 1.5rem;
             letter-spacing: 2px;
@@ -62,15 +64,29 @@
             letter-spacing: 3px;
             animation: bounce 2s infinite;
             z-index: 5;
-            display: none; /* Hidden until loaded */
+            display: none;
+            /* Hidden until loaded */
         }
 
         @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-15px); }
-            60% { transform: translateY(-7px); }
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-15px);
+            }
+
+            60% {
+                transform: translateY(-7px);
+            }
         }
-        
+
         /* Fixed overlay content for logo */
         .overlay-content {
             position: fixed;
@@ -81,30 +97,34 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            z-index: 100; /* Above everything */
+            z-index: 100;
+            /* Above everything */
             opacity: 0;
-            pointer-events: none; /* Let scrolls pass through when hidden */
+            pointer-events: none;
+            /* Let scrolls pass through when hidden */
             transition: top 0.8s cubic-bezier(0.65, 0, 0.35, 1),
-                        left 0.8s cubic-bezier(0.65, 0, 0.35, 1),
-                        transform 0.8s cubic-bezier(0.65, 0, 0.35, 1),
-                        opacity 0.5s ease;
+                left 0.8s cubic-bezier(0.65, 0, 0.35, 1),
+                transform 0.8s cubic-bezier(0.65, 0, 0.35, 1),
+                opacity 0.5s ease;
         }
 
         .overlay-content.is-header {
             top: 20px;
             left: 20px;
             transform: translate(0, 0) scale(0.3);
-            pointer-events: auto; /* Clickable as a home button */
+            pointer-events: auto;
+            /* Clickable as a home button */
             cursor: pointer;
         }
 
         .brand-logo {
             width: 16vw;
-            min-width: 200px; /* Prevents it from getting too small on mobile without breaking desktop zoom */
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
+            min-width: 200px;
+            /* Prevents it from getting too small on mobile without breaking desktop zoom */
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.8));
             transition: filter 0.3s ease;
         }
-        
+
         .overlay-content.is-header:hover .brand-logo {
             filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.8));
         }
@@ -142,7 +162,7 @@
             text-align: center;
             max-width: 500px;
             width: 90%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
         }
 
         .age-gate__logo {
@@ -305,7 +325,7 @@
 
         .team-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.8), var(--shadow-glow);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), var(--shadow-glow);
             border-color: rgba(212, 175, 55, 0.5);
         }
 
@@ -371,4 +391,325 @@
         .fade-up.is-visible {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        /* ------------------------------------- */
+        /* OUR BEERS SECTION (Split Gallery)     */
+        /* ------------------------------------- */
+        .beers-section {
+            padding: var(--space-xl) var(--space-md);
+            background-color: var(--color-bg-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .beers-header-animation {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+            min-height: 150px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .beers-subheading {
+            font-size: 2.2rem;
+            color: var(--color-brand-primary);
+            margin-top: -12px;
+            margin-bottom: var(--space-md);
+            font-family: var(--font-primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: left;
+            line-height: 1;
+        }
+
+        .split-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xl);
+            position: relative;
+        }
+
+        @media (min-width: 992px) {
+            .split-gallery {
+                flex-direction: row;
+                align-items: flex-start;
+                gap: var(--space-2xl);
+            }
+            .beers-left-col {
+                flex: 1;
+                max-width: 50%;
+                min-height: max-content;
+            }
+            .beers-right-col {
+                flex: 1;
+                position: sticky;
+                top: 100px;
+                height: calc(100vh - 120px);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+        }
+
+        .beer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: var(--space-md);
+            align-items: start;
+        }
+
+        .beer-card {
+            box-sizing: border-box;
+            background-color: #1a1a1a;
+            border: 2px solid transparent;
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), 
+                        border-color 0.3s ease, 
+                        box-shadow 0.3s ease;
+            position: relative;
+            z-index: 1;
+            /* Enforce consistent poster ratio for all tiles */
+            aspect-ratio: 2 / 3;
+        }
+
+        .beer-card:hover, .beer-card.is-active {
+            transform: scale(1.05);
+            border-color: rgba(212, 175, 55, 0.8);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5), 0 0 15px rgba(212, 175, 55, 0.3);
+            z-index: 10;
+        }
+
+        .beer-card__img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            transition: filter 0.3s ease;
+        }
+
+        .beer-card:hover .beer-card__img, .beer-card.is-active .beer-card__img {
+            filter: brightness(1.1);
+        }
+
+        .beer-preview-panel {
+            background-color: rgba(10, 10, 10, 0.8);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: var(--border-radius-lg);
+            padding: var(--space-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8), 0 20px 40px rgba(0,0,0,0.6);
+            transition: opacity 0.4s ease;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            height: 55vh;
+            perspective: 1000px;
+            margin-bottom: var(--space-md);
+            display: flex;
+            justify-content: center;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            height: 100%;
+            aspect-ratio: 2 / 3; /* Maintain poster aspect ratio for the flip box */
+            text-align: center;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .flip-card:hover .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: var(--border-radius-sm);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        .flip-card-front {
+            background-color: transparent;
+        }
+
+        .flip-card-back {
+            background-color: transparent;
+            transform: rotateY(180deg);
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 100%; 
+            object-fit: contain;
+            transition: opacity 0.3s ease;
+        }
+
+        .preview-pint-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-text-box {
+            transition: opacity 0.3s ease;
+        }
+
+        .preview-title {
+            color: var(--color-brand-primary);
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            margin-bottom: var(--space-xs);
+            font-family: var(--font-primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .preview-desc {
+            color: var(--color-text-light);
+            font-family: var(--font-primary);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 90%;
+            margin: 0 auto;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* Staggered Entry Animation */
+        .beer-animate {
+            opacity: 0;
+            transform: translateX(-100px) scale(0.8) rotate(-5deg); 
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), 
+                        transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .beer-animate.is-visible {
+            opacity: 1;
+            transform: translateX(0) scale(1) rotate(0deg);
+        }
+
+        /* ---------------------------------------------------
+           THE STORY SO FAR SECTION
+           --------------------------------------------------- */
+        .story-section {
+            padding: var(--space-xl) var(--space-md);
+            background-color: var(--color-bg-dark);
+            min-height: 100vh;
+        }
+
+        .story-section .parallax-container {
+            display: flex;
+            flex-direction: column-reverse; /* Put image on top on mobile */
+            gap: var(--space-xl);
+            position: relative;
+        }
+
+        .story-section .parallax-left {
+            flex: 1;
+        }
+
+        .story-chapter {
+            min-height: 50vh; /* gives scrolling room on mobile */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0.3;
+            transition: opacity 0.5s ease;
+            margin-bottom: var(--space-lg);
+        }
+        
+        .story-chapter.active {
+            opacity: 1;
+        }
+
+        .story-chapter h3 {
+            color: var(--color-brand-primary);
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: var(--space-md);
+            font-family: var(--font-primary);
+        }
+
+        .story-chapter p {
+            color: var(--color-text-light);
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+            line-height: 1.6;
+        }
+
+        .story-section .parallax-right {
+            flex: 1;
+            position: sticky;
+            top: 20px; /* stick near the top on mobile */
+            height: 40vh;
+            margin-bottom: var(--space-md);
+            z-index: 10;
+        }
+
+        .story-section .sticky-image-box {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border: 2px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .story-section .story-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.8s ease, transform 10s linear;
+        }
+
+        .story-section .story-img.active {
+            opacity: 1;
+            transform: scale(1.05); /* slow zoom effect */
+        }
+
+        @media (min-width: 992px) {
+            .story-section .parallax-container {
+                flex-direction: row;
+                align-items: flex-start;
+                gap: var(--space-2xl);
+            }
+
+            .story-section .parallax-left {
+                padding-right: var(--space-xl);
+                margin-bottom: 0;
+            }
+
+            .story-chapter {
+                min-height: 80vh; /* creates more scroll distance on desktop */
+                margin-bottom: 0;
+            }
+
+            .story-section .parallax-right {
+                top: 120px;
+                height: calc(100vh - 160px);
+                margin-bottom: 0;
+            }
         }

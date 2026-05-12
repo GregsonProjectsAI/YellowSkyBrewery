@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scroll Animation Demo</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for branding -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Outfit:wght@800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- SVG Filter Definition for the Comic Book Style -->
+    <!-- This SVG doesn't render anything itself, it just defines the filter we apply via CSS -->
+    <svg style="display: none;">
+        <defs>
+            <filter id="comic-filter">
+                <!-- Boost contrast and saturation aggressively -->
+                <feColorMatrix type="matrix" values="
+                    1.8 0   0   0   -0.3
+                    0   1.8 0   0   -0.3
+                    0   0   1.8 0   -0.3
+                    0   0   0   1   0" />
+                <!-- Posterize effect (crushes gradients into distinct bands of color) -->
+                <feComponentTransfer>
+                    <feFuncR type="discrete" tableValues="0 0.1 0.4 0.8 1"/>
+                    <feFuncG type="discrete" tableValues="0 0.1 0.4 0.8 1"/>
+                    <feFuncB type="discrete" tableValues="0 0.1 0.4 0.8 1"/>
+                </feComponentTransfer>
+                <!-- Add a warm, nostalgic Yellow Sky tint -->
+                <feColorMatrix type="matrix" values="
+                    1.2 0.2 0.0 0 0
+                    0.1 1.0 0.1 0 0
+                    0.0 0.1 0.8 0 0
+                    0   0   0   1 0" />
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Header area to allow natural scroll down to the animation -->
+    <div class="header">
+        <h1>Yellow Sky Brewery</h1>
+        <p>Keep scrolling to trigger the animation module.</p>
+    </div>
+
+    <!-- Scroll Spacer: Dictates how "long" the animation takes to scroll through -->
+    <div class="scroll-container">
+        
+        <!-- Sticky element: stays locked in the viewport while scrolling the container -->
+        <div class="sticky-view">
+            
+            <div class="animation-wrapper">
+                <!-- The dynamic image frame -->
+                <!-- It has a drop-shadow applied in CSS to make the cutout pop -->
+                <img id="colin-sequence" src="../../../assets/darts_webp_frames/frame_040.webp" alt="Colin throwing a dart">
+                
+                <!-- The pure CSS Dart -->
+                <div id="css-dart" class="dart hidden"></div>
+            </div>
+
+            <div class="scroll-instructions">
+                <h2>Scroll to Throw &darr;</h2>
+                <p>Raw transparent video frames dynamically stylized using 100% code.</p>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Extra footer space so the scroll can finish cleanly -->
+    <div class="footer">
+        <h2>Cheers!</h2>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -18,3 +18,9 @@ __pycache__/
 *.tmp
 *.bak
 *.log
+
+# Raw Media Assets (Too large for Git)
+assets/Real Pictures 1 (Chris dump)/
+*.mp4
+*.heic
+*.HEIC

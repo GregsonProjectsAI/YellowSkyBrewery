@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yellow Sky Story Prototypes</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/story-demos.css">
+</head>
+<body>
+    <!-- Navigation Back -->
+    <div style="position: fixed; top: 20px; left: 20px; z-index: 9999;">
+        <a href="index.html" class="btn">Back to Main Site</a>
+    </div>
+
+    <!-- Intro -->
+    <section class="demo-intro">
+        <h1 class="section-title">The Story Prototypes</h1>
+        <p>Scroll down to experience three different interactive layouts for "The Story So Far".</p>
+        <p>Scroll past this intro to begin.</p>
+    </section>
+
+    <!-- OPTION 1: Sticky Parallax -->
+    <section class="story-opt-1">
+        <div class="opt-title-bar">
+            <h2>Option 1: The Sticky Parallax</h2>
+            <p>Scroll down. The left text scrolls, the right image crossfades based on the active chapter.</p>
+        </div>
+        
+        <div class="parallax-container">
+            <div class="parallax-left">
+                <div class="story-chapter" data-image="1">
+                    <h3>Chapter 1: The Idea</h3>
+                    <p>It started with a bad pint in a good pub. We looked at each other and said, "We could do worse than this." So we did.</p>
+                </div>
+                <div class="story-chapter" data-image="2">
+                    <h3>Chapter 2: The Shed</h3>
+                    <p>Armed with a stolen brewing kettle and absolutely zero experience, we took over Colin's shed. Mistakes were made. Explosions were minor.</p>
+                </div>
+                <div class="story-chapter" data-image="3">
+                    <h3>Chapter 3: The First Pour</h3>
+                    <p>We called it "Owl Rye" because it kept us up all night. It was dark, spicy, and frankly, a bit aggressive. We loved it.</p>
+                </div>
+                <div class="story-chapter" data-image="4">
+                    <h3>Chapter 4: Yellow Sky</h3>
+                    <p>Today, we're still nitwits, but now we're nitwits with a proper brewery. Welcome to Yellow Sky.</p>
+                </div>
+            </div>
+            <div class="parallax-right">
+                <div class="sticky-image-box">
+                    <div class="story-img active" id="img-1" style="background-color: #2a2a2a;">Image 1 (The Pub)</div>
+                    <div class="story-img" id="img-2" style="background-color: #3a2a2a;">Image 2 (The Shed)</div>
+                    <div class="story-img" id="img-3" style="background-color: #4a2a2a;">Image 3 (The Pour)</div>
+                    <div class="story-img" id="img-4" style="background-color: #5a2a2a;">Image 4 (The Brewery)</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OPTION 2: Horizontal Scroll -->
+    <section class="story-opt-2">
+        <div class="opt-title-bar">
+            <h2>Option 2: Horizontal Scroll Journey</h2>
+            <p>Keep scrolling down. The page will pause and scroll horizontally instead.</p>
+        </div>
+        
+        <div class="horizontal-scroll-wrapper">
+            <div class="horizontal-scroll-container">
+                <div class="h-panel panel-1">
+                    <h3>Chapter 1: The Idea</h3>
+                    <div class="h-image" style="background-color: #2a2a2a;">Image 1</div>
+                    <p>It started with a bad pint in a good pub.</p>
+                </div>
+                <div class="h-panel panel-2">
+                    <h3>Chapter 2: The Shed</h3>
+                    <div class="h-image" style="background-color: #3a2a2a;">Image 2</div>
+                    <p>Armed with a stolen brewing kettle...</p>
+                </div>
+                <div class="h-panel panel-3">
+                    <h3>Chapter 3: The First Pour</h3>
+                    <div class="h-image" style="background-color: #4a2a2a;">Image 3</div>
+                    <p>We called it "Owl Rye" because it kept us up all night.</p>
+                </div>
+                <div class="h-panel panel-4">
+                    <h3>Chapter 4: Yellow Sky</h3>
+                    <div class="h-image" style="background-color: #5a2a2a;">Image 4</div>
+                    <p>Today, we're still nitwits, but with a proper brewery.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OPTION 3: Cascading Polaroids -->
+    <section class="story-opt-3">
+        <div class="opt-title-bar">
+            <h2>Option 3: Cascading Polaroid Wall</h2>
+            <p>Scroll down. Elements float up at different speeds to create a chaotic memory board.</p>
+        </div>
+        
+        <div class="polaroid-container">
+            <div class="polaroid p-1" data-speed="1.2">
+                <div class="p-img" style="background-color: #2a2a2a;">Image 1</div>
+                <div class="p-text">The Idea.</div>
+            </div>
+            <div class="polaroid p-2" data-speed="0.8">
+                <p>It started with a bad pint in a good pub. We looked at each other and said, "We could do worse than this." So we did.</p>
+            </div>
+            
+            <div class="polaroid p-3" data-speed="1.5">
+                <div class="p-img" style="background-color: #3a2a2a;">Image 2</div>
+                <div class="p-text">The Shed.</div>
+            </div>
+            <div class="polaroid p-4" data-speed="0.9">
+                <p>Armed with a stolen brewing kettle and absolutely zero experience, we took over Colin's shed. Mistakes were made. Explosions were minor.</p>
+            </div>
+            
+            <div class="polaroid p-5" data-speed="1.1">
+                <div class="p-img" style="background-color: #4a2a2a;">Image 3</div>
+                <div class="p-text">The Pour.</div>
+            </div>
+        </div>
+    </section>
+
+    <script src="js/story-demos.js"></script>
+</body>
+</html>

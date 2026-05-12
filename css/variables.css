@@ -20,6 +20,8 @@
     --space-md: 20px;
     --space-lg: 40px;
     --space-xl: 80px;
+    --space-2xl: 120px;
+    --space-3xl: 200px;
 
     /* Borders & Shadows */
     --border-radius-sm: 4px;
