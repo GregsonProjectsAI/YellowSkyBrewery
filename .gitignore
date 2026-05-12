@@ -20,7 +20,7 @@ __pycache__/
 *.log
 
 # Raw Media Assets (Too large for Git)
+assets/Real Pictures 1 (Chris dump)/**/*.mp4
+assets/Real Pictures 1 (Chris dump)/**/*.heic
+assets/Real Pictures 1 (Chris dump)/**/*.HEIC
 assets/Real Pictures 1 (Chris dump)/
-*.mp4
-*.heic
-*.HEIC
