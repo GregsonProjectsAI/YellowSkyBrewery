@@ -15,6 +15,8 @@
         .scroll-container {
             height: 800vh;
             position: relative;
+            background-color: #0d0d0d; /* seals the gap below the sticky-wrapper so the
+                                          backdrop can't bleed through as it scrolls off */
         }
 
         /* The sticky section that holds the canvas */
@@ -120,7 +122,8 @@
             background-position: center;
             filter: brightness(0.25) blur(6px);
             transform: scale(1.06); /* prevent blur edge bleed */
-            opacity: 0;             /* JS drives this — starts hidden, emerges from the dark */
+            opacity: 0;             /* JS drives this via IntersectionObserver on #intro */
+            transition: opacity 0.8s ease; /* smooth fade-in once content sections appear */
         }
 
         /* All NORMAL-FLOW content that must sit above the fixed backdrop (z-index:0) ─────── */
