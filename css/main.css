@@ -463,7 +463,7 @@
         }
 
         .dashboard-widget--bulletin {
-            flex: 3;
+            flex: 1;
             padding-left: 0;
         }
 
@@ -603,8 +603,7 @@
 
         /* Upcoming Events widget */
         .dashboard-widget--events {
-            flex: 1.5;
-            padding-right: 0;
+            flex: 1;
         }
 
         .dashboard-label-icon {
