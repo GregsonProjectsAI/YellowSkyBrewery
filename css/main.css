@@ -464,13 +464,12 @@
 
         .dashboard-widget--bulletin {
             flex: 1;
-            padding-left: 0;
+            align-items: center;
         }
 
         .dashboard-widget--socials {
             flex: 1;
-            align-items: flex-start;
-            padding-right: 0;
+            align-items: center;
         }
 
         .dashboard-divider {
