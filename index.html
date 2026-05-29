@@ -383,10 +383,29 @@
                 <p style="color: var(--color-text-muted); text-align: center; grid-column: 1 / -1; padding: 40px 0;">Loading bulletin updates...</p>
             </div>
             <div class="blog-archive-cta fade-up">
-                <a href="blog.html" class="btn btn--secondary">Explore Full Archive &rarr;</a>
+                <button id="blog-archive-open-btn" class="btn btn--secondary">Explore Full Archive &rarr;</button>
             </div>
         </div>
     </section>
+
+    <!-- Blog Archive Overlay -->
+    <div id="blog-archive-overlay" class="blog-archive-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Full Blog Archive">
+        <div class="blog-archive-overlay__header">
+            <div class="blog-archive-overlay__title-row">
+                <h2 class="blog-archive-overlay__title">The YSB Bulletin</h2>
+                <button id="blog-archive-close-btn" class="blog-archive-overlay__close" aria-label="Close archive">&times; Close</button>
+            </div>
+            <div class="blog-archive-filters" role="group" aria-label="Filter posts by category">
+                <button class="blog-filter-btn is-active" data-filter="all">All Posts</button>
+                <button class="blog-filter-btn" data-filter="brew-log">Brew Logs 🍺</button>
+                <button class="blog-filter-btn" data-filter="event">Events 📅</button>
+                <button class="blog-filter-btn" data-filter="general">Updates 📝</button>
+            </div>
+        </div>
+        <div class="blog-archive-overlay__body">
+            <div id="blog-archive-grid" class="blog-grid"></div>
+        </div>
+    </div>
 
     <!-- Site Footer -->
     <footer class="site-footer">
