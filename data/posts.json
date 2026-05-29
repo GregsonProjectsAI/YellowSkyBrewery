@@ -1,6 +1,17 @@
 {
   "posts": [
     {
+      "id": "a3f9d1e2-7b4c-4e8a-b2f1-9c0d6e5f8a3b",
+      "createdAt": "2026-05-29T10:30:00.000Z",
+      "updatedAt": "2026-05-29T10:30:00.000Z",
+      "type": "event",
+      "eventName": "Sundays from 13:00!",
+      "venue": "YSB HQ, Colin's Garden",
+      "eventDateTime": null,
+      "description": "We brew every Sunday from 1pm — always have, always will. If you fancy swinging by to see what's bubbling in the fermenters, have a taste, or just say hi, you're more than welcome. Fair warning: Colin will almost certainly challenge you to a game of darts.",
+      "ticketLink": null
+    },
+    {
       "id": "1c72cb2b-03fc-4995-9b7b-5508f4a24a5e",
       "createdAt": "2026-05-29T04:21:50.316Z",
       "updatedAt": "2026-05-29T04:21:50.316Z",

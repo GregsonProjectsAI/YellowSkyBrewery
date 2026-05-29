@@ -118,7 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── Dashboard latest-post widget ──────────────────────────────────────────
-    const dashWidget = document.getElementById('dashboard-latest-post');
+    const dashWidget      = document.getElementById('dashboard-latest-post');
+    const dashEventWidget = document.getElementById('dashboard-latest-event');
 
     function renderDashboard(posts) {
         if (!dashWidget) return;
@@ -158,6 +159,40 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+    // ── Dashboard latest-event widget ────────────────────────────────────────────
+    function renderDashboardEvent(posts) {
+        if (!dashEventWidget) return;
+        // Find the most recent event post
+        const event = (posts || []).find(p => p.type === 'event');
+        if (!event) {
+            dashEventWidget.innerHTML = `<span class="dashboard-post__empty">No upcoming events — watch this space!</span>`;
+            return;
+        }
+        const name = escapeHTML(event.eventName);
+        const desc = event.description ? escapeHTML(event.description.substring(0, 100)) + '…' : '';
+        const venue = event.venue ? escapeHTML(event.venue) : '';
+        dashEventWidget.innerHTML = `
+            <span class="dashboard-event__name">${name}</span>
+            ${venue ? `<span class="dashboard-event__venue">📍 ${venue}</span>` : ''}
+            ${desc  ? `<span class="dashboard-event__desc">${desc}</span>` : ''}
+            <button class="dashboard-post__open" id="dashboard-event-open-btn">View all events →</button>
+        `;
+        // Wire button to archive overlay filtered to events
+        const evBtn = document.getElementById('dashboard-event-open-btn');
+        if (evBtn) {
+            evBtn.addEventListener('click', () => {
+                // Open archive and switch to Events filter
+                const archiveBtn = document.getElementById('blog-archive-open-btn');
+                if (archiveBtn) archiveBtn.click();
+                // Small delay so the overlay has opened before we switch filter
+                setTimeout(() => {
+                    const eventFilter = document.querySelector('.blog-filter-btn[data-filter="event"]');
+                    if (eventFilter) eventFilter.click();
+                }, 50);
+            });
+        }
+    }
+
 
     // ── Archive overlay ───────────────────────────────────────────────────────
     const overlay     = document.getElementById('blog-archive-overlay');
@@ -204,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 allPosts = data.posts || [];
                 renderFeed(allPosts);        // also update homepage feed while we're here
                 renderArchive(allPosts, currentFilter);
+                renderDashboardEvent(allPosts);
             })
             .catch(() => {
                 archiveGrid.innerHTML = `<div class="blog-error"><p>Could not load the archive. Please try again.</p></div>`;
@@ -250,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 allPosts = data.posts || [];
                 renderFeed(allPosts);
                 renderDashboard(allPosts);
+                renderDashboardEvent(allPosts);
             })
             .catch(() => {
                 if (feedContainer) feedContainer.innerHTML = `<div class="blog-error"><p>Failed to load recent updates.</p></div>`;

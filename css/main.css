@@ -601,6 +601,50 @@
             text-transform: uppercase;
         }
 
+        /* Upcoming Events widget */
+        .dashboard-widget--events {
+            flex: 1.5;
+            padding-right: 0;
+        }
+
+        .dashboard-label-icon {
+            width: 13px;
+            height: 13px;
+            vertical-align: middle;
+            margin-right: 5px;
+            margin-bottom: 2px;
+            stroke: rgba(212, 175, 55, 0.75);
+        }
+
+        .dashboard-event {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .dashboard-event__name {
+            font-family: var(--font-primary);
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+            letter-spacing: 0.5px;
+        }
+
+        .dashboard-event__venue {
+            font-family: var(--font-primary);
+            font-size: 12px;
+            color: rgba(212, 175, 55, 0.7);
+            letter-spacing: 0.5px;
+        }
+
+        .dashboard-event__desc {
+            font-family: var(--font-primary);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.5;
+            max-width: 340px;
+        }
+
         /* Responsive — stack on narrow screens */
         @media (max-width: 768px) {
             .dashboard-grid {
