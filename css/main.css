@@ -1,13 +1,13 @@
         html {
             margin: 0;
             padding: 0;
-            background-color: #0d0d0d; /* dark root — shows during canvas fade when backdrop is still transparent */
+            background-color: transparent; /* transparent so the fixed backdrop isn't trapped below the canvas background */
         }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: transparent; /* must be transparent so position:fixed z-index:-1 backdrop can show through */
+            background-color: #0d0d0d; /* dark base — body is normal-flow (step 3) so the fixed backdrop (step 6) paints above it */
         }
 
         /* The container that creates the scroll space */
