@@ -172,3 +172,4 @@
                     if (glintEl) glintEl.classList.remove('is-glinting');
                 }
             }
+        }); // end scroll listener
