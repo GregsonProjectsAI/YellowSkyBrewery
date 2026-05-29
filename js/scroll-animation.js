@@ -154,11 +154,12 @@
                 demoContent.classList.remove('is-glinting');
                 void demoContent.offsetWidth;          // restart animation if re-triggered
                 demoContent.classList.add('is-glinting');
-                // Logo launches to corner shortly after the glint starts — glint causes movement
+                // Logo launches at the glint's peak (30% of 1300ms = 390ms)
+                // then glint fades as the logo travels, both finishing together
                 logoMovePending = setTimeout(() => {
                     demoContent.classList.add('is-header');
                     logoMovePending = null;
-                }, 220);
+                }, 390);
             }
 
             // Fast-scroll safety: if user rockets past both thresholds in one frame
