@@ -2,7 +2,7 @@
         html {
             margin: 0;
             padding: 0;
-            background-color: transparent;
+            background-color: #0d0d0d; /* dark base — visible when canvas & backdrop are both fading */
         }
 
         /* The container that creates the scroll space */
