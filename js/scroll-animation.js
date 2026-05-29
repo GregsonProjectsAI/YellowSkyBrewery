@@ -101,10 +101,9 @@
         const FADE_END        = 640 / 700;  // 0.914 — fade complete
         const LOGO_MOVE_START = 655 / 700;  // 0.936 — logo moves to corner AFTER fade
 
-        // Glint fires between the 6th and 7th of the 9 static fade frames
-        // Fade zone = HOLD_END→FADE_END (80 units). Frame 6.5 midpoint = 560 + (5.5/9)*80 ≈ 609
-        const GLINT_TRIGGER = 609 / 700;
-        const glintEl = document.getElementById('canvas-glint');
+        // Glint fires between the 4th and 5th fade frames (2 frames earlier)
+        // Fade zone = HOLD_END→FADE_END (80 units). Frame 4.5 midpoint = 560 + (4.5/9)*80 = 600/700
+        const GLINT_TRIGGER = 591 / 700;
         let glintFired = false;
 
         window.addEventListener('scroll', () => {
@@ -157,19 +156,17 @@
             }
 
             // ── Glint effect ─────────────────────────────────────────────────
-            // Fires once between the 6th and 7th fade frame; resets on scroll-back
+            // Applied to the logo element so it's scoped to the logo only
             if (scrollFraction >= GLINT_TRIGGER && scrollFraction < FADE_END && !glintFired) {
                 glintFired = true;
-                if (glintEl) {
-                    glintEl.classList.remove('is-glinting');
-                    void glintEl.offsetWidth; // force reflow so animation restarts cleanly
-                    glintEl.classList.add('is-glinting');
-                }
+                demoContent.classList.remove('is-glinting');
+                void demoContent.offsetWidth; // force reflow so animation restarts cleanly
+                demoContent.classList.add('is-glinting');
             }
             if (scrollFraction < GLINT_TRIGGER - 0.025) {
                 if (glintFired) {
                     glintFired = false;
-                    if (glintEl) glintEl.classList.remove('is-glinting');
+                    demoContent.classList.remove('is-glinting');
                 }
             }
         }); // end scroll listener
