@@ -297,10 +297,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 if (isOpen) {
                     clearTimeout(hideTimer);
-                    hideTimer = setTimeout(() => {
-                        isOpen = false;
-                        dropEl.classList.remove('is-open');
-                    }, 200);
+                    isOpen = false;
+                    dropEl.classList.remove('is-open');
                 }
             }
         });
