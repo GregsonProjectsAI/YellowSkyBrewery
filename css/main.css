@@ -38,6 +38,47 @@
             transition: opacity 1s ease-in-out;
         }
 
+        /* -------------------------------------------------- */
+        /* CANVAS GLINT — diagonal light-catch sweep effect    */
+        /* -------------------------------------------------- */
+        @keyframes canvas-glint-sweep {
+            0%   { transform: translateX(-130%) skewX(-18deg); opacity: 0; }
+            18%  { opacity: 1; }
+            82%  { opacity: 1; }
+            100% { transform: translateX(230%) skewX(-18deg); opacity: 0; }
+        }
+
+        .canvas-glint {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 5;
+            mix-blend-mode: screen;
+        }
+
+        .canvas-glint::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 32%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent                  0%,
+                rgba(255, 248, 210, 0.00)   22%,
+                rgba(255, 248, 210, 0.60)   50%,
+                rgba(255, 248, 210, 0.00)   78%,
+                transparent                 100%
+            );
+            transform: translateX(-130%) skewX(-18deg);
+            opacity: 0;
+        }
+
+        .canvas-glint.is-glinting::after {
+            animation: canvas-glint-sweep 0.72s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
         /* Loading indicator */
         #loading {
             position: fixed;
