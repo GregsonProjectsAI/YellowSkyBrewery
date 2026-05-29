@@ -39,44 +39,30 @@
         }
 
         /* -------------------------------------------------- */
-        /* CANVAS GLINT — diagonal light-catch sweep effect    */
+        /* LOGO GLINT — soft colour bloom via CSS filter       */
+        /* Animates directly on the img so it respects the     */
+        /* PNG transparency — no square clipping, no swipe.    */
         /* -------------------------------------------------- */
-        @keyframes canvas-glint-sweep {
-            0%   { transform: translateX(-130%) skewX(-18deg); opacity: 0; }
-            18%  { opacity: 1; }
-            82%  { opacity: 1; }
-            100% { transform: translateX(230%) skewX(-18deg); opacity: 0; }
-        }
-
-        .canvas-glint {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 5;
-            mix-blend-mode: screen;
-        }
-
-        .canvas-glint::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 32%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent                  0%,
-                rgba(255, 248, 210, 0.00)   22%,
-                rgba(255, 248, 210, 0.60)   50%,
-                rgba(255, 248, 210, 0.00)   78%,
-                transparent                 100%
-            );
-            transform: translateX(-130%) skewX(-18deg);
-            opacity: 0;
-        }
-
-        .canvas-glint.is-glinting::after {
-            animation: canvas-glint-sweep 0.72s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        @keyframes logo-colour-bloom {
+            0%   {
+                filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.80));
+            }
+            30%  {
+                filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55))
+                        drop-shadow(0 0 50px rgba(212, 175, 55, 0.70))
+                        drop-shadow(0 0 14px rgba(255, 248, 200, 0.40))
+                        brightness(1.20)
+                        saturate(1.30);
+            }
+            65%  {
+                filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.65))
+                        drop-shadow(0 0 28px rgba(212, 175, 55, 0.35))
+                        brightness(1.08)
+                        saturate(1.12);
+            }
+            100% {
+                filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.80));
+            }
         }
 
         /* Loading indicator */
@@ -206,30 +192,10 @@
             filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.8));
         }
 
-        /* Logo glint — applied directly to the logo element so it's scoped to the logo only */
-        .overlay-content.is-glinting {
-            overflow: hidden;
-        }
-
-        .overlay-content.is-glinting::after {
-            content: '';
-            position: absolute;
-            top: -30%;
-            left: 0;
-            width: 28%;
-            height: 160%;
-            background: linear-gradient(
-                90deg,
-                transparent                  0%,
-                rgba(255, 248, 210, 0.00)   22%,
-                rgba(255, 248, 210, 0.78)   50%,
-                rgba(255, 248, 210, 0.00)   78%,
-                transparent                 100%
-            );
-            transform: translateX(-100%) skewX(-18deg);
-            mix-blend-mode: screen;
-            pointer-events: none;
-            animation: canvas-glint-sweep 0.72s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        /* Logo glint — filter bloom scoped to the logo img, respects PNG shape */
+        .overlay-content.is-glinting .brand-logo {
+            animation: logo-colour-bloom 1.3s ease-in-out forwards;
+            transition: none; /* suppress the hover transition so animation runs clean */
         }
 
         /* ---------------------------------------------------
