@@ -312,4 +312,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         observer.observe(logoEl, { attributes: true, attributeFilter: ['class'] });
     })();
+
+    // ── Back to Top ───────────────────────────────────────────────────────────
+    const topBtn = document.getElementById('nav-top-btn');
+    if (topBtn) {
+        topBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 });
