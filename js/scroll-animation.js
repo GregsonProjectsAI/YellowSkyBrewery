@@ -55,10 +55,10 @@
         //   HOLD_END       → FADE_END      : canvas dissolves into brewery backdrop
         //   FADE_END       → LOGO_MOVE_START: canvas gone, logo stays centred and large
         //   LOGO_MOVE_START → 1.0          : logo shrinks and locks to corner
-        const ANIM_END        = 580 / 700;  // 0.829 — animation finishes (extended to let bubbles settle)
-        const HOLD_END        = 610 / 700;  // 0.871 — hold ends (shorter hold, ~30vh)
+        const ANIM_END        = 580 / 700;  // 0.829 — animation finishes
+        const HOLD_END        = 585 / 700;  // 0.836 — very short hold, fade starts almost immediately
         const FADE_END        = 660 / 700;  // 0.943 — fade complete
-        const LOGO_MOVE_START = 670 / 700;  // 0.957 — logo begins moving to corner AFTER fade
+        const LOGO_MOVE_START = 670 / 700;  // 0.957 — logo moves to corner AFTER fade
 
         window.addEventListener('scroll', () => {
             const scrollTop = window.scrollY;

@@ -32,19 +32,23 @@
     <!-- Fixed page backdrop — single image behind all middle sections -->
     <div class="page-backdrop"></div>
 
-    <!-- Fixed Overlay Logo + Nav Dropdown -->
+    <!-- Fixed Overlay Logo -->
     <div class="overlay-content" id="demo-content">
         <a href="#"><img src="assets/beer branding and names/transparent_logo.png" alt="Yellow Sky Brewery Logo"
                 class="brand-logo"></a>
-        <nav class="nav-dropdown" aria-label="Site navigation">
+    </div>
+
+    <!-- Nav Dropdown (outside the scaled container so it renders at full size) -->
+    <nav id="nav-dropdown" class="nav-dropdown" aria-label="Site navigation">
+        <div class="nav-dropdown__inner">
             <a href="#team" class="nav-dropdown__item">Meet the Nitwits</a>
             <a href="#beers" class="nav-dropdown__item">Our Beers</a>
             <a href="#story" class="nav-dropdown__item">Our Story</a>
             <a href="#blog" class="nav-dropdown__item">The Bulletin</a>
             <div class="nav-dropdown__divider"></div>
             <a href="/admin" class="nav-dropdown__item nav-dropdown__item--admin">&#128274; Admin Login</a>
-        </nav>
-    </div>
+        </div>
+    </nav>
 
     <div class="scroll-container">
         <div class="sticky-wrapper">

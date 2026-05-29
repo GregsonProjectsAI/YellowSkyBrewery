@@ -251,4 +251,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, { passive: true });
     })();
+
+    // ── Nav Dropdown Controller ───────────────────────────────────────────────
+    // The dropdown lives outside the scaled logo container so it renders at full
+    // size. We use a small hide-delay so the menu stays open as the mouse
+    // travels from the logo down into the dropdown panel.
+    (function () {
+        const logoEl    = document.getElementById('demo-content');
+        const dropEl    = document.getElementById('nav-dropdown');
+        if (!logoEl || !dropEl) return;
+
+        let hideTimer = null;
+
+        function showDropdown() {
+            clearTimeout(hideTimer);
+            // Only show once the logo has moved to the header corner
+            if (logoEl.classList.contains('is-header')) {
+                dropEl.classList.add('is-open');
+            }
+        }
+
+        function scheduleHide() {
+            hideTimer = setTimeout(() => {
+                dropEl.classList.remove('is-open');
+            }, 120); // 120ms grace period for mouse travel
+        }
+
+        logoEl.addEventListener('mouseenter', showDropdown);
+        logoEl.addEventListener('mouseleave', scheduleHide);
+        dropEl.addEventListener('mouseenter', showDropdown);
+        dropEl.addEventListener('mouseleave', scheduleHide);
+    })();
 });
