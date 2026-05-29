@@ -236,40 +236,90 @@
         </div>
     </section>
 
-    <!-- The Story So Far Section -->
-    <section class="story-section" id="story">
-        <div class="container">
-            <h2 class="section-title fade-up">But First...</h2>
-            <div class="parallax-container">
-                <div class="parallax-left">
-                    <div class="story-chapter" data-image="1">
-                        <h3>In The Beginning...</h3>
-                        <p>It all started where most bad decisions begin: Dave's garage. Armed with a few plastic buckets, some stolen brewing kettles, and absolutely zero professional experience, we set out to make beer. Most of it was terrible. Some of it was dangerous. But we were hooked.</p>
-                    </div>
-                    <div class="story-chapter" data-image="2">
-                        <h3>From Garage To Shed</h3>
-                        <p>When Dave's garage ran out of space (and patience), the operation was forced to relocate to Colin's garden shed. We considered this a massive upgrade. We finally had room to scale up our catastrophic experiments. Mistakes were still made. Explosions, however, were kept to a minimum.</p>
-                    </div>
-                    <div class="story-chapter" data-image="3">
-                        <h3>Home Improvements</h3>
-                        <p>Eventually, we realized that if we were going to be proper brewers, we needed proper gear. We ripped out the old wood, brought in the shiny steel, and stopped guessing temperatures by sticking our fingers in the mash. Yellow Sky Brewery was officially born, and the beer stopped tasting like regret.</p>
-                    </div>
-                    <div class="story-chapter" data-image="4">
-                        <h3>Into The Pub</h3>
-                        <p>The real test wasn't surviving the shed; it was surviving the public. We teamed up with the legends down in Tilford, and for the first time, a Yellow Sky brew flowed from a real pub tap. Seeing our quirky little birds perched on the bar... well, it almost made the garage fires worth it.</p>
-                    </div>
-                </div>
-                <div class="parallax-right">
-                    <div class="sticky-image-box">
-                        <img src="assets/story_garage.png" alt="Dave's Garage" class="story-img active" id="story-img-1">
-                        <img src="assets/story_shed.png" alt="Colin's Shed" class="story-img" id="story-img-2">
-                        <img src="assets/story_brewery.png" alt="The Brewery" class="story-img" id="story-img-3">
-                        <img src="assets/story_pub.png" alt="The Pub" class="story-img" id="story-img-4">
-                    </div>
-                </div>
-            </div>
+    <!-- But First... Entry Card -->
+    <section class="story-entry-section" id="story">
+        <div class="story-entry__backdrop" style="background-image: url('assets/story_garage.png');"></div>
+        <div class="story-entry__content fade-up">
+            <h2 class="story-entry__heading">But First...</h2>
+            <p class="story-entry__teaser">How three nitwits went from a garage to a pub tap.</p>
+            <button id="story-open-btn" class="btn btn--primary story-entry__btn">Explore Our Story &rarr;</button>
+            <p class="story-entry__skip-hint">or keep scrolling &darr;</p>
         </div>
     </section>
+
+    <!-- Story Overlay -->
+    <div id="story-overlay" class="story-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Our Story">
+
+        <button id="story-close-btn" class="story-overlay__close" aria-label="Close story">&#x2715; Skip Story</button>
+
+        <div class="story-slides-wrapper">
+            <div class="story-slides-track" id="story-slides-track">
+
+                <!-- Slide 1: In The Beginning -->
+                <div class="story-slide">
+                    <div class="story-slide__image-side">
+                        <img src="assets/story_garage.png" alt="Dave's Garage" class="story-slide__img">
+                    </div>
+                    <div class="story-slide__content-side">
+                        <span class="story-slide__number">01 / 04</span>
+                        <h3 class="story-slide__title">In The Beginning...</h3>
+                        <p class="story-slide__text">It all started where most bad decisions begin: Dave's garage. Armed with a few plastic buckets, some stolen brewing kettles, and absolutely zero professional experience, we set out to make beer. Most of it was terrible. Some of it was dangerous. But we were hooked.</p>
+                    </div>
+                </div>
+
+                <!-- Slide 2: From Garage To Shed -->
+                <div class="story-slide">
+                    <div class="story-slide__image-side">
+                        <img src="assets/story_shed.png" alt="Colin's Shed" class="story-slide__img">
+                    </div>
+                    <div class="story-slide__content-side">
+                        <span class="story-slide__number">02 / 04</span>
+                        <h3 class="story-slide__title">From Garage To Shed</h3>
+                        <p class="story-slide__text">When Dave's garage ran out of space (and patience), the operation was forced to relocate to Colin's garden shed. We considered this a massive upgrade. We finally had room to scale up our catastrophic experiments. Mistakes were still made. Explosions, however, were kept to a minimum.</p>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Home Improvements -->
+                <div class="story-slide">
+                    <div class="story-slide__image-side">
+                        <img src="assets/story_brewery.png" alt="The Brewery" class="story-slide__img">
+                    </div>
+                    <div class="story-slide__content-side">
+                        <span class="story-slide__number">03 / 04</span>
+                        <h3 class="story-slide__title">Home Improvements</h3>
+                        <p class="story-slide__text">Eventually, we realized that if we were going to be proper brewers, we needed proper gear. We ripped out the old wood, brought in the shiny steel, and stopped guessing temperatures by sticking our fingers in the mash. Yellow Sky Brewery was officially born, and the beer stopped tasting like regret.</p>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Into The Pub -->
+                <div class="story-slide">
+                    <div class="story-slide__image-side">
+                        <img src="assets/story_pub.png" alt="The Pub" class="story-slide__img">
+                    </div>
+                    <div class="story-slide__content-side">
+                        <span class="story-slide__number">04 / 04</span>
+                        <h3 class="story-slide__title">Into The Pub</h3>
+                        <p class="story-slide__text">The real test wasn't surviving the shed; it was surviving the public. We teamed up with the legends down in Tilford, and for the first time, a Yellow Sky brew flowed from a real pub tap. Seeing our quirky little birds perched on the bar... well, it almost made the garage fires worth it.</p>
+                        <button id="story-continue-btn" class="btn btn--primary story-overlay__continue">Continue &darr;</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Arrow Navigation -->
+        <button id="story-prev" class="story-nav__arrow story-nav__arrow--prev" aria-label="Previous chapter">&#8592;</button>
+        <button id="story-next" class="story-nav__arrow story-nav__arrow--next" aria-label="Next chapter">&#8594;</button>
+
+        <!-- Dot Indicators -->
+        <div class="story-dots" id="story-dots" role="tablist" aria-label="Story chapters">
+            <button class="story-dot is-active" data-index="0" role="tab" aria-label="Chapter 1"></button>
+            <button class="story-dot" data-index="1" role="tab" aria-label="Chapter 2"></button>
+            <button class="story-dot" data-index="2" role="tab" aria-label="Chapter 3"></button>
+            <button class="story-dot" data-index="3" role="tab" aria-label="Chapter 4"></button>
+        </div>
+
+    </div>
     <!-- JavaScript -->
     <script src="js/main.js"></script>
     <script src="js/scroll-animation.js"></script>

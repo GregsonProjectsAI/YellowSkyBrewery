@@ -133,27 +133,116 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // The Story So Far: Parallax Observer
-    const storyChapters = document.querySelectorAll('.story-chapter');
-    const storyImages = document.querySelectorAll('.story-img');
+    // Story Overlay Controller
+    (function () {
+        const overlay    = document.getElementById('story-overlay');
+        const openBtn    = document.getElementById('story-open-btn');
+        const closeBtn   = document.getElementById('story-close-btn');
+        const continueBtn = document.getElementById('story-continue-btn');
+        const track      = document.getElementById('story-slides-track');
+        const dots       = document.querySelectorAll('.story-dot');
+        const prevBtn    = document.getElementById('story-prev');
+        const nextBtn    = document.getElementById('story-next');
 
-    if (storyChapters.length > 0 && typeof IntersectionObserver !== 'undefined') {
-        const storyObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Dim all chapters, highlight active
-                    storyChapters.forEach(c => c.classList.remove('active'));
-                    entry.target.classList.add('active');
+        if (!overlay || !openBtn) return;
 
-                    // Switch image
-                    const imgId = entry.target.getAttribute('data-image');
-                    storyImages.forEach(img => img.classList.remove('active'));
-                    const targetImg = document.getElementById('story-img-' + imgId);
-                    if (targetImg) targetImg.classList.add('active');
-                }
+        const TOTAL_SLIDES = 4;
+        let currentSlide = 0;
+        let isOpen = false;
+        let touchStartX = 0;
+        let wheelTimer = null;
+
+        function goToSlide(index) {
+            index = Math.max(0, Math.min(TOTAL_SLIDES - 1, index));
+            currentSlide = index;
+
+            // Slide the track
+            track.style.transform = `translateX(${-index * 25}%)`;
+
+            // Sync dots
+            dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
+
+            // Sync arrows
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === TOTAL_SLIDES - 1;
+        }
+
+        function openOverlay() {
+            isOpen = true;
+            goToSlide(0);
+            overlay.classList.add('is-open');
+            overlay.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('no-scroll');
+        }
+
+        function closeOverlay(scrollToBeers) {
+            isOpen = false;
+            overlay.classList.remove('is-open');
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('no-scroll');
+            if (scrollToBeers) {
+                const beersSection = document.getElementById('beers');
+                if (beersSection) beersSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Open via CTA button
+        openBtn.addEventListener('click', openOverlay);
+
+        // Close via ✕ button
+        closeBtn.addEventListener('click', () => closeOverlay(false));
+
+        // Continue → scroll to beers section
+        if (continueBtn) {
+            continueBtn.addEventListener('click', () => closeOverlay(true));
+        }
+
+        // Click on dark backdrop (not on overlay children)
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeOverlay(false);
+        });
+
+        // Arrow buttons
+        prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
+        nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1));
+
+        // Dot clicks
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                goToSlide(parseInt(dot.getAttribute('data-index'), 10));
             });
-        }, { threshold: 0.5 });
+        });
 
-        storyChapters.forEach(c => storyObserver.observe(c));
-    }
+        // Keyboard — arrow keys + Escape
+        document.addEventListener('keydown', (e) => {
+            if (!isOpen) return;
+            if (e.key === 'ArrowRight') goToSlide(currentSlide + 1);
+            if (e.key === 'ArrowLeft')  goToSlide(currentSlide - 1);
+            if (e.key === 'Escape')     closeOverlay(false);
+        });
+
+        // Scroll wheel — debounced so one notch = one slide
+        overlay.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (wheelTimer) return;
+            if (e.deltaY > 0 || e.deltaX > 0) {
+                goToSlide(currentSlide + 1);
+            } else {
+                goToSlide(currentSlide - 1);
+            }
+            wheelTimer = setTimeout(() => { wheelTimer = null; }, 650);
+        }, { passive: false });
+
+        // Touch swipe
+        overlay.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+
+        overlay.addEventListener('touchend', (e) => {
+            const delta = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(delta) > 50) {
+                goToSlide(delta > 0 ? currentSlide + 1 : currentSlide - 1);
+            }
+        }, { passive: true });
+    })();
 });
