@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (beerGrid) {
             beerGridObserver.observe(beerGrid);
 
-            // Split Gallery Hover Engine for this specific gallery
+            // Split Gallery Hover + Click Engine for this specific gallery
             const cards = beerGrid.querySelectorAll('.beer-card');
             const previewPanel = gallery.querySelector('.beer-preview-panel');
             const previewImg = gallery.querySelector('.preview-img');
@@ -85,37 +85,50 @@ document.addEventListener('DOMContentLoaded', () => {
             const previewDesc = gallery.querySelector('.preview-desc');
             const flipCardFront = gallery.querySelector('.flip-card-front');
 
+            // Track which card (if any) the user has clicked to lock
+            let lockedCard = null;
+
+            function updateViewer(card) {
+                previewPanel.style.opacity = '0.5';
+                setTimeout(() => {
+                    const imgSrc = card.querySelector('img').src;
+                    const pintImgSrc = card.getAttribute('data-pint-img');
+                    const title = card.getAttribute('data-title');
+                    const desc = card.getAttribute('data-desc');
+                    const bgColor = card.style.backgroundColor;
+
+                    previewImg.src = imgSrc;
+                    previewImg.alt = title + " Preview";
+                    if (pintImgSrc) previewPintImg.src = pintImgSrc;
+                    previewTitle.textContent = title;
+                    previewDesc.textContent = desc;
+                    if (flipCardFront) {
+                        flipCardFront.style.backgroundColor = bgColor || 'transparent';
+                    }
+                    previewPanel.style.opacity = '1';
+                }, 150);
+            }
+
             if (cards.length > 0 && previewPanel && previewImg && previewPintImg && previewTitle && previewDesc) {
                 cards.forEach(card => {
+                    // Hover: update viewer only if no card is locked
                     card.addEventListener('mouseenter', () => {
+                        if (!lockedCard) {
+                            updateViewer(card);
+                        }
+                    });
+
+                    // Click: lock this card into the viewer
+                    card.addEventListener('click', () => {
+                        lockedCard = card;
                         cards.forEach(c => c.classList.remove('is-active'));
                         card.classList.add('is-active');
-
-                        previewPanel.style.opacity = '0.5';
-                        
-                        setTimeout(() => {
-                            const imgSrc = card.querySelector('img').src;
-                            const pintImgSrc = card.getAttribute('data-pint-img');
-                            const title = card.getAttribute('data-title');
-                            const desc = card.getAttribute('data-desc');
-                            const bgColor = card.style.backgroundColor;
-                            
-                            previewImg.src = imgSrc;
-                            previewImg.alt = title + " Preview";
-                            if (pintImgSrc) previewPintImg.src = pintImgSrc;
-                            previewTitle.textContent = title;
-                            previewDesc.textContent = desc;
-                            if (flipCardFront) {
-                                flipCardFront.style.backgroundColor = bgColor || 'transparent';
-                            }
-                            
-                            previewPanel.style.opacity = '1';
-                        }, 150);
+                        updateViewer(card);
                     });
                 });
-                
-                // Initialize first card
-                cards[0].classList.add('is-active');
+
+                // Show first card in viewer on load (not locked — hover still works)
+                updateViewer(cards[0]);
             }
         }
     });
