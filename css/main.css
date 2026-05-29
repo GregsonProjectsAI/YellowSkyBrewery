@@ -830,7 +830,6 @@
                 flex: 1;
                 position: sticky;
                 top: 100px;
-                height: fit-content;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -905,7 +904,7 @@
             background-color: transparent;
             width: 100%;
             flex: 1;              /* fills the preview panel rather than fixed 55vh */
-            min-height: 200px;    /* floor so it never collapses entirely */
+            min-height: 0;        /* required: lets flex:1 resolve height correctly */
             perspective: 1000px;
             margin-bottom: var(--space-md);
             display: flex;
