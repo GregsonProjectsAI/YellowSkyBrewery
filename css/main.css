@@ -1,8 +1,13 @@
-        body,
         html {
             margin: 0;
             padding: 0;
-            background-color: #0d0d0d; /* dark base — visible when canvas & backdrop are both fading */
+            background-color: #0d0d0d; /* dark root — shows during canvas fade when backdrop is still transparent */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent; /* must be transparent so position:fixed z-index:-1 backdrop can show through */
         }
 
         /* The container that creates the scroll space */
@@ -22,7 +27,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: transparent;
+            background-color: #0d0d0d; /* dark base visible through the fading canvas */
         }
 
         /* The canvas where frames will be drawn */

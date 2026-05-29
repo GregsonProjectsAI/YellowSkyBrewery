@@ -184,6 +184,8 @@
                 // then glint fades as the logo travels, both finishing together
                 logoMovePending = setTimeout(() => {
                     demoContent.classList.add('is-header');
+                    // Ensure backdrop is fully visible by the time the logo arrives
+                    if (backdropEl) backdropEl.style.opacity = '1';
                     logoMovePending = null;
                 }, 390);
             }
