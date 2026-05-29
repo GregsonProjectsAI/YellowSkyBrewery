@@ -104,6 +104,12 @@
         const HOLD_END        = 560 / 700;  // 0.800 — minimal hold
         const FADE_END        = 640 / 700;  // 0.914 — canvas fade complete
         const LOGO_MOVE_START = 655 / 700;  // 0.936 — logo moves to corner (now glint-triggered)
+        // Backdrop begins emerging once the canvas is mostly gone, then rises
+        // steadily so it materialises from the dark behind the content sections.
+        // The scroll-container's #0d0d0d background masks the transition while
+        // it's still on-screen, so there's no "reveal from below" artefact.
+        const BACKDROP_START  = 630 / 700;  // ~90% scroll — canvas nearly transparent
+        const BACKDROP_END    = 680 / 700;  // ~97% scroll — backdrop fully opaque
         // Glint fires just before the logo departs — the glint IS the trigger for movement
         const GLINT_TRIGGER = 650 / 700;
         let glintFired     = false;
@@ -114,7 +120,10 @@
             const totalScrollDistance = scrollContainer.offsetHeight - window.innerHeight;
 
             // Scroll container is hidden (animation was skipped) — nothing to drive
-            if (totalScrollDistance <= 0) return;
+            if (totalScrollDistance <= 0) {
+                if (backdropEl) backdropEl.style.opacity = '1';
+                return;
+            }
 
             let scrollFraction = 0;
             if (totalScrollDistance > 0) {
@@ -153,8 +162,20 @@
                 canvas.style.opacity = '0';
             }
 
+            // Backdrop emerges slowly from near-black once the canvas is almost gone.
+            // The scroll-container's dark background keeps this hidden while we're still
+            // in the animation section — no visible "reveal from below".
+            if (backdropEl) {
+                if (scrollFraction < BACKDROP_START) {
+                    backdropEl.style.opacity = '0';
+                } else if (scrollFraction < BACKDROP_END) {
+                    const bProgress = (scrollFraction - BACKDROP_START) / (BACKDROP_END - BACKDROP_START);
+                    backdropEl.style.opacity = bProgress.toFixed(3);
+                } else {
+                    backdropEl.style.opacity = '1';
+                }
+            }
 
-            // ── Logo movement + Glint — glint fires first, logo moves 220ms later ──────────
             if (scrollFraction >= GLINT_TRIGGER && !glintFired) {
                 glintFired = true;
                 // Bloom the logo colours
@@ -165,6 +186,8 @@
                 // then glint fades as the logo travels, both finishing together
                 logoMovePending = setTimeout(() => {
                     demoContent.classList.add('is-header');
+                    // Ensure backdrop is fully visible by the time the logo arrives
+                    if (backdropEl) backdropEl.style.opacity = '1';
                     logoMovePending = null;
                 }, 390);
             }
@@ -184,22 +207,3 @@
                 }
             }
         }); // end scroll listener
-
-        // ── Backdrop fade-in via IntersectionObserver ────────────────────────────────────────
-        // The backdrop must NOT be driven by scroll-fraction: the sticky-wrapper covers it
-        // throughout the animation, so any opacity change is invisible. Instead we watch
-        // the #intro section — it enters the viewport only after the animation container
-        // has fully scrolled off, at which point the CSS transition gives a genuine
-        // “fade in from behind the content” rather than a bottom-edge reveal.
-        if (backdropEl) {
-            const introEl = document.getElementById('intro');
-            if (introEl) {
-                const backdropReveal = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting) {
-                        backdropEl.style.opacity = '1';
-                        backdropReveal.disconnect(); // one-shot
-                    }
-                }, { threshold: 0.01 });
-                backdropReveal.observe(introEl);
-            }
-        }
