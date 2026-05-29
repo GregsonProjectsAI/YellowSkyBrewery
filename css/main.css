@@ -525,9 +525,9 @@
             flex-shrink: 0;
         }
 
-        .dashboard-post__badge--brew-log { background: rgba(212, 175, 55, 0.22); color: var(--color-brand-primary); border: 1px solid rgba(212,175,55,0.3); }
-        .dashboard-post__badge--event    { background: rgba(80, 160, 220, 0.2);  color: #9dd8f8; border: 1px solid rgba(80,160,220,0.3); }
-        .dashboard-post__badge--general  { background: rgba(120, 200, 140, 0.2); color: #a8e0b8; border: 1px solid rgba(120,200,140,0.3); }
+        .dashboard-post__badge--brew-log { background: rgba(212, 175, 55, 0.35);  color: #f5d97a; border: 1px solid rgba(212,175,55,0.6); }
+        .dashboard-post__badge--event    { background: rgba(80, 160, 220, 0.35);  color: #b8e4ff; border: 1px solid rgba(80,160,220,0.6); }
+        .dashboard-post__badge--general  { background: rgba(160, 220, 160, 0.35); color: #c8f0c8; border: 1px solid rgba(160,220,160,0.6); }
 
         .dashboard-post__title {
             font-family: var(--font-primary);
@@ -1423,21 +1423,21 @@
         }
 
         .blog-badge--brew-log {
-            background-color: rgba(212, 175, 55, 0.15);
-            color: var(--color-brand-primary);
-            border: 1px solid var(--color-brand-primary);
+            background-color: rgba(212, 175, 55, 0.35);
+            color: #f5d97a;
+            border: 1px solid rgba(212, 175, 55, 0.6);
         }
 
         .blog-badge--event {
-            background-color: rgba(45, 212, 191, 0.15);
-            color: var(--color-teal);
-            border: 1px solid var(--color-teal);
+            background-color: rgba(45, 212, 191, 0.35);
+            color: #7df5e8;
+            border: 1px solid rgba(45, 212, 191, 0.6);
         }
 
         .blog-badge--general {
-            background-color: rgba(255, 255, 255, 0.08);
-            color: var(--color-offwhite);
-            border: 1px solid var(--color-offwhite);
+            background-color: rgba(200, 200, 255, 0.25);
+            color: #d0d0ff;
+            border: 1px solid rgba(200, 200, 255, 0.5);
         }
 
         .blog-card__date {
