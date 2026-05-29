@@ -47,8 +47,9 @@
             // Collapse the scroll section so the page layout is normal without it
             const scrollContainer = document.querySelector('.scroll-container');
             if (scrollContainer) scrollContainer.style.display = 'none';
-            // Show the logo in header position immediately
+            // Show the logo in header position immediately with full opacity
             demoContent.classList.add('is-header');
+            demoContent.style.opacity = '1';
             // Ensure backdrop is fully visible when animation is skipped
             if (backdropEl) backdropEl.style.opacity = '1';
             document.body.classList.remove('no-scroll');
@@ -116,6 +117,12 @@
         window.addEventListener('scroll', () => {
             const scrollTop = window.scrollY;
             const totalScrollDistance = scrollContainer.offsetHeight - window.innerHeight;
+
+            // Scroll container is hidden (animation was skipped) — nothing to drive
+            if (totalScrollDistance <= 0) {
+                if (backdropEl) backdropEl.style.opacity = '1';
+                return;
+            }
 
             let scrollFraction = 0;
             if (totalScrollDistance > 0) {
