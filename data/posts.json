@@ -1,0 +1,41 @@
+{
+  "posts": [
+    {
+      "id": "1c72cb2b-03fc-4995-9b7b-5508f4a24a5e",
+      "createdAt": "2026-05-29T04:21:50.316Z",
+      "updatedAt": "2026-05-29T04:21:50.316Z",
+      "style": "Hazy IPA",
+      "beerName": "Wrong Tern Hazy IPA",
+      "yeast": "London Ale III",
+      "type": "brew-log",
+      "tastingNotes": "Super smooth mouthfeel, huge stone fruit and citrus aromas, crisp and balanced finish.",
+      "finalGravity": "1.014",
+      "brewDayNotes": "Beautiful mash and boil. The hop aromas are incredibly punchy and tropical. Yeast pitched at 19C.",
+      "brewDate": "2026-05-20",
+      "hops": "20g Admiral (60 min), 100g Citra (dry hop), 100g Mosaic (dry hop)",
+      "originalGravity": "1.062",
+      "batchNumber": "YSB-043",
+      "grainBill": "5kg Golden Promise, 1.5kg Flaked Oats, 0.5kg Wheat Malt"
+    },
+    {
+      "id": "cae072c2-d081-4c67-943f-6438915a2e75",
+      "createdAt": "2026-05-29T04:21:50.320Z",
+      "updatedAt": "2026-05-29T04:21:50.320Z",
+      "description": "Come join us for our annual Summer Solstice taproom takeover! We will have 8 YSB beers on tap, live acoustic music, local food trucks, and a high-stakes darts tournament. Open to all friends, family, and locals!",
+      "eventDateTime": "2026-06-21T18:00:00",
+      "ticketLink": "https://tickets.yellowskybrewery.co.uk/solstice-party",
+      "type": "event",
+      "venue": "YSB Sheds & Garden",
+      "eventName": "Summer Solstice Taproom Party"
+    },
+    {
+      "id": "057cde88-2a6d-419b-b79c-de693b55720d",
+      "createdAt": "2026-05-29T04:21:50.323Z",
+      "updatedAt": "2026-05-29T04:21:50.323Z",
+      "title": "Colin Crowned Darts Champion!",
+      "body": "It is with a mixture of pride and severe suspicion that we announce Colin is once again our taproom darts champion! Despite claims of skewed boards and dubious scoring from Woodwork and Labwork, Colin's final double-20 was certified by our chief quality control team (also Colin). Celebration cider will be flowing all weekend!",
+      "tags": "darts, champion, celebration, taproom",
+      "type": "general"
+    }
+  ]
+}

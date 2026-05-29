@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yellow Sky Brewery - Admin Panel</title>
+    <style>
+        :root {
+            --color-gold: #d4af37;
+            --color-gold-hover: #e5c45b;
+            --color-bg-dark: #0d0d0d;
+            --color-bg-panel: #161616;
+            --color-bg-card: #222222;
+            --color-border: #333333;
+            --color-text-light: #ffffff;
+            --color-text-muted: rgba(255, 255, 255, 0.7);
+            --color-teal: #2dd4bf;
+            --color-offwhite: #f5f5f5;
+            --color-error: #ff4d4d;
+            --color-success: #4edf6d;
+            --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--color-bg-dark);
+            color: var(--color-text-light);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* Centered Login Overlay */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background-color: var(--color-bg-panel);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-logo {
+            width: 100px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .login-title {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--color-gold);
+            letter-spacing: 1px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: var(--color-text-muted);
+            margin-bottom: 24px;
+        }
+
+        /* Shared Form Controls */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: var(--color-text-muted);
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--color-bg-dark);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text-light);
+            padding: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-gold);
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--color-gold);
+            color: var(--color-bg-dark);
+            border: none;
+            border-radius: 6px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: var(--color-gold-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn--block {
+            display: block;
+            width: 100%;
+        }
+
+        .btn--secondary {
+            background-color: transparent;
+            color: var(--color-text-light);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn--secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--color-text-muted);
+            transform: none;
+        }
+
+        .btn--danger {
+            background-color: var(--color-error);
+            color: var(--color-text-light);
+        }
+
+        .btn--danger:hover {
+            background-color: #ff6666;
+        }
+
+        /* Dashboard Layout */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 40px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-logo {
+            width: 50px;
+            height: auto;
+        }
+
+        .header-title h1 {
+            font-size: 24px;
+            color: var(--color-gold);
+        }
+
+        /* Template Selector Section */
+        .section-title {
+            font-size: 20px;
+            color: var(--color-gold);
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 8px;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .template-card {
+            background-color: var(--color-bg-panel);
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .template-card:hover {
+            border-color: var(--color-gold);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .template-card.active {
+            border-color: var(--color-gold);
+            background-color: rgba(212, 175, 55, 0.05);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+        }
+
+        .template-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .template-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .template-desc {
+            font-size: 13px;
+            color: var(--color-text-muted);
+        }
+
+        /* Dynamic Form Panel */
+        .form-panel {
+            background-color: var(--color-bg-panel);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 50px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-grid--full {
+            grid-column: span 2;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+            border-top: 1px solid var(--color-border);
+            padding-top: 20px;
+        }
+
+        /* Post List View */
+        .post-list-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .post-item {
+            background-color: var(--color-bg-panel);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.3s ease;
+        }
+
+        .post-item:hover {
+            border-color: #555555;
+        }
+
+        .post-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .post-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge--brew-log {
+            background-color: rgba(212, 175, 55, 0.15);
+            color: var(--color-gold);
+            border: 1px solid var(--color-gold);
+        }
+
+        .badge--event {
+            background-color: rgba(45, 212, 191, 0.15);
+            color: var(--color-teal);
+            border: 1px solid var(--color-teal);
+        }
+
+        .badge--general {
+            background-color: rgba(245, 245, 245, 0.1);
+            color: var(--color-offwhite);
+            border: 1px solid var(--color-offwhite);
+        }
+
+        .post-date {
+            color: var(--color-text-muted);
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background-color: var(--color-bg-panel);
+            border-left: 4px solid var(--color-gold);
+            color: var(--color-text-light);
+            padding: 15px 25px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 280px;
+            animation: slideIn 0.3s ease-out forwards;
+            font-size: 14px;
+        }
+
+        .toast--error {
+            border-left-color: var(--color-error);
+        }
+
+        .toast--success {
+            border-left-color: var(--color-success);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Hide items dynamically */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive styling adjustments */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-grid--full {
+                grid-column: span 1;
+            }
+            .post-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .post-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Login Area -->
+    <div id="login-section" class="login-container">
+        <div class="login-card">
+            <img src="../assets/beer branding and names/transparent_logo.png" alt="YSB Logo" class="login-logo">
+            <h2 class="login-title">Yellow Sky Brewery</h2>
+            <p class="login-subtitle">Admin Panel Authorization</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••••••" required>
+                </div>
+                <button type="submit" class="btn btn--block">Log In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Area (Hidden by default) -->
+    <div id="dashboard-section" class="dashboard-container hidden">
+        <header>
+            <div class="header-title">
+                <img src="../assets/beer branding and names/transparent_logo.png" alt="YSB Logo" class="header-logo">
+                <h1>YSB Blog Dashboard</h1>
+            </div>
+            <button id="logout-btn" class="btn btn--secondary">Logout</button>
+        </header>
+
+        <main>
+            <!-- Template Selector -->
+            <section class="mb-40">
+                <h2 class="section-title">Select Post Template</h2>
+                <div class="template-grid" id="template-selector">
+                    <div class="template-card active" data-type="brew-log">
+                        <div class="template-icon">🍺</div>
+                        <div class="template-name">Brew Log</div>
+                        <div class="template-desc">Log new beer style details, hops, gravities, and tasting notes.</div>
+                    </div>
+                    <div class="template-card" data-type="event">
+                        <div class="template-icon">📅</div>
+                        <div class="template-name">Event</div>
+                        <div class="template-desc">Promote upcoming taproom events, festivals, and get ticket links.</div>
+                    </div>
+                    <div class="template-card" data-type="general">
+                        <div class="template-icon">📝</div>
+                        <div class="template-name">General Update</div>
+                        <div class="template-desc">Announce general news, updates, achievements, or brewery gossip.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dynamic Form Section -->
+            <section id="form-section" class="form-panel">
+                <h2 class="section-title" id="form-panel-title">Create New Brew Log</h2>
+                <form id="post-form">
+                    
+                    <!-- Form Fields: Brew Log -->
+                    <div id="fields-brew-log" class="form-fields form-grid">
+                        <div class="form-group">
+                            <label for="brew-beerName">Beer Name *</label>
+                            <input type="text" id="brew-beerName" class="form-control" placeholder="Owl Rye">
+                        </div>
+                        <div class="form-group">
+                            <label for="brew-brewDate">Brew Date *</label>
+                            <input type="date" id="brew-brewDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="brew-batchNumber">Batch Number *</label>
+                            <input type="text" id="brew-batchNumber" class="form-control" placeholder="YSB-042">
+                        </div>
+                        <div class="form-group">
+                            <label for="brew-style">Beer Style *</label>
+                            <input type="text" id="brew-style" class="form-control" placeholder="Rye Pale Ale">
+                        </div>
+                        <div class="form-group">
+                            <label for="brew-grainBill">Grain Bill</label>
+                            <textarea id="brew-grainBill" class="form-control" placeholder="e.g. 4kg Pale Ale Malt, 1kg Rye Malt..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="brew-hops">Hops Schedule</label>
+                            <textarea id="brew-hops" class="form-control" placeholder="e.g. 20g Admiral (60 min), 50g Chinook (whirlpool)..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="brew-yeast">Yeast Strain</label>
+                            <input type="text" id="brew-yeast" class="form-control" placeholder="US-05 SafAle">
+                        </div>
+                        <div class="form-group">
+                            <label for="brew-originalGravity">Original Gravity (OG)</label>
+                            <input type="text" id="brew-originalGravity" class="form-control" placeholder="1.052">
+                        </div>
+                        <div class="form-group">
+                            <label for="brew-finalGravity">Final Gravity (FG)</label>
+                            <input type="text" id="brew-finalGravity" class="form-control" placeholder="1.011">
+                        </div>
+                        <div class="form-group form-grid--full">
+                            <label for="brew-brewDayNotes">Brew Day Notes</label>
+                            <textarea id="brew-brewDayNotes" class="form-control" placeholder="Notes on mash temperatures, boil, or general issues..."></textarea>
+                        </div>
+                        <div class="form-group form-grid--full">
+                            <label for="brew-tastingNotes">Tasting Notes (Optional)</label>
+                            <textarea id="brew-tastingNotes" class="form-control" placeholder="Initial carbonation, aroma, color profile, or landlord comments..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Form Fields: Event -->
+                    <div id="fields-event" class="form-fields form-grid hidden">
+                        <div class="form-group">
+                            <label for="event-eventName">Event Name *</label>
+                            <input type="text" id="event-eventName" class="form-control" placeholder="Spring Taproom Takeover">
+                        </div>
+                        <div class="form-group">
+                            <label for="event-eventDateTime">Event Date & Time *</label>
+                            <input type="datetime-local" id="event-eventDateTime" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="event-venue">Venue / Location *</label>
+                            <input type="text" id="event-venue" class="form-control" placeholder="YSB HQ (Colin's Sheds)">
+                        </div>
+                        <div class="form-group form-grid--full">
+                            <label for="event-description">Event Description *</label>
+                            <textarea id="event-description" class="form-control" placeholder="Details of what's happening, what's on tap, and activities..."></textarea>
+                        </div>
+                        <div class="form-group form-grid--full">
+                            <label for="event-ticketLink">Ticket Link (URL, Optional)</label>
+                            <input type="url" id="event-ticketLink" class="form-control" placeholder="https://tickets.yellowskybrewery.co.uk/event">
+                        </div>
+                    </div>
+
+                    <!-- Form Fields: General -->
+                    <div id="fields-general" class="form-fields form-grid hidden">
+                        <div class="form-group form-grid--full">
+                            <label for="general-title">Post Title *</label>
+                            <input type="text" id="general-title" class="form-control" placeholder="Winner of the Darts Championship!">
+                        </div>
+                        <div class="form-group form-grid--full">
+                            <label for="general-body">Post Body *</label>
+                            <textarea id="general-body" class="form-control" style="min-height: 200px;" placeholder="Write your news, updates, announcements, or thoughts here..."></textarea>
+                        </div>
+                        <div class="form-group form-grid--full">
+                            <label for="general-tags">Tags (Comma-separated values)</label>
+                            <input type="text" id="general-tags" class="form-control" placeholder="awards, taproom, collaboration">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="cancel-edit-btn" class="btn btn--secondary hidden">Cancel Edit</button>
+                        <button type="submit" id="submit-post-btn" class="btn">Publish Update</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Existing Posts List -->
+            <section>
+                <h2 class="section-title">Manage Published Updates</h2>
+                <div id="posts-container" class="post-list-grid">
+                    <p style="color: var(--color-text-muted); text-align: center; padding: 20px;">Fetching posts...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Script SPA logic -->
+    <script>
+        const API_URL = '/api';
+        let currentType = 'brew-log';
+        let editingPostId = null;
+        let posts = [];
+
+        // DOM elements
+        const loginSection = document.getElementById('login-section');
+        const loginForm = document.getElementById('login-form');
+        const passwordInput = document.getElementById('password');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const logoutBtn = document.getElementById('logout-btn');
+        const templateSelector = document.getElementById('template-selector');
+        const postForm = document.getElementById('post-form');
+        const formPanelTitle = document.getElementById('form-panel-title');
+        const submitPostBtn = document.getElementById('submit-post-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const postsContainer = document.getElementById('posts-container');
+        const toastContainer = document.getElementById('toast-container');
+
+        // Check active session
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                showDashboard();
+            }
+        });
+
+        // Toast notifications helper
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast--${type}`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <span style="cursor:pointer; margin-left: 15px; font-weight: bold;" onclick="this.parentElement.remove()">✕</span>
+            `;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Login Handler
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = passwordInput.value;
+
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Login failed');
+
+                localStorage.setItem('adminToken', data.token);
+                passwordInput.value = '';
+                showDashboard();
+                showToast('Successfully logged in.');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // Logout Handler
+        logoutBtn.addEventListener('click', async () => {
+            const token = localStorage.getItem('adminToken');
+            try {
+                await fetch(`${API_URL}/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (e) {
+                // Ignore API failure on logout, client state reset remains primary
+            }
+            localStorage.removeItem('adminToken');
+            showLogin();
+            showToast('Successfully logged out.');
+        });
+
+        // Toggle SPA sections
+        function showDashboard() {
+            loginSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+            fetchPosts();
+        }
+
+        function showLogin() {
+            dashboardSection.classList.add('hidden');
+            loginSection.classList.remove('hidden');
+        }
+
+        // Template Selector Logic
+        templateSelector.addEventListener('click', (e) => {
+            const card = e.target.closest('.template-card');
+            if (!card) return;
+
+            if (editingPostId) {
+                if (!confirm('You are currently editing a post. Changing the template will discard unsaved changes. Continue?')) {
+                    return;
+                }
+                resetForm();
+            }
+
+            // Remove active class from all template cards
+            document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+
+            const type = card.getAttribute('data-type');
+            setPostType(type);
+        });
+
+        function setPostType(type) {
+            currentType = type;
+            
+            // Hide all field sections
+            document.querySelectorAll('.form-fields').forEach(f => f.classList.add('hidden'));
+
+            // Show selected fields
+            const fieldsSection = document.getElementById(`fields-${type}`);
+            if (fieldsSection) fieldsSection.classList.remove('hidden');
+
+            // Update title
+            const capitalizedName = type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            formPanelTitle.textContent = editingPostId ? `Edit ${capitalizedName}` : `Create New ${capitalizedName}`;
+        }
+
+        // Fetch Posts list
+        async function fetchPosts() {
+            try {
+                const res = await fetch(`${API_URL}/posts`);
+                if (!res.ok) throw new Error('Could not fetch posts');
+                const data = await res.json();
+                posts = data.posts || [];
+                renderPostList();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Render posts list inside the dashboard
+        function renderPostList() {
+            if (posts.length === 0) {
+                postsContainer.innerHTML = `<p style="color: var(--color-text-muted); text-align: center; padding: 20px;">No updates published yet.</p>`;
+                return;
+            }
+
+            postsContainer.innerHTML = '';
+            posts.forEach(post => {
+                const item = document.createElement('div');
+                item.className = 'post-item';
+
+                // Determine display titles and badge styles
+                let displayTitle = '';
+                let badgeClass = '';
+                let typeLabel = '';
+
+                if (post.type === 'brew-log') {
+                    displayTitle = post.beerName || 'Unnamed Brew';
+                    badgeClass = 'badge--brew-log';
+                    typeLabel = 'Brew Log 🍺';
+                } else if (post.type === 'event') {
+                    displayTitle = post.eventName || 'Unnamed Event';
+                    badgeClass = 'badge--event';
+                    typeLabel = 'Event 📅';
+                } else {
+                    displayTitle = post.title || 'Untitled Post';
+                    badgeClass = 'badge--general';
+                    typeLabel = 'General Update 📝';
+                }
+
+                const postDate = new Date(post.createdAt).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+
+                item.innerHTML = `
+                    <div class="post-info">
+                        <div class="post-meta">
+                            <span class="badge ${badgeClass}">${typeLabel}</span>
+                            <span class="post-date">${postDate}</span>
+                        </div>
+                        <div class="post-title">${escapeHTML(displayTitle)}</div>
+                    </div>
+                    <div class="post-actions">
+                        <button class="btn btn--secondary btn-edit" data-id="${post.id}">Edit</button>
+                        <button class="btn btn--danger btn-delete" data-id="${post.id}">Delete</button>
+                    </div>
+                `;
+
+                postsContainer.appendChild(item);
+            });
+
+            // Bind actions
+            document.querySelectorAll('.btn-edit').forEach(b => {
+                b.addEventListener('click', (e) => editPost(e.target.getAttribute('data-id')));
+            });
+            document.querySelectorAll('.btn-delete').forEach(b => {
+                b.addEventListener('click', (e) => deletePost(e.target.getAttribute('data-id')));
+            });
+        }
+
+        // Escape HTML helper
+        function escapeHTML(str) {
+            return str ? str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            ) : '';
+        }
+
+        // Post submit handler (Create / Edit)
+        postForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Build request object based on current selected type
+            const bodyData = { type: currentType };
+
+            if (currentType === 'brew-log') {
+                bodyData.beerName = document.getElementById('brew-beerName').value.trim();
+                bodyData.brewDate = document.getElementById('brew-brewDate').value;
+                bodyData.batchNumber = document.getElementById('brew-batchNumber').value.trim();
+                bodyData.style = document.getElementById('brew-style').value.trim();
+                bodyData.grainBill = document.getElementById('brew-grainBill').value.trim();
+                bodyData.hops = document.getElementById('brew-hops').value.trim();
+                bodyData.yeast = document.getElementById('brew-yeast').value.trim();
+                bodyData.originalGravity = document.getElementById('brew-originalGravity').value.trim();
+                bodyData.finalGravity = document.getElementById('brew-finalGravity').value.trim();
+                bodyData.brewDayNotes = document.getElementById('brew-brewDayNotes').value.trim();
+                bodyData.tastingNotes = document.getElementById('brew-tastingNotes').value.trim();
+
+                if (!bodyData.beerName || !bodyData.brewDate || !bodyData.batchNumber || !bodyData.style) {
+                    showToast('Please fill out all required fields.', 'error');
+                    return;
+                }
+            } else if (currentType === 'event') {
+                bodyData.eventName = document.getElementById('event-eventName').value.trim();
+                bodyData.eventDateTime = document.getElementById('event-eventDateTime').value;
+                bodyData.venue = document.getElementById('event-venue').value.trim();
+                bodyData.description = document.getElementById('event-description').value.trim();
+                bodyData.ticketLink = document.getElementById('event-ticketLink').value.trim();
+
+                if (!bodyData.eventName || !bodyData.eventDateTime || !bodyData.venue || !bodyData.description) {
+                    showToast('Please fill out all required fields.', 'error');
+                    return;
+                }
+            } else if (currentType === 'general') {
+                bodyData.title = document.getElementById('general-title').value.trim();
+                bodyData.body = document.getElementById('general-body').value.trim();
+                bodyData.tags = document.getElementById('general-tags').value.trim();
+
+                if (!bodyData.title || !bodyData.body) {
+                    showToast('Please fill out all required fields.', 'error');
+                    return;
+                }
+            }
+
+            const token = localStorage.getItem('adminToken');
+            const url = editingPostId ? `${API_URL}/posts/${editingPostId}` : `${API_URL}/posts`;
+            const method = editingPostId ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(bodyData)
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        localStorage.removeItem('adminToken');
+                        showLogin();
+                        throw new Error('Session expired — please log in again.');
+                    }
+                    throw new Error(data.error || 'Server request failed');
+                }
+
+                showToast(editingPostId ? 'Post updated successfully.' : 'Post published successfully.');
+                resetForm();
+                fetchPosts();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // Edit Post Logic
+        function editPost(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+
+            editingPostId = id;
+            submitPostBtn.textContent = 'Save Changes';
+            cancelEditBtn.classList.remove('hidden');
+
+            // Select template card
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.toggle('active', card.getAttribute('data-type') === post.type);
+            });
+
+            // Set type and populate the appropriate fields
+            setPostType(post.type);
+
+            if (post.type === 'brew-log') {
+                document.getElementById('brew-beerName').value = post.beerName || '';
+                document.getElementById('brew-brewDate').value = post.brewDate ? post.brewDate.split('T')[0] : '';
+                document.getElementById('brew-batchNumber').value = post.batchNumber || '';
+                document.getElementById('brew-style').value = post.style || '';
+                document.getElementById('brew-grainBill').value = post.grainBill || '';
+                document.getElementById('brew-hops').value = post.hops || '';
+                document.getElementById('brew-yeast').value = post.yeast || '';
+                document.getElementById('brew-originalGravity').value = post.originalGravity || '';
+                document.getElementById('brew-finalGravity').value = post.finalGravity || '';
+                document.getElementById('brew-brewDayNotes').value = post.brewDayNotes || '';
+                document.getElementById('brew-tastingNotes').value = post.tastingNotes || '';
+            } else if (post.type === 'event') {
+                document.getElementById('event-eventName').value = post.eventName || '';
+                document.getElementById('event-eventDateTime').value = post.eventDateTime ? post.eventDateTime.substring(0, 16) : '';
+                document.getElementById('event-venue').value = post.venue || '';
+                document.getElementById('event-description').value = post.description || '';
+                document.getElementById('event-ticketLink').value = post.ticketLink || '';
+            } else if (post.type === 'general') {
+                document.getElementById('general-title').value = post.title || '';
+                document.getElementById('general-body').value = post.body || '';
+                document.getElementById('general-tags').value = post.tags || '';
+            }
+
+            // Scroll to form panel
+            document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Cancel Edit button click
+        cancelEditBtn.addEventListener('click', resetForm);
+
+        function resetForm() {
+            editingPostId = null;
+            submitPostBtn.textContent = 'Publish Update';
+            cancelEditBtn.classList.add('hidden');
+            postForm.reset();
+
+            // Restore active template title
+            const capitalizedName = currentType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            formPanelTitle.textContent = `Create New ${capitalizedName}`;
+        }
+
+        // Delete Post Logic
+        async function deletePost(id) {
+            if (!confirm('Are you absolutely sure you want to delete this post? This action cannot be undone.')) {
+                return;
+            }
+
+            const token = localStorage.getItem('adminToken');
+            try {
+                const res = await fetch(`${API_URL}/posts/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        localStorage.removeItem('adminToken');
+                        showLogin();
+                        throw new Error('Session expired — please log in again.');
+                    }
+                    throw new Error(data.error || 'Could not delete post');
+                }
+
+                showToast('Post deleted successfully.');
+                if (editingPostId === id) {
+                    resetForm();
+                }
+                fetchPosts();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
