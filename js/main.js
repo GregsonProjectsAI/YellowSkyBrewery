@@ -118,12 +118,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
 
-                    // Click: lock this card into the viewer
+                    // Click: lock this card — click the same card again to unlock
                     card.addEventListener('click', () => {
-                        lockedCard = card;
-                        cards.forEach(c => c.classList.remove('is-active'));
-                        card.classList.add('is-active');
-                        updateViewer(card);
+                        if (lockedCard === card) {
+                            // Second click on the same card — unlock
+                            lockedCard = null;
+                            card.classList.remove('is-active');
+                        } else {
+                            // Lock the new card
+                            lockedCard = card;
+                            cards.forEach(c => c.classList.remove('is-active'));
+                            card.classList.add('is-active');
+                            updateViewer(card);
+                        }
                     });
                 });
 
