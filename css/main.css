@@ -489,6 +489,16 @@
             color: rgba(212, 175, 55, 0.75);
         }
 
+        /* Latest post widget container — JS writes directly into this div */
+        #dashboard-latest-post {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            gap: 6px;
+        }
+
         /* Latest post compact display */
         .dashboard-post {
             display: flex;
@@ -546,7 +556,6 @@
             color: rgba(255, 255, 255, 0.4);
             letter-spacing: 1px;
             flex-shrink: 0;
-            margin-left: auto;
         }
 
         .dashboard-post__open {
