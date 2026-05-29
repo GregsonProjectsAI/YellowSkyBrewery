@@ -262,49 +262,48 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
 
     // ── Nav Dropdown Controller ───────────────────────────────────────────────
-    // Uses document-level mousemove + getBoundingClientRect() so there is zero
-    // gap between the logo and the dropdown — if the cursor is anywhere inside
-    // either element's rendered bounds, the menu stays open.
+    // Uses elementFromPoint for the logo hit-test so CSS scale transforms don't
+    // cause the trigger zone to extend beyond the visual logo bounds.
     (function () {
         const logoEl = document.getElementById('demo-content');
         const dropEl = document.getElementById('nav-dropdown');
         if (!logoEl || !dropEl) return;
 
-        let hideTimer = null;
-        let isOpen    = false;
+        let isOpen = false;
 
-        function isOverEither(e) {
-            // getBoundingClientRect reflects the VISUAL position after CSS transforms
-            const lo   = logoEl.getBoundingClientRect();
+        function isOverLogo(x, y) {
+            // Temporarily disable pointer-events on the dropdown so elementFromPoint
+            // sees through it and detects the logo underneath
+            const saved = dropEl.style.pointerEvents;
+            dropEl.style.pointerEvents = 'none';
+            const el = document.elementFromPoint(x, y);
+            dropEl.style.pointerEvents = saved;
+            return !!el && (logoEl === el || logoEl.contains(el));
+        }
+
+        function isOverInnerPanel(x, y) {
             const inner = dropEl.querySelector('.nav-dropdown__inner');
-            const dr   = inner ? inner.getBoundingClientRect() : dropEl.getBoundingClientRect();
-            const x    = e.clientX;
-            const y    = e.clientY;
-
-            const inLogo = x >= lo.left && x <= lo.right && y >= lo.top && y <= lo.bottom;
-            const inDrop = x >= dr.left && x <= dr.right && y >= dr.top && y <= dr.bottom;
-            return inLogo || inDrop;
+            if (!inner) return false;
+            const r = inner.getBoundingClientRect();
+            // Small top buffer bridges any gap between logo bottom and panel top
+            return x >= r.left && x <= r.right && y >= (r.top - 16) && y <= r.bottom;
         }
 
         document.addEventListener('mousemove', (e) => {
             if (!logoEl.classList.contains('is-header')) return;
 
-            if (isOverEither(e)) {
-                clearTimeout(hideTimer);
-                if (!isOpen) {
-                    isOpen = true;
-                    dropEl.classList.add('is-open');
-                }
-            } else {
-                if (isOpen) {
-                    clearTimeout(hideTimer);
-                    isOpen = false;
-                    dropEl.classList.remove('is-open');
-                }
+            const over = isOverLogo(e.clientX, e.clientY) || isOverInnerPanel(e.clientX, e.clientY);
+
+            if (over && !isOpen) {
+                isOpen = true;
+                dropEl.classList.add('is-open');
+            } else if (!over && isOpen) {
+                isOpen = false;
+                dropEl.classList.remove('is-open');
             }
         });
 
-        // Close immediately when logo leaves header state
+        // Close when logo loses header state (user scrolled back up)
         const observer = new MutationObserver(() => {
             if (!logoEl.classList.contains('is-header')) {
                 isOpen = false;
@@ -313,6 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         observer.observe(logoEl, { attributes: true, attributeFilter: ['class'] });
     })();
+
 
     // ── Back to Top ───────────────────────────────────────────────────────────
     const topBtn = document.getElementById('nav-top-btn');
