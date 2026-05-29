@@ -29,6 +29,9 @@
 
     <div id="loading">Loading Assets... 0%</div>
 
+    <!-- Fixed page backdrop — single image behind all middle sections -->
+    <div class="page-backdrop"></div>
+
     <!-- Fixed Overlay Logo -->
     <div class="overlay-content" id="demo-content">
         <a href="#"><img src="assets/beer branding and names/transparent_logo.png" alt="Yellow Sky Brewery Logo"
@@ -238,9 +241,9 @@
 
     <!-- But First... Entry Card -->
     <section class="story-entry-section" id="story">
-        <div class="story-entry__backdrop" style="background-image: url('assets/story_garage.png');"></div>
+        <div class="story-entry__backdrop" style="background-image: url('assets/All The boys.jpeg');"></div>
         <div class="story-entry__content fade-up">
-            <h2 class="story-entry__heading">But First...</h2>
+            <h2 class="story-entry__heading">"You Did What?!"</h2>
             <p class="story-entry__teaser">How three nitwits went from a garage to a pub tap.</p>
             <button id="story-open-btn" class="btn btn--primary story-entry__btn">Explore Our Story &rarr;</button>
             <p class="story-entry__skip-hint">or keep scrolling &darr;</p>
@@ -255,51 +258,85 @@
         <div class="story-slides-wrapper">
             <div class="story-slides-track" id="story-slides-track">
 
-                <!-- Slide 1: In The Beginning -->
+                <!-- Slide 1: It All Started (Poem) -->
+                <div class="story-slide">
+                    <div class="story-slide__image-side">
+                        <img src="assets/story_garage.png" alt="Yellow Sky Brewery" class="story-slide__img">
+                    </div>
+                    <div class="story-slide__content-side">
+                        <span class="story-slide__number">01 / 06</span>
+                        <h3 class="story-slide__title">It All Started...</h3>
+                        <p class="story-slide__text story-slide__poem">On October 7th 2017<br>On a day of unusually Yellow Sky'd weather<br>Three young(ish) men<br>Found themselves on the foothills<br>Of an aspirational upwards (and sideways)<br>Stumble to the very summit<br>Of Mount Beer!<br><br>Many hurdles to be hopped<br>A malt-itude of mysteries to<br>Unravel in the unending<br>Quest for satisfaction<br>(be it chilled or cellar temperature)<br>At the pint glass shaped<br>Alter of Ale!</p>
+                    </div>
+                </div>
+
+                <!-- Slide 2: But First... -->
                 <div class="story-slide">
                     <div class="story-slide__image-side">
                         <img src="assets/story_garage.png" alt="Dave's Garage" class="story-slide__img">
                     </div>
                     <div class="story-slide__content-side">
-                        <span class="story-slide__number">01 / 04</span>
-                        <h3 class="story-slide__title">In The Beginning...</h3>
-                        <p class="story-slide__text">It all started where most bad decisions begin: Dave's garage. Armed with a few plastic buckets, some stolen brewing kettles, and absolutely zero professional experience, we set out to make beer. Most of it was terrible. Some of it was dangerous. But we were hooked.</p>
+                        <span class="story-slide__number">02 / 06</span>
+                        <h3 class="story-slide__title">But First...</h3>
+                        <p class="story-slide__text">It all started where most bad decisions begin: a party at Lee's house. Having made a few beers using malt extract brewing kits, Chris and Lee decided they were very good at making beer. Their confidence in no way boosted by the large quantities of mediocre home brew consumed that evening, the decision was clear &mdash; they should start their own brewery!</p>
+                        <p class="story-slide__text">After several discussions about why it would be foolish not to, and how they would split the hoards of gold they would no doubt accrue, they put the idea forward to Dave. Needless to say Dave thought making beer was an excellent plan.</p>
+                        <p class="story-slide__text">After receiving a Braumeister brewing kit for a retirement gift, the doors to Dave's garage were opened for brewing on October 7th 2017. A rare weather system had blown sand up from the Sahara causing the sky to take on a yellow colour. And so the decision was taken to name the brewery Yellow Sky.</p>
                     </div>
                 </div>
 
-                <!-- Slide 2: From Garage To Shed -->
+                <!-- Slide 3: Well, Now What? -->
+                <div class="story-slide">
+                    <div class="story-slide__image-side">
+                        <img src="assets/story_shed.png" alt="Learning to Brew" class="story-slide__img">
+                    </div>
+                    <div class="story-slide__content-side">
+                        <span class="story-slide__number">03 / 06</span>
+                        <h3 class="story-slide__title">Well, Now What?</h3>
+                        <p class="story-slide__text">Whilst enthusiasm was high, the fact remained that none of the heroes in this story knew how to brew all grain beer &mdash; perhaps they were Nitwits after all.</p>
+                        <p class="story-slide__text">Nevertheless they set forth, getting together every Sunday (as they continue to do) to learn through trial and error. Early efforts included a Porter that took nine hours to make (not to its benefit), a pale ale designed to be as bitter as possible (successful but undrinkable) and a single hop brew using the Admiral hop &mdash; the beer worked, but it was horrid.</p>
+                        <p class="story-slide__text">However, every now and then the Nitwits would create something just good enough to spur them on. Water chemistry was utilised, hop additions were refined, malt adjuncts applied in more measured quantities. At that time there was really just one problem&hellip;</p>
+                    </div>
+                </div>
+
+                <!-- Slide 4: There's No Room Here! -->
                 <div class="story-slide">
                     <div class="story-slide__image-side">
                         <img src="assets/story_shed.png" alt="Colin's Shed" class="story-slide__img">
                     </div>
                     <div class="story-slide__content-side">
-                        <span class="story-slide__number">02 / 04</span>
-                        <h3 class="story-slide__title">From Garage To Shed</h3>
-                        <p class="story-slide__text">When Dave's garage ran out of space (and patience), the operation was forced to relocate to Colin's garden shed. We considered this a massive upgrade. We finally had room to scale up our catastrophic experiments. Mistakes were still made. Explosions, however, were kept to a minimum.</p>
+                        <span class="story-slide__number">04 / 06</span>
+                        <h3 class="story-slide__title">There's No Room Here!</h3>
+                        <p class="story-slide__text">Alas, due to modest but steady growth, the Nitwits had quite literally reached the limits of Dave's garage. It was time for a re-think.</p>
+                        <p class="story-slide__text">Seeing this on the horizon, Lee had quietly been repurposing a couple of sheds at the end of Colin's garden. Logs, tools and spiders were cleared out. Water and electricity supplies were installed and new brewing gear purchased to create what remains YSB HQ.</p>
+                        <p class="story-slide__text">Freshly equipped with two Grainfather G30s, four stainless steel conical fermenters, a propylene glycol chiller and a steady supply of malt, hops and yeast. It was time to get serious.</p>
                     </div>
                 </div>
 
-                <!-- Slide 3: Home Improvements -->
+                <!-- Slide 5: Well, Serious-ish -->
                 <div class="story-slide">
                     <div class="story-slide__image-side">
                         <img src="assets/story_brewery.png" alt="The Brewery" class="story-slide__img">
                     </div>
                     <div class="story-slide__content-side">
-                        <span class="story-slide__number">03 / 04</span>
-                        <h3 class="story-slide__title">Home Improvements</h3>
-                        <p class="story-slide__text">Eventually, we realized that if we were going to be proper brewers, we needed proper gear. We ripped out the old wood, brought in the shiny steel, and stopped guessing temperatures by sticking our fingers in the mash. Yellow Sky Brewery was officially born, and the beer stopped tasting like regret.</p>
+                        <span class="story-slide__number">05 / 06</span>
+                        <h3 class="story-slide__title">Well, Serious-ish&hellip;</h3>
+                        <p class="story-slide__text">The thing is, being serious has never really been the way things are done at Yellow Sky. Yes, the Nitwits continued improving, refining and experimenting &mdash; always striving to make sure the beer was of the highest quality. But the most important part of Yellow Sky has always been having fun.</p>
+                        <p class="story-slide__text">So time passed and the Nitwits carried on doing their own thing, hosting events for friends and family, enjoying Sunday beers and attempting to play darts. But murmurs grew from enthusiastic followers: <em>'Hey, you guys actually make some really good beer! When are you going to take this commercial?'</em></p>
+                        <p class="story-slide__text">Turning a 50 litre per week shed-based home brewery into a commercial operation being no small task, the Nitwits stayed the idea. There were forays &mdash; supplying beer to the Godalming Staycation festival and hosting a charity event for Prostate Cancer. Now eight years in and confident in their brewing skills, perhaps there was another way to get involved.</p>
                     </div>
                 </div>
 
-                <!-- Slide 4: Into The Pub -->
+                <!-- Slide 6: Can We Join In? -->
                 <div class="story-slide">
                     <div class="story-slide__image-side">
                         <img src="assets/story_pub.png" alt="The Pub" class="story-slide__img">
                     </div>
                     <div class="story-slide__content-side">
-                        <span class="story-slide__number">04 / 04</span>
-                        <h3 class="story-slide__title">Into The Pub</h3>
-                        <p class="story-slide__text">The real test wasn't surviving the shed; it was surviving the public. We teamed up with the legends down in Tilford, and for the first time, a Yellow Sky brew flowed from a real pub tap. Seeing our quirky little birds perched on the bar... well, it almost made the garage fires worth it.</p>
+                        <span class="story-slide__number">06 / 06</span>
+                        <h3 class="story-slide__title">Can We Join In?</h3>
+                        <p class="story-slide__text">So to a chance meeting at a local wood fair, of all things. The Nitwits, unimpressed by the not-at-all interesting sights, predictably made their way to the nearest beer concession &mdash; Tilford Brewery. Here they spent the next 45 minutes talking at owner and head brewer Mark about his beer, their beer, and the possibility of getting involved. For reasons they still haven't worked out, Mark was open to it.</p>
+                        <p class="story-slide__text">Shortly thereafter Chris went to Tilford, secretly hoping to be offered a job, for a brew day. Recognising the plot, Mark generously proposed a collaboration. <em>'Yes please!'</em> Chris replied. Nitwits Lee and Chris went to brew Owlrye with Mark &mdash; their first real venture into the wider market, met with a very positive response.</p>
+                        <p class="story-slide__text">Seeing their recipe on the bar alongside local legends of brewing was a proud moment indeed. The first of many they hope, and a justification for the hours of work they've put into their craft.</p>
                         <button id="story-continue-btn" class="btn btn--primary story-overlay__continue">Continue &darr;</button>
                     </div>
                 </div>
@@ -317,6 +354,8 @@
             <button class="story-dot" data-index="1" role="tab" aria-label="Chapter 2"></button>
             <button class="story-dot" data-index="2" role="tab" aria-label="Chapter 3"></button>
             <button class="story-dot" data-index="3" role="tab" aria-label="Chapter 4"></button>
+            <button class="story-dot" data-index="4" role="tab" aria-label="Chapter 5"></button>
+            <button class="story-dot" data-index="5" role="tab" aria-label="Chapter 6"></button>
         </div>
 
     </div>

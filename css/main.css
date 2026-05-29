@@ -2,7 +2,7 @@
         html {
             margin: 0;
             padding: 0;
-            background-color: var(--color-bg-dark);
+            background-color: transparent;
         }
 
         /* The container that creates the scroll space */
@@ -51,6 +51,18 @@
             letter-spacing: 2px;
             text-transform: uppercase;
             z-index: 10;
+        }
+
+        /* Fixed page backdrop — single brewery image behind all middle sections */
+        .page-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: url('../assets/brewery_bg.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.25) blur(6px);
+            transform: scale(1.06); /* prevent blur edge bleed */
         }
 
         /* Scroll prompt */
@@ -240,7 +252,7 @@
         /* ------------------------------------- */
         .intro-section {
             padding: var(--space-xl) var(--space-md);
-            background-color: var(--color-bg-dark);
+            background-color: transparent;
             text-align: center;
             display: flex;
             align-items: center;
@@ -283,7 +295,7 @@
         /* ------------------------------------- */
         .team-section {
             padding: var(--space-xl) var(--space-md);
-            background-color: var(--color-bg-dark);
+            background-color: transparent;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -398,7 +410,7 @@
         /* ------------------------------------- */
         .beers-section {
             padding: var(--space-xl) var(--space-md);
-            background-color: var(--color-bg-dark);
+            background-color: transparent;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -730,7 +742,7 @@
         .story-slides-track {
             display: flex;
             height: 100%;
-            width: 400%;
+            width: 600%;
             transform: translateX(0);
             transition: transform 0.65s cubic-bezier(0.65, 0, 0.35, 1);
             will-change: transform;
@@ -738,7 +750,7 @@
 
         /* Individual slide */
         .story-slide {
-            width: 25%;
+            width: calc(100% / 6);
             height: 100%;
             display: flex;
             flex-direction: row;
@@ -771,6 +783,20 @@
             flex-direction: column;
             justify-content: center;
             gap: var(--space-md);
+            overflow-y: auto;
+            max-height: 80vh;
+            padding-right: 8px;
+        }
+
+        .story-slide__content-side::-webkit-scrollbar {
+            width: 4px;
+        }
+        .story-slide__content-side::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .story-slide__content-side::-webkit-scrollbar-thumb {
+            background-color: rgba(212, 175, 55, 0.3);
+            border-radius: 2px;
         }
 
         .story-slide__number {
@@ -795,6 +821,14 @@
             font-size: clamp(1rem, 1.4vw, 1.15rem);
             line-height: 1.75;
             margin: 0;
+        }
+
+        /* Poem slide — slightly more lyrical spacing */
+        .story-slide__poem {
+            font-style: italic;
+            line-height: 2;
+            color: rgba(255, 255, 255, 0.85);
+            letter-spacing: 0.3px;
         }
 
         .story-overlay__continue {

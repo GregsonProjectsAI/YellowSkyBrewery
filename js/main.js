@@ -146,25 +146,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!overlay || !openBtn) return;
 
-        const TOTAL_SLIDES = 4;
+        const TOTAL_SLIDES = 6;
         let currentSlide = 0;
         let isOpen = false;
         let touchStartX = 0;
         let wheelTimer = null;
 
         function goToSlide(index) {
-            index = Math.max(0, Math.min(TOTAL_SLIDES - 1, index));
+            // Going past the last slide closes the overlay and continues the page
+            if (index > TOTAL_SLIDES - 1) {
+                closeOverlay(true);
+                return;
+            }
+
+            index = Math.max(0, index);
             currentSlide = index;
 
-            // Slide the track
-            track.style.transform = `translateX(${-index * 25}%)`;
+            // Slide the track — each slide occupies (100/TOTAL_SLIDES)% of the track
+            track.style.transform = `translateX(${-(index * 100 / TOTAL_SLIDES)}%)`;
 
             // Sync dots
             dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
 
-            // Sync arrows
+            // Sync arrows — only disable prev on slide 0; next is always active
             prevBtn.disabled = index === 0;
-            nextBtn.disabled = index === TOTAL_SLIDES - 1;
+            nextBtn.disabled = false;
         }
 
         function openOverlay() {
