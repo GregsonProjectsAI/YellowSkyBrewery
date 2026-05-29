@@ -16,12 +16,17 @@
         canvas.height = 1080;
 
         // Preload all frames for buttery smooth playback
+        const loadingTextEl = document.getElementById('loading-text');
+        const skipBtn       = document.getElementById('skip-animation-btn');
+
         function onFrameSettled() {
             loadedImages++;
-            loadingEl.innerText = `Loading Assets... ${Math.round((loadedImages / frameCount) * 100)}%`;
-
+            if (loadingTextEl) {
+                loadingTextEl.innerText = `Loading Assets... ${Math.round((loadedImages / frameCount) * 100)}%`;
+            }
             if (loadedImages === frameCount) {
                 clearTimeout(loadingTimeout);
+                clearTimeout(slowTimeout);
                 startPlayback();
             }
         }
@@ -34,22 +39,46 @@
             renderFrame(0);
         }
 
+        function skipAnimation() {
+            clearTimeout(loadingTimeout);
+            clearTimeout(slowTimeout);
+            loadingEl.style.display = 'none';
+            // Collapse the scroll section so the page layout is normal without it
+            const scrollContainer = document.querySelector('.scroll-container');
+            if (scrollContainer) scrollContainer.style.display = 'none';
+            // Show the logo in header position immediately
+            demoContent.classList.add('is-header');
+            document.body.classList.remove('no-scroll');
+            const intro = document.getElementById('intro');
+            if (intro) intro.scrollIntoView({ behavior: 'auto' });
+        }
+
+        if (skipBtn) skipBtn.addEventListener('click', skipAnimation);
+
         for (let i = 1; i <= frameCount; i++) {
             const img = new Image();
             const paddedIndex = i.toString().padStart(4, '0');
             img.src = `${imagePrefix}${paddedIndex}${imageExtension}`;
             img.onload  = onFrameSettled;
-            img.onerror = onFrameSettled; // count failures too — one bad frame won't hang forever
+            img.onerror = onFrameSettled; // count failures too
             images.push(img);
         }
 
-        // Safety net: if loading stalls for any reason, start after 15 seconds
+        // After 6 seconds at 0%, show a helpful message and the skip button
+        const slowTimeout = setTimeout(() => {
+            if (loadedImages < 5) {
+                if (loadingTextEl) loadingTextEl.innerText = 'Server warming up — this can take up to a minute on first visit.';
+                if (skipBtn) skipBtn.style.opacity = '1';
+            }
+        }, 6000);
+
+        // Hard fallback: force-start after 90 seconds regardless
         const loadingTimeout = setTimeout(() => {
             if (loadedImages < frameCount) {
-                console.warn(`YSB: only ${loadedImages}/${frameCount} frames loaded — starting anyway`);
-                startPlayback();
+                console.warn(`YSB: only ${loadedImages}/${frameCount} frames loaded — skipping animation`);
+                skipAnimation();
             }
-        }, 15000);
+        }, 90000);
 
         // Draw a specific frame to the canvas
         function renderFrame(index) {
