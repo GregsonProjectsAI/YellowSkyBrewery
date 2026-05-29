@@ -101,10 +101,10 @@
         const FADE_END        = 640 / 700;  // 0.914 — fade complete
         const LOGO_MOVE_START = 655 / 700;  // 0.936 — logo moves to corner AFTER fade
 
-        // Glint fires just before the logo moves to the corner
-        // Still window: FADE_END (640) → LOGO_MOVE_START (655). Trigger at 650 = last moment logo is static and large
+        // Glint fires just before the logo departs — the glint IS the trigger for movement
         const GLINT_TRIGGER = 650 / 700;
-        let glintFired = false;
+        let glintFired     = false;
+        let logoMovePending = null;
 
         window.addEventListener('scroll', () => {
             const scrollTop = window.scrollY;
@@ -147,26 +147,32 @@
                 canvas.style.opacity = '0';
             }
 
-            // Logo moves to corner only AFTER the canvas fade is fully complete
-            // This ensures the large logo is visible during the entire pint dissolve
-            if (scrollFraction > LOGO_MOVE_START) {
-                demoContent.classList.add('is-header');
-            } else {
-                demoContent.classList.remove('is-header');
+            // ── Logo movement + Glint — glint fires first, logo moves 220ms later ──────────
+            if (scrollFraction >= GLINT_TRIGGER && !glintFired) {
+                glintFired = true;
+                // Bloom the logo colours
+                demoContent.classList.remove('is-glinting');
+                void demoContent.offsetWidth;          // restart animation if re-triggered
+                demoContent.classList.add('is-glinting');
+                // Logo launches to corner shortly after the glint starts — glint causes movement
+                logoMovePending = setTimeout(() => {
+                    demoContent.classList.add('is-header');
+                    logoMovePending = null;
+                }, 220);
             }
 
-            // ── Glint effect ─────────────────────────────────────────────────
-            // Applied to the logo element so it's scoped to the logo only
-            if (scrollFraction >= GLINT_TRIGGER && scrollFraction < LOGO_MOVE_START && !glintFired) {
-                glintFired = true;
-                demoContent.classList.remove('is-glinting');
-                void demoContent.offsetWidth; // force reflow so animation restarts cleanly
-                demoContent.classList.add('is-glinting');
+            // Fast-scroll safety: if user rockets past both thresholds in one frame
+            if (scrollFraction > LOGO_MOVE_START && !demoContent.classList.contains('is-header')) {
+                demoContent.classList.add('is-header');
             }
-            if (scrollFraction < GLINT_TRIGGER - 0.025) {
+
+            // Scroll-back: cancel pending move and reset both states
+            if (scrollFraction < GLINT_TRIGGER - 0.03) {
                 if (glintFired) {
                     glintFired = false;
+                    if (logoMovePending) { clearTimeout(logoMovePending); logoMovePending = null; }
                     demoContent.classList.remove('is-glinting');
+                    demoContent.classList.remove('is-header');
                 }
             }
         }); // end scroll listener
