@@ -16,28 +16,40 @@
         canvas.height = 1080;
 
         // Preload all frames for buttery smooth playback
+        function onFrameSettled() {
+            loadedImages++;
+            loadingEl.innerText = `Loading Assets... ${Math.round((loadedImages / frameCount) * 100)}%`;
+
+            if (loadedImages === frameCount) {
+                clearTimeout(loadingTimeout);
+                startPlayback();
+            }
+        }
+
+        function startPlayback() {
+            loadingEl.style.display = 'none';
+            scrollHint.style.display = 'block';
+            canvas.style.opacity = '1';
+            setTimeout(() => { canvas.style.transition = 'none'; }, 1100);
+            renderFrame(0);
+        }
+
         for (let i = 1; i <= frameCount; i++) {
             const img = new Image();
             const paddedIndex = i.toString().padStart(4, '0');
             img.src = `${imagePrefix}${paddedIndex}${imageExtension}`;
-
-            img.onload = () => {
-                loadedImages++;
-                loadingEl.innerText = `Loading Assets... ${Math.round((loadedImages / frameCount) * 100)}%`;
-
-                if (loadedImages === frameCount) {
-                    loadingEl.style.display = 'none';
-                    scrollHint.style.display = 'block';
-                    canvas.style.opacity = '1';
-
-                    // Remove CSS transition after load fade-in — scroll drives opacity directly after that
-                    setTimeout(() => { canvas.style.transition = 'none'; }, 1100);
-
-                    renderFrame(0);
-                }
-            };
+            img.onload  = onFrameSettled;
+            img.onerror = onFrameSettled; // count failures too — one bad frame won't hang forever
             images.push(img);
         }
+
+        // Safety net: if loading stalls for any reason, start after 15 seconds
+        const loadingTimeout = setTimeout(() => {
+            if (loadedImages < frameCount) {
+                console.warn(`YSB: only ${loadedImages}/${frameCount} frames loaded — starting anyway`);
+                startPlayback();
+            }
+        }, 15000);
 
         // Draw a specific frame to the canvas
         function renderFrame(index) {
