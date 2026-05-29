@@ -1333,9 +1333,9 @@
            --------------------------------------------------- */
         .blog-section {
             position: relative;
-            z-index: 5;
+            z-index: 1;
             padding: var(--space-2xl) 0;
-            background-color: var(--color-bg-darker);
+            background-color: transparent;
         }
 
         .blog-grid {
