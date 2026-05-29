@@ -275,13 +275,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function isOverEither(e) {
             // getBoundingClientRect reflects the VISUAL position after CSS transforms
-            const lo = logoEl.getBoundingClientRect();
-            const dr = dropEl.getBoundingClientRect();
-            const x  = e.clientX;
-            const y  = e.clientY;
+            const lo   = logoEl.getBoundingClientRect();
+            const inner = dropEl.querySelector('.nav-dropdown__inner');
+            const dr   = inner ? inner.getBoundingClientRect() : dropEl.getBoundingClientRect();
+            const x    = e.clientX;
+            const y    = e.clientY;
 
-            const inLogo = x >= lo.left && x <= lo.right  && y >= lo.top && y <= lo.bottom;
-            const inDrop = x >= dr.left && x <= dr.right  && y >= dr.top && y <= dr.bottom;
+            const inLogo = x >= lo.left && x <= lo.right && y >= lo.top && y <= lo.bottom;
+            const inDrop = x >= dr.left && x <= dr.right && y >= dr.top && y <= dr.bottom;
             return inLogo || inDrop;
         }
 
