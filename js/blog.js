@@ -117,6 +117,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ── Dashboard latest-post widget ──────────────────────────────────────────
+    const dashWidget = document.getElementById('dashboard-latest-post');
+
+    function renderDashboard(posts) {
+        if (!dashWidget) return;
+        if (!posts || posts.length === 0) {
+            dashWidget.innerHTML = `<span class="dashboard-post__empty">No posts yet</span>`;
+            return;
+        }
+
+        const post  = posts[0]; // most recent
+        const title = post.type === 'brew-log' ? post.beerName
+                    : post.type === 'event'    ? post.eventName
+                    : post.title;
+
+        const excerpt = post.type === 'brew-log' ? (post.brewDayNotes || post.tastingNotes || '')
+                      : post.type === 'event'    ? (post.description || '')
+                      : (post.body || '');
+
+        const badgeClass = `dashboard-post__badge--${post.type}`;
+        const badgeLabel = post.type === 'brew-log' ? 'Brew Log'
+                         : post.type === 'event'    ? 'Event'
+                         : 'Update';
+
+        dashWidget.innerHTML = `
+            <span class="dashboard-post__badge ${badgeClass}">${badgeLabel}</span>
+            <span class="dashboard-post__title">${escapeHTML(title)}</span>
+            ${excerpt ? `<span class="dashboard-post__excerpt">${escapeHTML(excerpt.substring(0, 80))}…</span>` : ''}
+            <span class="dashboard-post__date">${formatDate(post.createdAt)}</span>
+            <button class="dashboard-post__open" id="dashboard-post-open-btn">Read more →</button>
+        `;
+
+        // Wire open button to archive overlay
+        const openBtn = document.getElementById('dashboard-post-open-btn');
+        if (openBtn) {
+            openBtn.addEventListener('click', () => {
+                const archiveBtn = document.getElementById('blog-archive-open-btn');
+                if (archiveBtn) archiveBtn.click();
+            });
+        }
+    }
+
     // ── Archive overlay ───────────────────────────────────────────────────────
     const overlay     = document.getElementById('blog-archive-overlay');
     const archiveGrid = document.getElementById('blog-archive-grid');
@@ -207,9 +249,11 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 allPosts = data.posts || [];
                 renderFeed(allPosts);
+                renderDashboard(allPosts);
             })
             .catch(() => {
                 if (feedContainer) feedContainer.innerHTML = `<div class="blog-error"><p>Failed to load recent updates.</p></div>`;
+                if (dashWidget) dashWidget.innerHTML = `<span class="dashboard-post__empty">Could not load</span>`;
             });
     }
 });
