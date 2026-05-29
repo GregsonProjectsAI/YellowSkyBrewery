@@ -101,9 +101,9 @@
         const FADE_END        = 640 / 700;  // 0.914 — fade complete
         const LOGO_MOVE_START = 655 / 700;  // 0.936 — logo moves to corner AFTER fade
 
-        // Glint fires between the 4th and 5th fade frames (2 frames earlier)
-        // Fade zone = HOLD_END→FADE_END (80 units). Frame 4.5 midpoint = 560 + (4.5/9)*80 = 600/700
-        const GLINT_TRIGGER = 591 / 700;
+        // Glint fires just before the logo moves to the corner
+        // Still window: FADE_END (640) → LOGO_MOVE_START (655). Trigger at 650 = last moment logo is static and large
+        const GLINT_TRIGGER = 650 / 700;
         let glintFired = false;
 
         window.addEventListener('scroll', () => {
@@ -157,7 +157,7 @@
 
             // ── Glint effect ─────────────────────────────────────────────────
             // Applied to the logo element so it's scoped to the logo only
-            if (scrollFraction >= GLINT_TRIGGER && scrollFraction < FADE_END && !glintFired) {
+            if (scrollFraction >= GLINT_TRIGGER && scrollFraction < LOGO_MOVE_START && !glintFired) {
                 glintFired = true;
                 demoContent.classList.remove('is-glinting');
                 void demoContent.offsetWidth; // force reflow so animation restarts cleanly
