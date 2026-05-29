@@ -253,33 +253,56 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
 
     // ── Nav Dropdown Controller ───────────────────────────────────────────────
-    // The dropdown lives outside the scaled logo container so it renders at full
-    // size. We use a small hide-delay so the menu stays open as the mouse
-    // travels from the logo down into the dropdown panel.
+    // Uses document-level mousemove + getBoundingClientRect() so there is zero
+    // gap between the logo and the dropdown — if the cursor is anywhere inside
+    // either element's rendered bounds, the menu stays open.
     (function () {
-        const logoEl    = document.getElementById('demo-content');
-        const dropEl    = document.getElementById('nav-dropdown');
+        const logoEl = document.getElementById('demo-content');
+        const dropEl = document.getElementById('nav-dropdown');
         if (!logoEl || !dropEl) return;
 
         let hideTimer = null;
+        let isOpen    = false;
 
-        function showDropdown() {
-            clearTimeout(hideTimer);
-            // Only show once the logo has moved to the header corner
-            if (logoEl.classList.contains('is-header')) {
-                dropEl.classList.add('is-open');
+        function isOverEither(e) {
+            // getBoundingClientRect reflects the VISUAL position after CSS transforms
+            const lo = logoEl.getBoundingClientRect();
+            const dr = dropEl.getBoundingClientRect();
+            const x  = e.clientX;
+            const y  = e.clientY;
+
+            const inLogo = x >= lo.left && x <= lo.right  && y >= lo.top && y <= lo.bottom;
+            const inDrop = x >= dr.left && x <= dr.right  && y >= dr.top && y <= dr.bottom;
+            return inLogo || inDrop;
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (!logoEl.classList.contains('is-header')) return;
+
+            if (isOverEither(e)) {
+                clearTimeout(hideTimer);
+                if (!isOpen) {
+                    isOpen = true;
+                    dropEl.classList.add('is-open');
+                }
+            } else {
+                if (isOpen) {
+                    clearTimeout(hideTimer);
+                    hideTimer = setTimeout(() => {
+                        isOpen = false;
+                        dropEl.classList.remove('is-open');
+                    }, 200);
+                }
             }
-        }
+        });
 
-        function scheduleHide() {
-            hideTimer = setTimeout(() => {
+        // Close immediately when logo leaves header state
+        const observer = new MutationObserver(() => {
+            if (!logoEl.classList.contains('is-header')) {
+                isOpen = false;
                 dropEl.classList.remove('is-open');
-            }, 120); // 120ms grace period for mouse travel
-        }
-
-        logoEl.addEventListener('mouseenter', showDropdown);
-        logoEl.addEventListener('mouseleave', scheduleHide);
-        dropEl.addEventListener('mouseenter', showDropdown);
-        dropEl.addEventListener('mouseleave', scheduleHide);
+            }
+        });
+        observer.observe(logoEl, { attributes: true, attributeFilter: ['class'] });
     })();
 });
