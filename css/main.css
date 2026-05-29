@@ -15,8 +15,8 @@
         .scroll-container {
             height: 800vh;
             position: relative;
-            background-color: #0d0d0d; /* seals the gap below the sticky-wrapper so the
-                                          backdrop can't bleed through as it scrolls off */
+            /* no background — body provides the dark base; transparent so the
+               backdrop (z-index:0) shows through as the canvas fades out */
         }
 
         /* The sticky section that holds the canvas */
@@ -29,7 +29,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #0d0d0d; /* dark base visible through the fading canvas */
+            /* no background — must be transparent so the fixed backdrop behind it
+               is visible as the canvas opacity fades during the scroll animation */
         }
 
         /* The canvas where frames will be drawn */
@@ -122,8 +123,7 @@
             background-position: center;
             filter: brightness(0.25) blur(6px);
             transform: scale(1.06); /* prevent blur edge bleed */
-            opacity: 0;             /* JS drives this via IntersectionObserver on #intro */
-            transition: opacity 0.8s ease; /* smooth fade-in once content sections appear */
+            opacity: 0;             /* JS drives this — scroll-fraction interpolation handles the fade */
         }
 
         /* All NORMAL-FLOW content that must sit above the fixed backdrop (z-index:0) ─────── */
