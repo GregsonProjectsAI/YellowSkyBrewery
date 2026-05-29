@@ -49,14 +49,16 @@
 
         const scrollContainer = document.querySelector('.scroll-container');
 
-        // --- Scroll zones (fractions of 800vh total travel; container is 900vh) ---
-        //   0     → ANIM_END  : animation plays frame by frame
-        //   ANIM_END → HOLD_END: frozen on last frame, fully opaque ("pint stands proud")
-        //   HOLD_END → FADE_END: canvas dissolves into brewery backdrop
-        //   FADE_END → 1.0    : canvas gone, logo locks to corner
-        const ANIM_END = 500 / 700;   // 0.714  — animation finishes
-        const HOLD_END = 575 / 700;   // 0.821  — hold ends (~75vh, ≈1.5s)
-        const FADE_END = 650 / 700;   // 0.929  — fade complete, logo locks (~50vh left)
+        // --- Scroll zones (fractions of scroll travel) ---
+        //   0              → ANIM_END      : animation plays frame by frame (all 192 frames)
+        //   ANIM_END       → HOLD_END      : frozen on last frame, fully opaque ("pint stands proud")
+        //   HOLD_END       → FADE_END      : canvas dissolves into brewery backdrop
+        //   FADE_END       → LOGO_MOVE_START: canvas gone, logo stays centred and large
+        //   LOGO_MOVE_START → 1.0          : logo shrinks and locks to corner
+        const ANIM_END        = 580 / 700;  // 0.829 — animation finishes (extended to let bubbles settle)
+        const HOLD_END        = 610 / 700;  // 0.871 — hold ends (shorter hold, ~30vh)
+        const FADE_END        = 660 / 700;  // 0.943 — fade complete
+        const LOGO_MOVE_START = 670 / 700;  // 0.957 — logo begins moving to corner AFTER fade
 
         window.addEventListener('scroll', () => {
             const scrollTop = window.scrollY;
@@ -82,7 +84,7 @@
                 scrollHint.style.opacity = '1';
             }
 
-            // Logo/overlay fades in during the animation
+            // Logo/overlay fades in during the animation — stays centred and large
             if (videoProgress > 0.4) {
                 demoContent.style.opacity = Math.min(1, (videoProgress - 0.4) * 3);
             } else {
@@ -99,8 +101,9 @@
                 canvas.style.opacity = '0';
             }
 
-            // Logo snaps to corner once the fade is complete
-            if (scrollFraction > FADE_END) {
+            // Logo moves to corner only AFTER the canvas fade is fully complete
+            // This ensures the large logo is visible during the entire pint dissolve
+            if (scrollFraction > LOGO_MOVE_START) {
                 demoContent.classList.add('is-header');
             } else {
                 demoContent.classList.remove('is-header');

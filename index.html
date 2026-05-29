@@ -32,10 +32,18 @@
     <!-- Fixed page backdrop — single image behind all middle sections -->
     <div class="page-backdrop"></div>
 
-    <!-- Fixed Overlay Logo -->
+    <!-- Fixed Overlay Logo + Nav Dropdown -->
     <div class="overlay-content" id="demo-content">
         <a href="#"><img src="assets/beer branding and names/transparent_logo.png" alt="Yellow Sky Brewery Logo"
                 class="brand-logo"></a>
+        <nav class="nav-dropdown" aria-label="Site navigation">
+            <a href="#team" class="nav-dropdown__item">Meet the Nitwits</a>
+            <a href="#beers" class="nav-dropdown__item">Our Beers</a>
+            <a href="#story" class="nav-dropdown__item">Our Story</a>
+            <a href="#blog" class="nav-dropdown__item">The Bulletin</a>
+            <div class="nav-dropdown__divider"></div>
+            <a href="/admin" class="nav-dropdown__item nav-dropdown__item--admin">&#128274; Admin Login</a>
+        </nav>
     </div>
 
     <div class="scroll-container">
@@ -373,6 +381,14 @@
             </div>
         </div>
     </section>
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p class="site-footer__copy">&copy; 2026 Yellow Sky Brewery &mdash; Handcrafted by Three Nitwits</p>
+            <a href="/admin" class="site-footer__admin-link">&#128274; Staff Login</a>
+        </div>
+    </footer>
 
     <!-- JavaScript -->
     <script src="js/main.js"></script>

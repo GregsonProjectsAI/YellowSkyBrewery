@@ -123,9 +123,8 @@
         .overlay-content.is-header {
             top: 20px;
             left: 20px;
-            transform: translate(0, 0) scale(0.3);
+            transform: translate(0, 0) scale(0.36);
             pointer-events: auto;
-            /* Clickable as a home button */
             cursor: pointer;
         }
 
@@ -139,6 +138,64 @@
 
         .overlay-content.is-header:hover .brand-logo {
             filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.8));
+        }
+
+        /* ---------------------------------------------------
+           NAV DROPDOWN
+           --------------------------------------------------- */
+        .nav-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background-color: rgba(10, 10, 10, 0.97);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 200px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-8px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+            white-space: nowrap;
+            z-index: 200;
+        }
+
+        .overlay-content.is-header:hover .nav-dropdown {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .nav-dropdown__item {
+            display: block;
+            padding: 10px 20px;
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            font-family: var(--font-primary);
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .nav-dropdown__item:hover {
+            color: var(--color-brand-primary);
+            background-color: rgba(212, 175, 55, 0.06);
+        }
+
+        .nav-dropdown__divider {
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.06);
+            margin: 6px 0;
+        }
+
+        .nav-dropdown__item--admin {
+            color: rgba(212, 175, 55, 0.6);
+        }
+
+        .nav-dropdown__item--admin:hover {
+            color: var(--color-brand-primary);
         }
 
         /* Utility Classes */
@@ -471,6 +528,11 @@
             grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             gap: var(--space-md);
             align-items: start;
+            background-color: rgba(10, 10, 10, 0.8);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: var(--border-radius-lg);
+            padding: var(--space-lg);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8), 0 20px 40px rgba(0,0,0,0.6);
         }
 
         .beer-card {
@@ -1209,4 +1271,48 @@
 
         .blog-error p {
             color: var(--color-error);
-        }
+        }
+
+        /* ---------------------------------------------------
+           SITE FOOTER
+           --------------------------------------------------- */
+        .site-footer {
+            background-color: var(--color-bg-darker);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 30px var(--space-md);
+            text-align: center;
+        }
+
+        .site-footer__inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .site-footer__copy {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: var(--font-primary);
+            letter-spacing: 1px;
+        }
+
+        .site-footer__admin-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: rgba(212, 175, 55, 0.35);
+            text-decoration: none;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: var(--font-primary);
+            transition: color 0.3s ease;
+        }
+
+        .site-footer__admin-link:hover {
+            color: rgba(212, 175, 55, 0.8);
+        }
+
