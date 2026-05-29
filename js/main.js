@@ -292,15 +292,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('mousemove', (e) => {
             if (!logoEl.classList.contains('is-header')) return;
 
-            const over = isOverLogo(e.clientX, e.clientY) || isOverInnerPanel(e.clientX, e.clientY);
+            const x = e.clientX;
+            const y = e.clientY;
+            const overLogo  = isOverLogo(x, y);
+            const overPanel = isOverInnerPanel(x, y);
 
-            if (over && !isOpen) {
+            if (overLogo && !isOpen) {
+                // Only the logo can OPEN the menu
                 isOpen = true;
                 dropEl.classList.add('is-open');
-            } else if (!over && isOpen) {
+            } else if (!overLogo && !overPanel && isOpen) {
+                // Leaving both logo AND panel closes it
                 isOpen = false;
                 dropEl.classList.remove('is-open');
             }
+            // overPanel && isOpen → keep open (stay logic, no re-open)
+            // overPanel && !isOpen → do nothing (panel alone can't open menu)
         });
 
         // Close when logo loses header state (user scrolled back up)
