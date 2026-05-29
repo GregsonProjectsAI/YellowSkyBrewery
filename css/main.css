@@ -115,6 +115,7 @@
             background-position: center;
             filter: brightness(0.25) blur(6px);
             transform: scale(1.06); /* prevent blur edge bleed */
+            opacity: 0;             /* JS drives this — starts hidden, emerges from the dark */
         }
 
         /* Scroll prompt */

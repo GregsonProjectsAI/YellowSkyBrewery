@@ -1,8 +1,9 @@
-        const canvas = document.getElementById('animation-canvas');
-        const ctx = canvas.getContext('2d');
-        const loadingEl = document.getElementById('loading');
-        const scrollHint = document.getElementById('scroll-hint');
+        const canvas      = document.getElementById('animation-canvas');
+        const ctx         = canvas.getContext('2d');
+        const loadingEl   = document.getElementById('loading');
+        const scrollHint  = document.getElementById('scroll-hint');
         const demoContent = document.getElementById('demo-content');
+        const backdropEl  = document.querySelector('.page-backdrop');
 
         const frameCount = 192;
         const images = [];
@@ -48,6 +49,8 @@
             if (scrollContainer) scrollContainer.style.display = 'none';
             // Show the logo in header position immediately
             demoContent.classList.add('is-header');
+            // Ensure backdrop is fully visible when animation is skipped
+            if (backdropEl) backdropEl.style.opacity = '1';
             document.body.classList.remove('no-scroll');
             const intro = document.getElementById('intro');
             if (intro) intro.scrollIntoView({ behavior: 'auto' });
@@ -67,7 +70,7 @@
         // After 6 seconds at 0%, show a helpful message and the skip button
         const slowTimeout = setTimeout(() => {
             if (loadedImages < 5) {
-                if (loadingTextEl) loadingTextEl.innerText = 'Server warming up — this can take up to a minute on first visit.';
+                if (loadingTextEl) loadingTextEl.innerText = 'Firing up the fermenters — this can take up to a minute on first visit.';
                 if (skipBtn) skipBtn.style.opacity = '1';
             }
         }, 6000);
@@ -96,10 +99,14 @@
         //   HOLD_END       → FADE_END      : canvas dissolves into brewery backdrop
         //   FADE_END       → LOGO_MOVE_START: canvas gone, logo stays centred and large
         //   LOGO_MOVE_START → 1.0          : logo shrinks and locks to corner
-        const ANIM_END        = 555 / 700;  // 0.793 — animation finishes, fade begins almost immediately
+        const ANIM_END        = 555 / 700;  // 0.793 — animation finishes
         const HOLD_END        = 560 / 700;  // 0.800 — minimal hold
-        const FADE_END        = 640 / 700;  // 0.914 — fade complete
-        const LOGO_MOVE_START = 655 / 700;  // 0.936 — logo moves to corner AFTER fade
+        const FADE_END        = 640 / 700;  // 0.914 — canvas fade complete
+        const LOGO_MOVE_START = 655 / 700;  // 0.936 — logo moves to corner (now glint-triggered)
+        // Backdrop emerges AFTER the canvas is nearly gone (≈88% faded)
+        // then rises slowly so it feels like it materialises from the dark
+        const BACKDROP_START  = 630 / 700;  // canvas at ~12% opacity — almost black
+        const BACKDROP_END    = 680 / 700;  // backdrop fully established, well before scroll end
 
         // Glint fires just before the logo departs — the glint IS the trigger for movement
         const GLINT_TRIGGER = 650 / 700;
@@ -145,6 +152,18 @@
                 canvas.style.opacity = Math.max(0, 1 - fadeProgress).toString();
             } else {
                 canvas.style.opacity = '0';
+            }
+
+            // Backdrop emerges slowly from near-black after the canvas is almost gone
+            if (backdropEl) {
+                if (scrollFraction < BACKDROP_START) {
+                    backdropEl.style.opacity = '0';
+                } else if (scrollFraction < BACKDROP_END) {
+                    const bProgress = (scrollFraction - BACKDROP_START) / (BACKDROP_END - BACKDROP_START);
+                    backdropEl.style.opacity = bProgress.toFixed(3);
+                } else {
+                    backdropEl.style.opacity = '1';
+                }
             }
 
             // ── Logo movement + Glint — glint fires first, logo moves 220ms later ──────────
