@@ -181,14 +181,23 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.add('no-scroll');
         }
 
-        function closeOverlay(scrollToBeers) {
+        function closeOverlay(continueStory) {
             isOpen = false;
             overlay.classList.remove('is-open');
             overlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('no-scroll');
-            if (scrollToBeers) {
-                const beersSection = document.getElementById('beers');
-                if (beersSection) beersSection.scrollIntoView({ behavior: 'smooth' });
+            if (continueStory) {
+                // Scroll back to the story section but a little further in,
+                // so the page implies "keep scrolling" rather than jumping away.
+                const storySection = document.getElementById('story');
+                if (storySection) {
+                    const rect = storySection.getBoundingClientRect();
+                    const nudge = window.innerHeight * 0.35; // 35vh into the section
+                    window.scrollTo({
+                        top: window.scrollY + rect.top + nudge,
+                        behavior: 'smooth'
+                    });
+                }
             }
         }
 
@@ -198,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Close via ✕ button
         closeBtn.addEventListener('click', () => closeOverlay(false));
 
-        // Continue → scroll to beers section
+        // Continue → close overlay and nudge into the story section
         if (continueBtn) {
             continueBtn.addEventListener('click', () => closeOverlay(true));
         }
