@@ -114,13 +114,29 @@
         .page-backdrop {
             position: fixed;
             inset: 0;
-            z-index: -1;
+            z-index: 0;              /* was -1; z-index:-1 painted below html's own background */
             background-image: url('../assets/brewery_bg.jpg');
             background-size: cover;
             background-position: center;
             filter: brightness(0.25) blur(6px);
             transform: scale(1.06); /* prevent blur edge bleed */
             opacity: 0;             /* JS drives this — starts hidden, emerges from the dark */
+        }
+
+        /* All NORMAL-FLOW content that must sit above the fixed backdrop (z-index:0) ─────── */
+        /* Fixed elements (.overlay-content, .nav-dropdown, #loading, .age-gate, overlays)    */
+        /* already have explicit z-index values (10–9999) so they naturally stack above the   */
+        /* backdrop without needing this rule. Only flow sections need position:relative here. */
+        .scroll-container,
+        .intro-section,
+        .dashboard-strip,
+        .team-section,
+        .beers-section,
+        .story-entry-section,
+        .blog-section,
+        .site-footer {
+            position: relative;
+            z-index: 1;
         }
 
         /* Scroll prompt */
