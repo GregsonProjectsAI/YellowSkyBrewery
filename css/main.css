@@ -358,11 +358,11 @@
         /* DASHBOARD STRIP                       */
         /* ------------------------------------- */
         .dashboard-strip {
-            border-top: 1px solid rgba(212, 175, 55, 0.12);
-            border-bottom: 1px solid rgba(212, 175, 55, 0.12);
-            padding: 20px var(--space-md);
-            background-color: rgba(0, 0, 0, 0.35);
-            backdrop-filter: blur(6px);
+            border-top: 1px solid rgba(212, 175, 55, 0.35);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+            padding: 28px var(--space-md);
+            background-color: rgba(212, 175, 55, 0.07);
+            backdrop-filter: blur(8px);
         }
 
         .dashboard-grid {
@@ -399,10 +399,10 @@
 
         .dashboard-label {
             font-family: var(--font-primary);
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 3px;
             text-transform: uppercase;
-            color: rgba(212, 175, 55, 0.5);
+            color: rgba(212, 175, 55, 0.75);
         }
 
         /* Latest post compact display */
@@ -422,22 +422,22 @@
 
         .dashboard-post__badge {
             font-family: var(--font-primary);
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
             flex-shrink: 0;
         }
 
-        .dashboard-post__badge--brew-log { background: rgba(212, 175, 55, 0.15); color: var(--color-brand-primary); }
-        .dashboard-post__badge--event    { background: rgba(80, 160, 220, 0.15); color: #7ec8f0; }
-        .dashboard-post__badge--general  { background: rgba(120, 200, 140, 0.15); color: #90d4a0; }
+        .dashboard-post__badge--brew-log { background: rgba(212, 175, 55, 0.22); color: var(--color-brand-primary); border: 1px solid rgba(212,175,55,0.3); }
+        .dashboard-post__badge--event    { background: rgba(80, 160, 220, 0.2);  color: #9dd8f8; border: 1px solid rgba(80,160,220,0.3); }
+        .dashboard-post__badge--general  { background: rgba(120, 200, 140, 0.2); color: #a8e0b8; border: 1px solid rgba(120,200,140,0.3); }
 
         .dashboard-post__title {
             font-family: var(--font-primary);
-            font-size: 15px;
-            color: rgba(255, 255, 255, 0.88);
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.95);
             letter-spacing: 0.5px;
             white-space: nowrap;
             overflow: hidden;
@@ -447,8 +447,8 @@
 
         .dashboard-post__excerpt {
             font-family: var(--font-primary);
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.4);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.55);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -457,8 +457,8 @@
 
         .dashboard-post__date {
             font-family: var(--font-primary);
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.25);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
             letter-spacing: 1px;
             flex-shrink: 0;
             margin-left: auto;
@@ -466,8 +466,8 @@
 
         .dashboard-post__open {
             font-family: var(--font-primary);
-            font-size: 11px;
-            color: rgba(212, 175, 55, 0.5);
+            font-size: 12px;
+            color: rgba(212, 175, 55, 0.75);
             text-decoration: none;
             letter-spacing: 1px;
             flex-shrink: 0;
@@ -499,21 +499,21 @@
             align-items: center;
             gap: 8px;
             text-decoration: none;
-            color: rgba(255, 255, 255, 0.45);
+            color: rgba(255, 255, 255, 0.65);
             transition: color 0.25s ease;
         }
 
-        .dashboard-social-link:hover { color: rgba(255, 255, 255, 0.9); }
+        .dashboard-social-link:hover { color: rgba(255, 255, 255, 1); }
 
         .dashboard-social-icon {
-            width: 22px;
-            height: 22px;
+            width: 26px;
+            height: 26px;
             flex-shrink: 0;
         }
 
         .dashboard-social-label {
             font-family: var(--font-primary);
-            font-size: 12px;
+            font-size: 13px;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
