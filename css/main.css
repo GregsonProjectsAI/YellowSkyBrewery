@@ -1359,6 +1359,18 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
         }
 
+        /* Highlighted state — fired when user clicks through from a dashboard banner widget */
+        .blog-card.is-highlighted {
+            border-color: rgba(212, 175, 55, 0.85);
+            animation: card-highlight-pulse 3.5s ease-out forwards;
+        }
+
+        @keyframes card-highlight-pulse {
+            0%   { box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.6), 0 0 40px rgba(212, 175, 55, 0.4); }
+            60%  { box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.4), 0 0 20px rgba(212, 175, 55, 0.2); }
+            100% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); border-color: rgba(255, 255, 255, 0.05); }
+        }
+
         .blog-card.fade-up {
             opacity: 0;
             transform: translateY(40px);

@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Shared state ──────────────────────────────────────────────────────────
     let allPosts      = null;   // cached after first fetch
     let currentFilter = 'all';
+    let pendingHighlight = null; // post id to highlight when archive opens
 
     // ── Helper utilities ──────────────────────────────────────────────────────
     function escapeHTML(str) {
@@ -150,10 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="dashboard-post__open" id="dashboard-post-open-btn">Read more →</button>
         `;
 
-        // Wire open button to archive overlay
+        // Wire open button — sets highlight target before opening overlay
         const openBtn = document.getElementById('dashboard-post-open-btn');
         if (openBtn) {
             openBtn.addEventListener('click', () => {
+                pendingHighlight = post.id;           // mark this post for highlighting
                 const archiveBtn = document.getElementById('blog-archive-open-btn');
                 if (archiveBtn) archiveBtn.click();
             });
@@ -177,18 +179,17 @@ document.addEventListener('DOMContentLoaded', () => {
             ${desc  ? `<span class="dashboard-event__desc">${desc}</span>` : ''}
             <button class="dashboard-post__open" id="dashboard-event-open-btn">View all events →</button>
         `;
-        // Wire button to archive overlay filtered to events
+        // Wire button — set event filter and highlight target before opening overlay
         const evBtn = document.getElementById('dashboard-event-open-btn');
         if (evBtn) {
             evBtn.addEventListener('click', () => {
-                // Open archive and switch to Events filter
+                pendingHighlight = event.id;          // mark this event for highlighting
+                // Switch filter to 'event' synchronously before the overlay opens
+                // so renderArchive uses the right filter when it fires
+                const eventFilter = document.querySelector('.blog-filter-btn[data-filter="event"]');
+                if (eventFilter) eventFilter.click();
                 const archiveBtn = document.getElementById('blog-archive-open-btn');
                 if (archiveBtn) archiveBtn.click();
-                // Small delay so the overlay has opened before we switch filter
-                setTimeout(() => {
-                    const eventFilter = document.querySelector('.blog-filter-btn[data-filter="event"]');
-                    if (eventFilter) eventFilter.click();
-                }, 50);
             });
         }
     }
@@ -200,6 +201,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const openBtn     = document.getElementById('blog-archive-open-btn');
     const closeBtn    = document.getElementById('blog-archive-close-btn');
     const filterBtns  = document.querySelectorAll('.blog-filter-btn');
+
+    function highlightCard(postId) {
+        if (!postId || !archiveGrid) return;
+        requestAnimationFrame(() => {
+            const target = archiveGrid.querySelector(`[data-post-id="${postId}"]`);
+            if (!target) return;
+            target.classList.add('is-highlighted');
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => target.classList.remove('is-highlighted'), 3500);
+        });
+    }
 
     function renderArchive(posts, filter) {
         if (!archiveGrid) return;
@@ -214,9 +226,17 @@ document.addEventListener('DOMContentLoaded', () => {
         filtered.forEach(post => {
             const card = document.createElement('article');
             card.className = `blog-card blog-card--${post.type} is-visible`;
+            card.dataset.postId = post.id;           // stamp id for highlight targeting
             card.innerHTML = buildCardHTML(post, false); // full text in archive
             archiveGrid.appendChild(card);
         });
+
+        // If a dashboard widget sent us here for a specific post, highlight it
+        if (pendingHighlight) {
+            const id = pendingHighlight;
+            pendingHighlight = null;
+            highlightCard(id);
+        }
     }
 
     function openArchive() {
