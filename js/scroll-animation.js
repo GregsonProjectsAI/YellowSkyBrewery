@@ -108,7 +108,7 @@
         // steadily so it materialises from the dark behind the content sections.
         // The scroll-container's #0d0d0d background masks the transition while
         // it's still on-screen, so there's no "reveal from below" artefact.
-        const BACKDROP_START  = 616 / 700;  // = HOLD_END + 70% of canvas fade — glass is 70% black
+        const BACKDROP_START  = 592 / 700;  // = HOLD_END + 40% of canvas fade — glass is 40% black
         const BACKDROP_END    = 680 / 700;  // backdrop fully opaque well before scroll end
         // Glint fires just before the logo departs — the glint IS the trigger for movement
         const GLINT_TRIGGER = 650 / 700;
