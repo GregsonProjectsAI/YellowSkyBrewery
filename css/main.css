@@ -999,6 +999,22 @@
             transition: opacity 0.3s ease;
         }
 
+        .flip-card-hint {
+            font-family: var(--font-primary);
+            font-size: 0.72rem;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.55);
+            text-align: center;
+            margin: 0 0 var(--space-sm) 0;
+            animation: hint-pulse 2.8s ease-in-out infinite;
+        }
+
+        @keyframes hint-pulse {
+            0%, 100% { opacity: 0.55; }
+            50%       { opacity: 1; }
+        }
+
         .preview-title {
             color: var(--color-brand-primary);
             font-size: clamp(1.8rem, 3vw, 2.5rem);
