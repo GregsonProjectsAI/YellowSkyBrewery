@@ -685,6 +685,17 @@
         }
 
         /* ------------------------------------- */
+        /* OUR BEERS HEADING BRIDGE              */
+        /* ------------------------------------- */
+        .beers-heading-bridge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-xl) var(--space-md);
+            background-color: transparent;
+        }
+
+        /* ------------------------------------- */
         /* TEAM SECTION (MEET THE NITWITS)       */
         /* ------------------------------------- */
 

@@ -160,13 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let wheelTimer = null;
 
         function goToSlide(index) {
-            // Going past the last slide closes the overlay and continues the page
-            if (index > TOTAL_SLIDES - 1) {
-                closeOverlay(true);
-                return;
-            }
-
-            index = Math.max(0, index);
+            // Clamp — do not go beyond the last slide or before the first
+            index = Math.max(0, Math.min(TOTAL_SLIDES - 1, index));
             currentSlide = index;
 
             // Slide the track — each slide occupies (100/TOTAL_SLIDES)% of the track
