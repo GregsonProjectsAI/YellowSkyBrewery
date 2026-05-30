@@ -725,6 +725,31 @@
             aspect-ratio: 3/4;
             overflow: hidden;
             background-color: #1a1a1a;
+            position: relative;
+        }
+
+        /* "Click for more" hover overlay */
+        .team-card__image-wrapper::after {
+            content: 'Click for more';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-primary);
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.92);
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+        }
+
+        .team-card:hover .team-card__image-wrapper::after {
+            opacity: 1;
         }
 
         .team-card__image {
