@@ -415,6 +415,23 @@
             letter-spacing: 3px;
             margin: 0;
             line-height: 1.1;
+            animation: title-glow 3.5s ease-in-out infinite;
+        }
+
+        @keyframes title-glow {
+            0%, 100% {
+                text-shadow:
+                    0 0 10px rgba(212, 175, 55, 0.3),
+                    0 0 25px rgba(212, 175, 55, 0.2),
+                    0 0 50px rgba(212, 175, 55, 0.1);
+            }
+            50% {
+                text-shadow:
+                    0 0 15px rgba(212, 175, 55, 0.7),
+                    0 0 35px rgba(212, 175, 55, 0.5),
+                    0 0 70px rgba(212, 175, 55, 0.3),
+                    0 0 100px rgba(212, 175, 55, 0.15);
+            }
         }
 
         .intro-divider {
