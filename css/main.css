@@ -1538,22 +1538,75 @@
         }
 
         /* Specific card hovers matching their type accents */
-        .blog-card--brew-log:hover {
+        .blog-card--brew-log:not(.is-expanded):hover {
             border-color: var(--color-brand-primary);
             box-shadow: 0 12px 30px rgba(212, 175, 55, 0.15);
             transform: translateY(-8px);
         }
 
-        .blog-card--event:hover {
+        .blog-card--event:not(.is-expanded):hover {
             border-color: var(--color-teal);
             box-shadow: 0 12px 30px rgba(45, 212, 191, 0.15);
             transform: translateY(-8px);
         }
 
-        .blog-card--general:hover {
+        .blog-card--general:not(.is-expanded):hover {
             border-color: var(--color-text-light);
             box-shadow: 0 12px 30px rgba(255, 255, 255, 0.08);
             transform: translateY(-8px);
+        }
+
+        /* Expanded card state — lifts clamps and settles the card */
+        .blog-card.is-expanded {
+            transform: none !important;
+            border-color: rgba(212, 175, 55, 0.35);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
+        }
+
+        .blog-card.is-expanded .blog-card__body {
+            display: block;
+            -webkit-line-clamp: unset;
+            overflow: visible;
+        }
+
+        .blog-card.is-expanded .blog-card__snippet-text {
+            display: block;
+            -webkit-line-clamp: unset;
+            overflow: visible;
+        }
+
+        /* Expand hint bar — sits at the bottom of each card */
+        .blog-card__expand-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: var(--space-md);
+            padding-top: var(--space-sm);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: var(--font-primary);
+            transition: color 0.2s ease;
+            user-select: none;
+        }
+
+        .blog-card:hover .blog-card__expand-hint {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .blog-card.is-expanded .blog-card__expand-hint {
+            color: rgba(212, 175, 55, 0.6);
+            border-top-color: rgba(212, 175, 55, 0.12);
+        }
+
+        .blog-card__expand-icon {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
         }
 
         /* Card Header & Badge */

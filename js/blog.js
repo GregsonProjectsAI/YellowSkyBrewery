@@ -25,9 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── Card HTML builders ────────────────────────────────────────────────────
-    function buildBrewLogCard(post, truncate) {
+    function buildBrewLogCard(post) {
         const brewDate = post.brewDate ? formatDate(post.brewDate) : 'N/A';
-        const notesLen = truncate ? 160 : 99999;
         return `
             <div class="blog-card__header">
                 <span class="blog-badge blog-badge--brew-log">Brew Log 🍺</span>
@@ -42,8 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${post.originalGravity ? `<div class="blog-card__meta-item"><span class="blog-card__meta-label">OG:</span><span class="blog-card__meta-value">${escapeHTML(post.originalGravity)}</span></div>` : ''}
                 ${post.finalGravity ? `<div class="blog-card__meta-item"><span class="blog-card__meta-label">FG:</span><span class="blog-card__meta-value">${escapeHTML(post.finalGravity)}</span></div>` : ''}
             </div>
-            ${post.brewDayNotes ? `<div class="blog-card__snippet-box"><h4 class="blog-card__snippet-title">Brew Day Notes:</h4><p class="blog-card__snippet-text">${truncateText(escapeHTML(post.brewDayNotes), notesLen)}</p></div>` : ''}
-            ${post.tastingNotes ? `<div class="blog-card__snippet-box blog-card__snippet-box--tasting"><h4 class="blog-card__snippet-title">Tasting Notes:</h4><p class="blog-card__snippet-text">${truncateText(escapeHTML(post.tastingNotes), notesLen)}</p></div>` : ''}
+            ${post.brewDayNotes ? `<div class="blog-card__snippet-box"><h4 class="blog-card__snippet-title">Brew Day Notes:</h4><p class="blog-card__snippet-text">${escapeHTML(post.brewDayNotes)}</p></div>` : ''}
+            ${post.tastingNotes ? `<div class="blog-card__snippet-box blog-card__snippet-box--tasting"><h4 class="blog-card__snippet-title">Tasting Notes:</h4><p class="blog-card__snippet-text">${escapeHTML(post.tastingNotes)}</p></div>` : ''}
+            <div class="blog-card__expand-hint"><span class="blog-card__expand-label">Read more</span><svg class="blog-card__expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         `;
     }
 
@@ -68,7 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             <p class="blog-card__body">${escapeHTML(post.description)}</p>
-            ${post.ticketLink ? `<a href="${escapeHTML(post.ticketLink)}" target="_blank" rel="noopener noreferrer" class="blog-card__btn-tickets">Get Tickets &rarr;</a>` : ''}
+            ${post.ticketLink ? `<a href="${escapeHTML(post.ticketLink)}" target="_blank" rel="noopener noreferrer" class="blog-card__btn-tickets blog-card__no-expand">Get Tickets &rarr;</a>` : ''}
+            <div class="blog-card__expand-hint"><span class="blog-card__expand-label">Read more</span><svg class="blog-card__expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         `;
     }
 
@@ -82,24 +83,32 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 class="blog-card__title">${escapeHTML(post.title)}</h3>
             <p class="blog-card__body">${escapeHTML(post.body)}</p>
             ${tagList.length > 0 ? `<div class="blog-card__tags">${tagList.map(tag => `<span class="blog-card__tag">#${escapeHTML(tag)}</span>`).join('')}</div>` : ''}
+            <div class="blog-card__expand-hint"><span class="blog-card__expand-label">Read more</span><svg class="blog-card__expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         `;
     }
 
-    function buildCardHTML(post, truncate = true) {
-        if (post.type === 'brew-log') return buildBrewLogCard(post, truncate);
+    function buildCardHTML(post) {
+        if (post.type === 'brew-log') return buildBrewLogCard(post);
         if (post.type === 'event')    return buildEventCard(post);
         return buildGeneralCard(post);
     }
 
     // ── Shared expand / collapse handler ──────────────────────────────────────
-    // Re-renders the card's inner HTML with full or truncated text on click.
-    // Works reliably inside any scroll container — no overflow tricks needed.
+    // Toggles .is-expanded on the card element; CSS handles all clamping/unclamping.
+    // We never re-render innerHTML, so the card's fade-up visibility class and
+    // all interior links/buttons remain intact across toggles.
     function attachExpandHandler(card, post) {
-        let expanded = false;
-        card.addEventListener('click', function () {
-            expanded = !expanded;
-            card.innerHTML = buildCardHTML(post, !expanded);
-            card.style.transform = expanded ? 'none' : '';
+        card.addEventListener('click', function (e) {
+            // Don't toggle if the user clicked a link or button inside the card
+            if (e.target.closest('.blog-card__no-expand, a, button')) return;
+
+            const expanded = card.classList.toggle('is-expanded');
+            const hint = card.querySelector('.blog-card__expand-label');
+            if (hint) hint.textContent = expanded ? 'Show less' : 'Read more';
+
+            // Rotate the chevron icon
+            const icon = card.querySelector('.blog-card__expand-icon');
+            if (icon) icon.style.transform = expanded ? 'rotate(180deg)' : '';
         });
     }
 
@@ -116,10 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
         posts.slice(0, 3).forEach(post => {
             const card = document.createElement('article');
             card.className = `blog-card blog-card--${post.type} fade-up`;
-            card.innerHTML = buildCardHTML(post, true);
-
+            card.innerHTML = buildCardHTML(post);
             attachExpandHandler(card, post);
-
             feedContainer.appendChild(card);
 
             if (window.IntersectionObserver) {
@@ -151,11 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const title = post.type === 'brew-log' ? post.beerName : post.title;
-
-        const excerpt = post.type === 'brew-log' ? (post.brewDayNotes || post.tastingNotes || '')
-                      : (post.body || '');
-
+        const title  = post.type === 'brew-log' ? post.beerName : post.title;
+        const excerpt = post.type === 'brew-log' ? (post.brewDayNotes || post.tastingNotes || '') : (post.body || '');
         const badgeClass = `dashboard-post__badge--${post.type}`;
         const badgeLabel = post.type === 'brew-log' ? 'Brew Log' : 'Update';
 
@@ -167,41 +171,37 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="dashboard-post__open" id="dashboard-post-open-btn">Read more →</button>
         `;
 
-        // Wire open button — sets highlight target before opening overlay
         const openBtn = document.getElementById('dashboard-post-open-btn');
         if (openBtn) {
             openBtn.addEventListener('click', () => {
-                pendingHighlight = post.id;           // mark this post for highlighting
+                pendingHighlight = post.id;
                 const archiveBtn = document.getElementById('blog-archive-open-btn');
                 if (archiveBtn) archiveBtn.click();
             });
         }
     }
-    // ── Dashboard latest-event widget ────────────────────────────────────────────
+
+    // ── Dashboard latest-event widget ─────────────────────────────────────────
     function renderDashboardEvent(posts) {
         if (!dashEventWidget) return;
-        // Find the most recent event post
         const event = (posts || []).find(p => p.type === 'event');
         if (!event) {
             dashEventWidget.innerHTML = `<span class="dashboard-post__empty">No upcoming events — watch this space!</span>`;
             return;
         }
-        const name = escapeHTML(event.eventName);
-        const desc = event.description ? escapeHTML(event.description.substring(0, 100)) + '…' : '';
+        const name  = escapeHTML(event.eventName);
+        const desc  = event.description ? escapeHTML(event.description.substring(0, 100)) + '…' : '';
         const venue = event.venue ? escapeHTML(event.venue) : '';
         dashEventWidget.innerHTML = `
             <span class="dashboard-event__name">${name}</span>
             ${venue ? `<span class="dashboard-event__venue">📍 ${venue}</span>` : ''}
-            ${desc  ? `<span class="dashboard-event__desc">${desc}</span>` : ''}
+            ${desc  ? `<span class="dashboard-event__desc">${desc}</span>`   : ''}
             <button class="dashboard-post__open" id="dashboard-event-open-btn">View all events →</button>
         `;
-        // Wire button — set event filter and highlight target before opening overlay
         const evBtn = document.getElementById('dashboard-event-open-btn');
         if (evBtn) {
             evBtn.addEventListener('click', () => {
-                pendingHighlight = event.id;          // mark this event for highlighting
-                // Switch filter to 'event' synchronously before the overlay opens
-                // so renderArchive uses the right filter when it fires
+                pendingHighlight = event.id;
                 const eventFilter = document.querySelector('.blog-filter-btn[data-filter="event"]');
                 if (eventFilter) eventFilter.click();
                 const archiveBtn = document.getElementById('blog-archive-open-btn');
@@ -210,8 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
-    // ── Dashboard this-week's-brew widget ──────────────────────────────────────
+    // ── Dashboard this-week's-brew widget ─────────────────────────────────────
     const brewWidget = document.getElementById('dashboard-this-weeks-brew');
 
     function renderDashboardBrew(posts) {
@@ -223,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         brewWidget.innerHTML = `
             <span class="dashboard-brew__name">${escapeHTML(brew.beerName)}</span>
-            ${brew.style    ? `<span class="dashboard-brew__style">${escapeHTML(brew.style)}</span>` : ''}
+            ${brew.style       ? `<span class="dashboard-brew__style">${escapeHTML(brew.style)}</span>`              : ''}
             ${brew.batchNumber ? `<span class="dashboard-brew__batch">Batch ${escapeHTML(brew.batchNumber)}</span>` : ''}
             <button class="dashboard-post__open" id="dashboard-brew-open-btn">View brew log →</button>
         `;
@@ -270,13 +269,12 @@ document.addEventListener('DOMContentLoaded', () => {
         filtered.forEach(post => {
             const card = document.createElement('article');
             card.className = `blog-card blog-card--${post.type} is-visible`;
-            card.dataset.postId = post.id;   // stamp id for highlight targeting
-            card.innerHTML = buildCardHTML(post, true); // start truncated, expandable on click
+            card.dataset.postId = post.id;
+            card.innerHTML = buildCardHTML(post);
             attachExpandHandler(card, post);
             archiveGrid.appendChild(card);
         });
 
-        // If a dashboard widget sent us here for a specific post, highlight it
         if (pendingHighlight) {
             const id = pendingHighlight;
             pendingHighlight = null;
@@ -291,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('no-scroll');
 
         if (allPosts !== null) {
-            // Already fetched — render instantly from cache
             renderArchive(allPosts, currentFilter);
             return;
         }
@@ -302,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(r => { if (!r.ok) throw new Error('Network error'); return r.json(); })
             .then(data => {
                 allPosts = data.posts || [];
-                renderFeed(allPosts);        // also update homepage feed while we're here
+                renderFeed(allPosts);
                 renderArchive(allPosts, currentFilter);
                 renderDashboard(allPosts);
                 renderDashboardEvent(allPosts);
@@ -323,19 +320,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openBtn)  openBtn.addEventListener('click', openArchive);
     if (closeBtn) closeBtn.addEventListener('click', closeArchive);
 
-    // Escape key closes
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && overlay && overlay.classList.contains('is-open')) closeArchive();
     });
 
-    // Click outside the panel closes
     if (overlay) {
         overlay.addEventListener('click', e => {
             if (e.target === overlay) closeArchive();
         });
     }
 
-    // Category filters
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             filterBtns.forEach(b => b.classList.remove('is-active'));
@@ -358,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(() => {
                 if (feedContainer) feedContainer.innerHTML = `<div class="blog-error"><p>Failed to load recent updates.</p></div>`;
-                if (dashWidget) dashWidget.innerHTML = `<span class="dashboard-post__empty">Could not load</span>`;
+                if (dashWidget)    dashWidget.innerHTML    = `<span class="dashboard-post__empty">Could not load</span>`;
             });
     }
 });
