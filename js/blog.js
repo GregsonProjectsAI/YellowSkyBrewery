@@ -91,6 +91,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return buildGeneralCard(post);
     }
 
+    // ── Shared expand / collapse handler ────────────────────────────────────────
+    // Attaches an isolated click listener to a single card. Inline styles are
+    // scoped to the card's own child elements — sibling cards are unaffected.
+    function attachExpandHandler(card) {
+        (function (thisCard) {
+            let expanded = false;
+            thisCard.addEventListener('click', function () {
+                expanded = !expanded;
+                thisCard.style.overflow = expanded ? 'visible' : '';
+                thisCard.querySelectorAll('.blog-card__body').forEach(function (el) {
+                    el.style.display         = expanded ? 'block'   : '';
+                    el.style.webkitLineClamp = expanded ? 'unset'   : '';
+                    el.style.overflow        = expanded ? 'visible' : '';
+                });
+                thisCard.querySelectorAll('.blog-card__snippet-text').forEach(function (el) {
+                    el.style.display         = expanded ? 'block'   : '';
+                    el.style.webkitLineClamp = expanded ? 'unset'   : '';
+                    el.style.overflow        = expanded ? 'visible' : '';
+                });
+                thisCard.style.transform = expanded ? 'none' : '';
+            });
+        }(card));
+    }
+
     // ── Homepage feed (top 3) ─────────────────────────────────────────────────
     const feedContainer = document.getElementById('blog-posts-feed');
 
@@ -106,35 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = `blog-card blog-card--${post.type} fade-up`;
             card.innerHTML = buildCardHTML(post, true);
 
-            // Each card gets its own isolated expand/collapse handler via IIFE.
-            // Inline styles are set directly on THIS card's own child elements —
-            // there is no shared class that could affect sibling cards.
-            (function (thisCard) {
-                let expanded = false;
-                thisCard.addEventListener('click', function () {
-                    expanded = !expanded;
-
-                    // Card container overflow
-                    thisCard.style.overflow = expanded ? 'visible' : '';
-
-                    // Body text (general / event cards)
-                    thisCard.querySelectorAll('.blog-card__body').forEach(function (el) {
-                        el.style.display        = expanded ? 'block'   : '';
-                        el.style.webkitLineClamp = expanded ? 'unset'   : '';
-                        el.style.overflow       = expanded ? 'visible' : '';
-                    });
-
-                    // Snippet text (brew log cards)
-                    thisCard.querySelectorAll('.blog-card__snippet-text').forEach(function (el) {
-                        el.style.display        = expanded ? 'block'   : '';
-                        el.style.webkitLineClamp = expanded ? 'unset'   : '';
-                        el.style.overflow       = expanded ? 'visible' : '';
-                    });
-
-                    // Suppress hover lift while expanded
-                    thisCard.style.transform = expanded ? 'none' : '';
-                });
-            }(card));
+            // Attach isolated expand/collapse handler
+            attachExpandHandler(card);
 
             feedContainer.appendChild(card);
 
@@ -286,8 +283,9 @@ document.addEventListener('DOMContentLoaded', () => {
         filtered.forEach(post => {
             const card = document.createElement('article');
             card.className = `blog-card blog-card--${post.type} is-visible`;
-            card.dataset.postId = post.id;           // stamp id for highlight targeting
-            card.innerHTML = buildCardHTML(post, false); // full text in archive
+            card.dataset.postId = post.id;   // stamp id for highlight targeting
+            card.innerHTML = buildCardHTML(post, true); // start truncated, expandable on click
+            attachExpandHandler(card);
             archiveGrid.appendChild(card);
         });
 
