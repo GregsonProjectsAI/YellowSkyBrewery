@@ -734,7 +734,7 @@
             border: 1px solid rgba(212, 175, 55, 0.15);
             border-radius: var(--border-radius-sm);
             overflow: hidden;
-            transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+            transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease, filter 0.4s ease, opacity 0.4s ease;
             display: flex;
             flex-direction: column;
             cursor: pointer;
@@ -770,7 +770,6 @@
             text-transform: uppercase;
             color: rgba(255, 255, 255, 0.92);
             background: rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(2px);
             opacity: 0;
             transition: opacity 0.35s ease;
             pointer-events: none;
@@ -790,6 +789,12 @@
 
         .team-card:hover .team-card__image {
             transform: scale(1.05);
+        }
+
+        /* Sibling dimming — blur & fade cards that are NOT being hovered */
+        .team-grid:has(.team-card:hover) .team-card:not(:hover) {
+            filter: blur(3px);
+            opacity: 0.45;
         }
 
         .team-card__content {
