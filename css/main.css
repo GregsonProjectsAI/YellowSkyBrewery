@@ -793,8 +793,9 @@
 
         /* Sibling dimming — blur & fade cards that are NOT being hovered */
         .team-grid:has(.team-card:hover) .team-card:not(:hover) {
-            filter: blur(3px);
-            opacity: 0.45;
+            filter: blur(3px) !important;
+            opacity: 0.45 !important;
+            transition: filter 0.4s ease, opacity 0.4s ease !important;
         }
 
         .team-card__content {
@@ -834,7 +835,7 @@
         .fade-up {
             opacity: 0;
             transform: translateY(40px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
+            transition: opacity 0.8s ease, transform 0.8s ease, filter 0.4s ease;
         }
 
         .fade-up.is-visible {
