@@ -201,8 +201,11 @@
             top: 20px;
             left: 20px;
             transform: translate(0, 0) scale(0.36);
+            transform-origin: top left;
             pointer-events: auto;
             cursor: pointer;
+            width: fit-content;
+            height: fit-content;
         }
 
         .brand-logo {
