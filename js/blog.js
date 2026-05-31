@@ -106,14 +106,14 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = `blog-card blog-card--${post.type} fade-up`;
             card.innerHTML = buildCardHTML(post, true);
 
-            // Expand / collapse toggle
+            // Expand / collapse — clicking anywhere on the card toggles it
             const expandBtn = document.createElement('button');
             expandBtn.className = 'blog-card__expand-btn';
             expandBtn.textContent = 'Read more ↓';
+            expandBtn.setAttribute('tabindex', '-1'); // card handles focus/click
             card.appendChild(expandBtn);
 
-            expandBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            card.addEventListener('click', () => {
                 const expanded = card.classList.toggle('is-expanded');
                 expandBtn.textContent = expanded ? 'Collapse ↑' : 'Read more ↓';
             });
