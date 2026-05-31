@@ -91,28 +91,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return buildGeneralCard(post);
     }
 
-    // ── Shared expand / collapse handler ────────────────────────────────────────
-    // Attaches an isolated click listener to a single card. Inline styles are
-    // scoped to the card's own child elements — sibling cards are unaffected.
-    function attachExpandHandler(card) {
-        (function (thisCard) {
-            let expanded = false;
-            thisCard.addEventListener('click', function () {
-                expanded = !expanded;
-                thisCard.style.overflow = expanded ? 'visible' : '';
-                thisCard.querySelectorAll('.blog-card__body').forEach(function (el) {
-                    el.style.display         = expanded ? 'block'   : '';
-                    el.style.webkitLineClamp = expanded ? 'unset'   : '';
-                    el.style.overflow        = expanded ? 'visible' : '';
-                });
-                thisCard.querySelectorAll('.blog-card__snippet-text').forEach(function (el) {
-                    el.style.display         = expanded ? 'block'   : '';
-                    el.style.webkitLineClamp = expanded ? 'unset'   : '';
-                    el.style.overflow        = expanded ? 'visible' : '';
-                });
-                thisCard.style.transform = expanded ? 'none' : '';
-            });
-        }(card));
+    // ── Shared expand / collapse handler ──────────────────────────────────────
+    // Re-renders the card's inner HTML with full or truncated text on click.
+    // Works reliably inside any scroll container — no overflow tricks needed.
+    function attachExpandHandler(card, post) {
+        let expanded = false;
+        card.addEventListener('click', function () {
+            expanded = !expanded;
+            card.innerHTML = buildCardHTML(post, !expanded);
+            card.style.transform = expanded ? 'none' : '';
+        });
     }
 
     // ── Homepage feed (top 3) ─────────────────────────────────────────────────
@@ -130,8 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = `blog-card blog-card--${post.type} fade-up`;
             card.innerHTML = buildCardHTML(post, true);
 
-            // Attach isolated expand/collapse handler
-            attachExpandHandler(card);
+            attachExpandHandler(card, post);
 
             feedContainer.appendChild(card);
 
@@ -285,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = `blog-card blog-card--${post.type} is-visible`;
             card.dataset.postId = post.id;   // stamp id for highlight targeting
             card.innerHTML = buildCardHTML(post, true); // start truncated, expandable on click
-            attachExpandHandler(card);
+            attachExpandHandler(card, post);
             archiveGrid.appendChild(card);
         });
 
