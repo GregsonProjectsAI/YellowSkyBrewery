@@ -105,6 +105,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('article');
             card.className = `blog-card blog-card--${post.type} fade-up`;
             card.innerHTML = buildCardHTML(post, true);
+
+            // Expand / collapse toggle
+            const expandBtn = document.createElement('button');
+            expandBtn.className = 'blog-card__expand-btn';
+            expandBtn.textContent = 'Read more ↓';
+            card.appendChild(expandBtn);
+
+            expandBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const expanded = card.classList.toggle('is-expanded');
+                expandBtn.textContent = expanded ? 'Collapse ↑' : 'Read more ↓';
+            });
+
             feedContainer.appendChild(card);
 
             if (window.IntersectionObserver) {
