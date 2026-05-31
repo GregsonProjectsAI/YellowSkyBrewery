@@ -7,7 +7,7 @@
     <title>Yellow Sky Brewery</title>
     <!-- CSS -->
     <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/main.css?v=7">
+    <link rel="stylesheet" href="css/main.css?v=8">
 </head>
 
 <body class="no-scroll">
@@ -80,6 +80,16 @@
                 <div class="dashboard-widget dashboard-widget--bulletin">
                     <span class="dashboard-label">Latest Bulletin</span>
                     <div id="dashboard-latest-post" class="dashboard-post">
+                        <span class="dashboard-post__loading">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-divider"></div>
+
+                <!-- This Week's Brew Widget -->
+                <div class="dashboard-widget dashboard-widget--brew">
+                    <span class="dashboard-label">This Week's Brew</span>
+                    <div id="dashboard-this-weeks-brew" class="dashboard-brew">
                         <span class="dashboard-post__loading">Loading...</span>
                     </div>
                 </div>

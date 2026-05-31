@@ -160,19 +160,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const post  = posts[0]; // most recent
-        const title = post.type === 'brew-log' ? post.beerName
-                    : post.type === 'event'    ? post.eventName
-                    : post.title;
+        // Latest Bulletin = most recent post that is NOT an event
+        const post = posts.find(p => p.type !== 'event');
+        if (!post) {
+            dashWidget.innerHTML = `<span class="dashboard-post__empty">No updates yet</span>`;
+            return;
+        }
+
+        const title = post.type === 'brew-log' ? post.beerName : post.title;
 
         const excerpt = post.type === 'brew-log' ? (post.brewDayNotes || post.tastingNotes || '')
-                      : post.type === 'event'    ? (post.description || '')
                       : (post.body || '');
 
         const badgeClass = `dashboard-post__badge--${post.type}`;
-        const badgeLabel = post.type === 'brew-log' ? 'Brew Log'
-                         : post.type === 'event'    ? 'Event'
-                         : 'Update';
+        const badgeLabel = post.type === 'brew-log' ? 'Brew Log' : 'Update';
 
         dashWidget.innerHTML = `
             <span class="dashboard-post__badge ${badgeClass}">${badgeLabel}</span>
@@ -225,6 +226,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+
+    // ── Dashboard this-week's-brew widget ──────────────────────────────────────
+    const brewWidget = document.getElementById('dashboard-this-weeks-brew');
+
+    function renderDashboardBrew(posts) {
+        if (!brewWidget) return;
+        const brew = (posts || []).find(p => p.type === 'brew-log');
+        if (!brew) {
+            brewWidget.innerHTML = `<span class="dashboard-post__empty">No brews logged yet</span>`;
+            return;
+        }
+        brewWidget.innerHTML = `
+            <span class="dashboard-brew__name">${escapeHTML(brew.beerName)}</span>
+            ${brew.style    ? `<span class="dashboard-brew__style">${escapeHTML(brew.style)}</span>` : ''}
+            ${brew.batchNumber ? `<span class="dashboard-brew__batch">Batch ${escapeHTML(brew.batchNumber)}</span>` : ''}
+            <button class="dashboard-post__open" id="dashboard-brew-open-btn">View brew log →</button>
+        `;
+        const brewBtn = document.getElementById('dashboard-brew-open-btn');
+        if (brewBtn) {
+            brewBtn.addEventListener('click', () => {
+                pendingHighlight = brew.id;
+                const brewFilter = document.querySelector('.blog-filter-btn[data-filter="brew-log"]');
+                if (brewFilter) brewFilter.click();
+                const archiveBtn = document.getElementById('blog-archive-open-btn');
+                if (archiveBtn) archiveBtn.click();
+            });
+        }
+    }
 
     // ── Archive overlay ───────────────────────────────────────────────────────
     const overlay     = document.getElementById('blog-archive-overlay');
@@ -290,7 +319,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 allPosts = data.posts || [];
                 renderFeed(allPosts);        // also update homepage feed while we're here
                 renderArchive(allPosts, currentFilter);
+                renderDashboard(allPosts);
                 renderDashboardEvent(allPosts);
+                renderDashboardBrew(allPosts);
             })
             .catch(() => {
                 archiveGrid.innerHTML = `<div class="blog-error"><p>Could not load the archive. Please try again.</p></div>`;
@@ -338,6 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderFeed(allPosts);
                 renderDashboard(allPosts);
                 renderDashboardEvent(allPosts);
+                renderDashboardBrew(allPosts);
             })
             .catch(() => {
                 if (feedContainer) feedContainer.innerHTML = `<div class="blog-error"><p>Failed to load recent updates.</p></div>`;

@@ -672,6 +672,40 @@
             max-width: 340px;
         }
 
+        /* This Week's Brew widget */
+        .dashboard-widget--brew {
+            flex: 1;
+        }
+
+        .dashboard-brew {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .dashboard-brew__name {
+            font-family: var(--font-primary);
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+            letter-spacing: 0.5px;
+        }
+
+        .dashboard-brew__style {
+            font-family: var(--font-primary);
+            font-size: 12px;
+            color: rgba(212, 175, 55, 0.75);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .dashboard-brew__batch {
+            font-family: var(--font-primary);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 1px;
+        }
+
         /* Responsive — stack on narrow screens */
         @media (max-width: 768px) {
             .dashboard-grid {
