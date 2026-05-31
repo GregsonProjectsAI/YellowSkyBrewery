@@ -106,21 +106,35 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = `blog-card blog-card--${post.type} fade-up`;
             card.innerHTML = buildCardHTML(post, true);
 
-            // Expand / collapse button (visual cue only — card click handles it)
-            const expandBtn = document.createElement('button');
-            expandBtn.className = 'blog-card__expand-btn';
-            expandBtn.setAttribute('aria-hidden', 'true');
-            expandBtn.setAttribute('tabindex', '-1');
-            expandBtn.textContent = 'Read more ↓';
-            card.appendChild(expandBtn);
-
-            // Attach listener once; capture this card and its button in a tight closure
-            (function (thisCard, thisBtn) {
+            // Each card gets its own isolated expand/collapse handler via IIFE.
+            // Inline styles are set directly on THIS card's own child elements —
+            // there is no shared class that could affect sibling cards.
+            (function (thisCard) {
+                let expanded = false;
                 thisCard.addEventListener('click', function () {
-                    const expanded = thisCard.classList.toggle('is-expanded');
-                    thisBtn.textContent = expanded ? 'Collapse ↑' : 'Read more ↓';
+                    expanded = !expanded;
+
+                    // Card container overflow
+                    thisCard.style.overflow = expanded ? 'visible' : '';
+
+                    // Body text (general / event cards)
+                    thisCard.querySelectorAll('.blog-card__body').forEach(function (el) {
+                        el.style.display        = expanded ? 'block'   : '';
+                        el.style.webkitLineClamp = expanded ? 'unset'   : '';
+                        el.style.overflow       = expanded ? 'visible' : '';
+                    });
+
+                    // Snippet text (brew log cards)
+                    thisCard.querySelectorAll('.blog-card__snippet-text').forEach(function (el) {
+                        el.style.display        = expanded ? 'block'   : '';
+                        el.style.webkitLineClamp = expanded ? 'unset'   : '';
+                        el.style.overflow       = expanded ? 'visible' : '';
+                    });
+
+                    // Suppress hover lift while expanded
+                    thisCard.style.transform = expanded ? 'none' : '';
                 });
-            }(card, expandBtn));
+            }(card));
 
             feedContainer.appendChild(card);
 
