@@ -1732,6 +1732,10 @@
         }
 
         /* Expanded card — remove all text truncation */
+        .blog-card.is-expanded {
+            overflow: visible;
+        }
+
         .blog-card.is-expanded .blog-card__body {
             display: block;
             -webkit-line-clamp: unset;

@@ -106,17 +106,21 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = `blog-card blog-card--${post.type} fade-up`;
             card.innerHTML = buildCardHTML(post, true);
 
-            // Expand / collapse — clicking anywhere on the card toggles it
+            // Expand / collapse button (visual cue only — card click handles it)
             const expandBtn = document.createElement('button');
             expandBtn.className = 'blog-card__expand-btn';
+            expandBtn.setAttribute('aria-hidden', 'true');
+            expandBtn.setAttribute('tabindex', '-1');
             expandBtn.textContent = 'Read more ↓';
-            expandBtn.setAttribute('tabindex', '-1'); // card handles focus/click
             card.appendChild(expandBtn);
 
-            card.addEventListener('click', () => {
-                const expanded = card.classList.toggle('is-expanded');
-                expandBtn.textContent = expanded ? 'Collapse ↑' : 'Read more ↓';
-            });
+            // Attach listener once; capture this card and its button in a tight closure
+            (function (thisCard, thisBtn) {
+                thisCard.addEventListener('click', function () {
+                    const expanded = thisCard.classList.toggle('is-expanded');
+                    thisBtn.textContent = expanded ? 'Collapse ↑' : 'Read more ↓';
+                });
+            }(card, expandBtn));
 
             feedContainer.appendChild(card);
 
