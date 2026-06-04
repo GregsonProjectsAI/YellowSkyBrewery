@@ -1296,7 +1296,6 @@
             border-radius: var(--border-radius-lg);
             object-fit: contain;
             display: block;
-            transform: scale(1.3);
             box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9);
             border: 1px solid rgba(212, 175, 55, 0.25);
         }
