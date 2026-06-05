@@ -1310,9 +1310,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: fill;
             filter: blur(18px) brightness(0.5);
-            transform: scale(1.1); /* Prevent blur bleed at edges */
+            transform: scale(1.05); /* Minimal scaling for blur bleed */
             z-index: 1;
         }
 
