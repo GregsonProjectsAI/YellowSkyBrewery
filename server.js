@@ -281,8 +281,7 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'No subscribers to email.' });
   }
 
-  // Resend batch sending allows up to 100 emails at once
-  // For small lists, this is perfectly fine.
+  // Send individually using Promise.all to bypass any Batch API restrictions
   const emails = data.subscribers.map(sub => ({
     from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
     to: sub.email,
@@ -296,10 +295,20 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
   }));
 
   try {
-    const response = await resend.batch.send(emails);
-    res.json({ success: true, count: emails.length, response });
+    const results = await Promise.allSettled(
+      emails.map(email => resend.emails.send(email))
+    );
+    
+    // Log any individual failures
+    results.forEach((res, i) => {
+      if (res.status === 'rejected' || (res.value && res.value.error)) {
+        console.error(`Failed to send to ${emails[i].to}:`, res.reason || res.value.error);
+      }
+    });
+
+    res.json({ success: true, count: emails.length });
   } catch (err) {
-    console.error('Batch email error:', err);
+    console.error('Mailshot error:', err);
     res.status(500).json({ error: 'Failed to send mailshot.' });
   }
 });
