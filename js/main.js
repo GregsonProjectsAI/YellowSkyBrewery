@@ -334,4 +334,51 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ── Subscription Form ─────────────────────────────────────────────────────
+    const subscribeForm = document.getElementById('subscribe-form');
+    const subscribeMessage = document.getElementById('subscribe-message');
+
+    if (subscribeForm) {
+        subscribeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = subscribeForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Submitting...';
+            subscribeMessage.textContent = '';
+            subscribeMessage.className = 'subscribe-message';
+
+            const formData = new FormData(subscribeForm);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    subscribeMessage.textContent = result.message || "You're on the list. Check your inbox soon.";
+                    subscribeMessage.classList.add('success');
+                    subscribeForm.reset();
+                } else {
+                    subscribeMessage.textContent = result.error || 'Something went wrong. Please try again.';
+                    subscribeMessage.classList.add('error');
+                }
+            } catch (error) {
+                console.error('Subscription error:', error);
+                subscribeMessage.textContent = 'Network error. Please try again later.';
+                subscribeMessage.classList.add('error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        });
+    }
 });

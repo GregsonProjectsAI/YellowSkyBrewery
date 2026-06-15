@@ -9,10 +9,12 @@ const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'yellowsky2025';
 const DATA_DIR  = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'posts.json');
+const SUBSCRIBERS_FILE = path.join(DATA_DIR, 'subscribers.json');
 
 // Ensure data directory and file exist on first run
 if (!fs.existsSync(DATA_DIR))  fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify({ posts: [] }, null, 2));
+if (!fs.existsSync(SUBSCRIBERS_FILE)) fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify({ subscribers: [] }, null, 2));
 
 // In-memory session tokens (cleared on server restart — fine for this use case)
 const sessions = new Map();
@@ -110,6 +112,56 @@ app.delete('/api/posts/:id', requireAuth, (req, res) => {
   data.posts.splice(idx, 1);
   writePosts(data);
   res.json({ success: true });
+});
+
+// ── Subscribers API ──────────────────────────────────────────────────────────
+
+// POST /api/subscribe — public endpoint for mailing list signup
+app.post('/api/subscribe', (req, res) => {
+  const { name, email } = req.body || {};
+  
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Name and email are required.' });
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Please enter a valid email address.' });
+  }
+
+  let data = { subscribers: [] };
+  try {
+    data = JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8'));
+  } catch (err) {
+    console.error('Error reading subscribers file:', err);
+  }
+
+  // Check if email already exists
+  if (data.subscribers.some(sub => sub.email.toLowerCase() === email.toLowerCase())) {
+    return res.status(400).json({ error: 'This email is already on the invite list.' });
+  }
+
+  const newSubscriber = {
+    id: uuidv4(),
+    name: name.trim(),
+    email: email.trim().toLowerCase(),
+    subscribedAt: new Date().toISOString()
+  };
+
+  data.subscribers.push(newSubscriber);
+  
+  try {
+    fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(data, null, 2), 'utf8');
+    
+    // In a full implementation, you would trigger an email send here via Resend/SendGrid/etc.
+    // e.g. sendWelcomeEmail(newSubscriber.email, newSubscriber.name);
+    
+    res.status(201).json({ success: true, message: "You're on the list. Check your inbox soon." });
+  } catch (err) {
+    console.error('Error saving subscriber:', err);
+    res.status(500).json({ error: 'Internal server error. Please try again later.' });
+  }
 });
 
 // ── Start ────────────────────────────────────────────────────────────────────
