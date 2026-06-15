@@ -26,3 +26,5 @@ assets/Real Pictures 1 (Chris dump)/**/*.HEIC
 assets/Real Pictures 1 (Chris dump)/
 
 .env
+
+node_modules/
