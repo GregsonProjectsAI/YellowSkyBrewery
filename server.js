@@ -263,7 +263,7 @@ app.post('/api/subscribe', (req, res) => {
       resend.emails.send({
         from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
         to: newSubscriber.email,
-        subject: 'Welcome to the Nitwits',
+        subject: 'Thanks for joining the Nitwits',
         html: getThemedEmailHtml(`
           <h2>Cheers, ${newSubscriber.name}!</h2>
           <p>You're officially on the list.</p>
