@@ -5,7 +5,22 @@ const path    = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { Resend } = require('resend');
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Aggressively hunt for the Resend API key to catch Render dashboard typos
+let rawResendKey = process.env.RESEND_API_KEY;
+if (!rawResendKey) {
+  // Look for any key name containing "RESEND" (e.g. accidentally added spaces)
+  const typoKey = Object.keys(process.env).find(k => k.toUpperCase().includes('RESEND'));
+  if (typoKey) rawResendKey = process.env[typoKey];
+  
+  // Look for any value that starts with "re_" just in case the name was completely wrong
+  if (!rawResendKey) {
+    const valKey = Object.keys(process.env).find(k => typeof process.env[k] === 'string' && process.env[k].trim().startsWith('re_'));
+    if (valKey) rawResendKey = process.env[valKey];
+  }
+}
+if (rawResendKey) rawResendKey = rawResendKey.trim(); // strip accidental spaces from the key itself
+
+const resend = rawResendKey ? new Resend(rawResendKey) : null;
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'yellowsky2025';
