@@ -5,7 +5,7 @@ const path    = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'yellowsky2025';
@@ -235,7 +235,7 @@ app.post('/api/subscribe', (req, res) => {
     fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(data, null, 2), 'utf8');
     
     // Send automated welcome email via Resend
-    if (process.env.RESEND_API_KEY) {
+    if (resend) {
       resend.emails.send({
         from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
         to: newSubscriber.email,
@@ -266,8 +266,8 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Subject and message are required.' });
   }
 
-  if (!process.env.RESEND_API_KEY) {
-    return res.status(500).json({ error: 'Resend API key is not configured.' });
+  if (!resend) {
+    return res.status(500).json({ error: 'Resend API key is not configured or invalid.' });
   }
 
   let data = { subscribers: [] };
