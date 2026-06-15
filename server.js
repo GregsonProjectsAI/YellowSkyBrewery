@@ -295,16 +295,16 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
   }));
 
   try {
-    const results = await Promise.allSettled(
+    const results = await Promise.all(
       emails.map(email => resend.emails.send(email))
     );
     
-    // Log any individual failures
-    results.forEach((res, i) => {
-      if (res.status === 'rejected' || (res.value && res.value.error)) {
-        console.error(`Failed to send to ${emails[i].to}:`, res.reason || res.value.error);
-      }
-    });
+    // Check if any returned an API error
+    const failed = results.find(res => res.error);
+    if (failed) {
+      console.error('Resend API rejected the email:', failed.error);
+      return res.status(500).json({ error: `Resend Error: ${failed.error.message}` });
+    }
 
     res.json({ success: true, count: emails.length });
   } catch (err) {
