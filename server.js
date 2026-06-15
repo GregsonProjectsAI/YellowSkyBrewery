@@ -197,14 +197,6 @@ function getThemedEmailHtml(content) {
 }
 
 // POST /api/subscribe — public endpoint for mailing list signup
-// Temporary debug endpoint to check Render environment variables
-app.get('/api/debug', (req, res) => {
-  const keys = Object.keys(process.env);
-  res.json({
-    keysInRender: keys.filter(k => k.includes('RESEND') || k.includes('ADMIN')),
-    allKeys: keys
-  });
-});
 
 app.post('/api/subscribe', (req, res) => {
   const { name, email } = req.body || {};
