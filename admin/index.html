@@ -471,6 +471,11 @@
                         <div class="template-name">General Update</div>
                         <div class="template-desc">Announce general news, updates, achievements, or brewery gossip.</div>
                     </div>
+                    <div class="template-card" data-type="mailshot">
+                        <div class="template-icon">✉️</div>
+                        <div class="template-name">Send Mailshot</div>
+                        <div class="template-desc">Blast a direct email to all current subscribers on the mailing list.</div>
+                    </div>
                 </div>
             </section>
 
@@ -564,6 +569,18 @@
                         <div class="form-group form-grid--full">
                             <label for="general-tags">Tags (Comma-separated values)</label>
                             <input type="text" id="general-tags" class="form-control" placeholder="awards, taproom, collaboration">
+                        </div>
+                    </div>
+
+                    <!-- Form Fields: Mailshot -->
+                    <div id="fields-mailshot" class="form-fields form-grid hidden">
+                        <div class="form-group form-grid--full">
+                            <label for="mailshot-subject">Email Subject *</label>
+                            <input type="text" id="mailshot-subject" class="form-control" placeholder="YSB Update: Next Sunday Brew Session!">
+                        </div>
+                        <div class="form-group form-grid--full">
+                            <label for="mailshot-message">Email Message *</label>
+                            <textarea id="mailshot-message" class="form-control" style="min-height: 200px;" placeholder="Write your email here... It will automatically start with 'Hi [Name],' and end with '— The Nitwits'."></textarea>
                         </div>
                     </div>
 
@@ -710,9 +727,15 @@
             const fieldsSection = document.getElementById(`fields-${type}`);
             if (fieldsSection) fieldsSection.classList.remove('hidden');
 
-            // Update title
-            const capitalizedName = type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            formPanelTitle.textContent = editingPostId ? `Edit ${capitalizedName}` : `Create New ${capitalizedName}`;
+            // Update title and button
+            if (type === 'mailshot') {
+                formPanelTitle.textContent = 'Blast Mailshot to List';
+                submitPostBtn.textContent = 'Send to All Subscribers';
+            } else {
+                const capitalizedName = type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                formPanelTitle.textContent = editingPostId ? `Edit ${capitalizedName}` : `Create New ${capitalizedName}`;
+                submitPostBtn.textContent = editingPostId ? 'Save Changes' : 'Publish Update';
+            }
         }
 
         // Fetch Posts list
@@ -842,6 +865,45 @@
                     showToast('Please fill out all required fields.', 'error');
                     return;
                 }
+            } else if (currentType === 'mailshot') {
+                const subject = document.getElementById('mailshot-subject').value.trim();
+                const message = document.getElementById('mailshot-message').value.trim();
+                if (!subject || !message) {
+                    showToast('Please fill out all required fields.', 'error');
+                    return;
+                }
+                if (!confirm('Are you absolutely sure you want to blast this email to ALL subscribers?')) return;
+                
+                const token = localStorage.getItem('adminToken');
+                try {
+                    submitPostBtn.textContent = 'Sending...';
+                    submitPostBtn.disabled = true;
+                    const res = await fetch(`${API_URL}/mailshot`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ subject, message })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        if (res.status === 401) {
+                            localStorage.removeItem('adminToken');
+                            showLogin();
+                            throw new Error('Session expired — please log in again.');
+                        }
+                        throw new Error(data.error || 'Failed to send mailshot');
+                    }
+                    
+                    showToast(`Mailshot sent successfully to ${data.count} subscribers!`);
+                    resetForm();
+                } catch (err) {
+                    showToast(err.message, 'error');
+                } finally {
+                    submitPostBtn.disabled = false;
+                }
+                return; // Early return to avoid running the standard blog post logic
             }
 
             const token = localStorage.getItem('adminToken');

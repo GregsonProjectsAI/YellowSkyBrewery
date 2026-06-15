@@ -3,7 +3,9 @@ const express = require('express');
 const fs      = require('fs');
 const path    = require('path');
 const { v4: uuidv4 } = require('uuid');
+const { Resend } = require('resend');
 
+const resend = new Resend(process.env.RESEND_API_KEY);
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'yellowsky2025';
@@ -154,13 +156,68 @@ app.post('/api/subscribe', (req, res) => {
   try {
     fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(data, null, 2), 'utf8');
     
-    // In a full implementation, you would trigger an email send here via Resend/SendGrid/etc.
-    // e.g. sendWelcomeEmail(newSubscriber.email, newSubscriber.name);
+    // Send automated welcome email via Resend
+    if (process.env.RESEND_API_KEY) {
+      resend.emails.send({
+        from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
+        to: newSubscriber.email,
+        subject: 'Welcome to the Nitwits',
+        html: `
+          <h2>Cheers, ${newSubscriber.name}!</h2>
+          <p>You're officially on the list.</p>
+          <p>We brew every Sunday from 1pm at the secret YSB HQ (Colin's garden in Cranleigh).</p>
+          <p>If you're ever in the mood for a pint, some darts, and a lot of nonsense, you know where to find us.</p>
+          <br>
+          <p>— The Nitwits</p>
+        `
+      }).catch(err => console.error('Resend error:', err));
+    }
     
     res.status(201).json({ success: true, message: "You're on the list. Check your inbox soon." });
   } catch (err) {
     console.error('Error saving subscriber:', err);
     res.status(500).json({ error: 'Internal server error. Please try again later.' });
+  }
+});
+
+// POST /api/mailshot — authenticated endpoint to blast email to all subscribers
+app.post('/api/mailshot', requireAuth, async (req, res) => {
+  const { subject, message } = req.body || {};
+  
+  if (!subject || !message) {
+    return res.status(400).json({ error: 'Subject and message are required.' });
+  }
+
+  if (!process.env.RESEND_API_KEY) {
+    return res.status(500).json({ error: 'Resend API key is not configured.' });
+  }
+
+  let data = { subscribers: [] };
+  try {
+    data = JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8'));
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to read subscribers list.' });
+  }
+
+  if (data.subscribers.length === 0) {
+    return res.status(400).json({ error: 'No subscribers to email.' });
+  }
+
+  // Resend batch sending allows up to 100 emails at once
+  // For small lists, this is perfectly fine.
+  const emails = data.subscribers.map(sub => ({
+    from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
+    to: sub.email,
+    subject: subject,
+    html: `<p>Hi ${sub.name},</p><p>${message.replace(/\n/g, '<br>')}</p><br><p>— The Nitwits</p>`
+  }));
+
+  try {
+    const response = await resend.batch.send(emails);
+    res.json({ success: true, count: emails.length, response });
+  } catch (err) {
+    console.error('Batch email error:', err);
+    res.status(500).json({ error: 'Failed to send mailshot.' });
   }
 });
 
