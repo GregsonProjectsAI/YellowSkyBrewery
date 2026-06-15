@@ -192,20 +192,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const name  = escapeHTML(event.eventName);
         const desc  = event.description ? escapeHTML(event.description.substring(0, 100)) + '…' : '';
         const venue = event.venue ? escapeHTML(event.venue) : '';
+        
+        const isSundayEvent = event.eventName && event.eventName.toLowerCase().includes('sunday');
+        
         dashEventWidget.innerHTML = `
             <span class="dashboard-event__name">${name}</span>
             ${venue ? `<span class="dashboard-event__venue">📍 ${venue}</span>` : ''}
             ${desc  ? `<span class="dashboard-event__desc">${desc}</span>`   : ''}
-            <button class="dashboard-post__open" id="dashboard-event-open-btn">View all events →</button>
+            <button class="dashboard-post__open" id="dashboard-event-open-btn">${isSundayEvent ? 'Get an invite →' : 'View all events →'}</button>
         `;
         const evBtn = document.getElementById('dashboard-event-open-btn');
         if (evBtn) {
             evBtn.addEventListener('click', () => {
-                pendingHighlight = event.id;
-                const eventFilter = document.querySelector('.blog-filter-btn[data-filter="event"]');
-                if (eventFilter) eventFilter.click();
-                const archiveBtn = document.getElementById('blog-archive-open-btn');
-                if (archiveBtn) archiveBtn.click();
+                if (isSundayEvent) {
+                    const contactSection = document.getElementById('contact');
+                    if (contactSection) {
+                        contactSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else {
+                    pendingHighlight = event.id;
+                    const eventFilter = document.querySelector('.blog-filter-btn[data-filter="event"]');
+                    if (eventFilter) eventFilter.click();
+                    const archiveBtn = document.getElementById('blog-archive-open-btn');
+                    if (archiveBtn) archiveBtn.click();
+                }
             });
         }
     }
