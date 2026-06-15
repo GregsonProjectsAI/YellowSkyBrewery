@@ -118,6 +118,84 @@ app.delete('/api/posts/:id', requireAuth, (req, res) => {
 
 // ── Subscribers API ──────────────────────────────────────────────────────────
 
+function getThemedEmailHtml(content) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          background-color: #0d0d0d;
+          color: #ffffff;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          background-color: #161616;
+          border: 1px solid #333333;
+          border-radius: 8px;
+          overflow: hidden;
+          margin-top: 40px;
+          margin-bottom: 40px;
+        }
+        .header {
+          background-color: #000000;
+          padding: 30px;
+          text-align: center;
+          border-bottom: 1px solid #d4af37;
+        }
+        .header img {
+          max-width: 150px;
+        }
+        .content {
+          padding: 40px 30px;
+          line-height: 1.6;
+          color: #e0e0e0;
+        }
+        h2 {
+          color: #d4af37;
+          margin-top: 0;
+          font-weight: normal;
+          letter-spacing: 1px;
+        }
+        .footer {
+          background-color: #0a0a0a;
+          padding: 20px;
+          text-align: center;
+          font-size: 12px;
+          color: #777777;
+          border-top: 1px solid #222222;
+        }
+        a {
+          color: #d4af37;
+          text-decoration: none;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://yellowskybrewery.com/assets/beer%20branding%20and%20names/transparent_logo.png" alt="Yellow Sky Brewery">
+        </div>
+        <div class="content">
+          ${content}
+        </div>
+        <div class="footer">
+          Yellow Sky Brewery<br>
+          Hidden in Cranleigh, Surrey<br>
+          <br>
+          You are receiving this because you're on the Nitwits mailing list.
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 // POST /api/subscribe — public endpoint for mailing list signup
 app.post('/api/subscribe', (req, res) => {
   const { name, email } = req.body || {};
@@ -162,14 +240,14 @@ app.post('/api/subscribe', (req, res) => {
         from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
         to: newSubscriber.email,
         subject: 'Welcome to the Nitwits',
-        html: `
+        html: getThemedEmailHtml(`
           <h2>Cheers, ${newSubscriber.name}!</h2>
           <p>You're officially on the list.</p>
           <p>We brew every Sunday from 1pm at the secret YSB HQ (Colin's garden in Cranleigh).</p>
           <p>If you're ever in the mood for a pint, some darts, and a lot of nonsense, you know where to find us.</p>
           <br>
           <p>— The Nitwits</p>
-        `
+        `)
       }).catch(err => console.error('Resend error:', err));
     }
     
@@ -209,7 +287,12 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
     from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
     to: sub.email,
     subject: subject,
-    html: `<p>Hi ${sub.name},</p><p>${message.replace(/\n/g, '<br>')}</p><br><p>— The Nitwits</p>`
+    html: getThemedEmailHtml(`
+      <h2>Hi ${sub.name},</h2>
+      <p>${message.replace(/\n/g, '<br>')}</p>
+      <br>
+      <p>— The Nitwits</p>
+    `)
   }));
 
   try {
