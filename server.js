@@ -213,6 +213,14 @@ function getThemedEmailHtml(content) {
 
 // POST /api/subscribe — public endpoint for mailing list signup
 
+// Public health check to remotely diagnose Render's environment injection
+app.get('/api/health', (req, res) => {
+  const keys = Object.keys(process.env);
+  const hasName = keys.some(k => k.includes('RESEND'));
+  const hasValue = keys.some(k => typeof process.env[k] === 'string' && process.env[k].includes('re_'));
+  res.json({ status: 'ok', hasName, hasValue, totalKeys: keys.length });
+});
+
 app.post('/api/subscribe', (req, res) => {
   const { name, email } = req.body || {};
   
