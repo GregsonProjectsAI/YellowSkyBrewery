@@ -1221,15 +1221,18 @@
             z-index: 9998;
             background-color: rgba(5, 5, 5, 0.98);
             opacity: 0;
+            visibility: hidden;
             pointer-events: none;
-            transition: opacity 0.45s ease;
+            transition: opacity 0.45s ease, visibility 0s ease 0.45s;
             overflow-y: auto;
             scroll-behavior: smooth;
         }
 
         .story-overlay.is-open {
             opacity: 1;
+            visibility: visible;
             pointer-events: auto;
+            transition: opacity 0.45s ease, visibility 0s ease 0s;
         }
 
         /* Close button */
