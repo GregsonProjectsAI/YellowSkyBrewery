@@ -316,10 +316,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function closeOverlay(continueStory) {
-            isOpen = false;
+            if (!isOpen) return;
+            isOpen       = false;
+            isAnimating  = false;  // always unblock — may have been mid-transition
+            isLooping    = false;
+            currentPhase    = 0;
+            targetProgress  = 0;
+            currentProgress = 0;
+            lerpFactor      = LERP_WHEEL;
+
             overlay.classList.remove('is-open');
             overlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('no-scroll');
+
+            // Clean up all slide active states and inline styles
+            slides.forEach(s => {
+                if (!s) return;
+                s.classList.remove('is-active', 'phase-active');
+                s.style.opacity    = '';
+                s.style.visibility = '';
+            });
+            texts.forEach(t => {
+                if (!t) return;
+                t.classList.remove('is-active', 'phase-active');
+                t.style.opacity    = '';
+                t.style.visibility = '';
+            });
+
+            if (canvas) canvas.classList.remove('is-visible');
+            if (prevBtn) prevBtn.disabled = true;
+
             if (continueStory) {
                 const sec = document.getElementById('story');
                 if (sec) {
