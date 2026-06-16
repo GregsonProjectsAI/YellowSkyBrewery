@@ -209,8 +209,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let isLooping       = false;
 
         // ── Cross-fade config ─────────────────────────────────────────────────
-        const FADE_ZONE = 0.07; // edge overlap fraction per panel
-        const LERP      = 0.10; // smoothing — higher = snappier, lower = more glide
+        const FADE_ZONE  = 0.07;  // edge overlap fraction per panel
+        const LERP_WHEEL = 0.10;  // wheel feel — snappy, tracks the scroll directly
+        const LERP_BTN   = 0.03;  // button/key feel — slow, cinematic glide between stops
+        let   lerpFactor = LERP_WHEEL;
 
         function panelOpacity(progress, index, count) {
             const segment = 1 / count;
@@ -246,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isOpen) { isLooping = false; return; }
 
             if (currentPhase === 2) {
-                currentProgress += (targetProgress - currentProgress) * LERP;
+                currentProgress += (targetProgress - currentProgress) * lerpFactor;
                 renderStoryFrame(currentProgress);
                 applyTextOpacities(currentProgress);
             }
@@ -338,13 +340,17 @@ document.addEventListener('DOMContentLoaded', () => {
             nextBtn.addEventListener('click', () => {
                 if      (currentPhase === 0) goPhase(1);
                 else if (currentPhase === 1) goPhase(2);
-                else if (currentPhase === 2) targetProgress = Math.min(1, targetProgress + 0.334);
+                else if (currentPhase === 2) {
+                    lerpFactor = LERP_BTN;
+                    targetProgress = Math.min(1, targetProgress + 0.334);
+                }
             });
         }
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
                 if      (currentPhase === 1) goPhase(0);
                 else if (currentPhase === 2) {
+                    lerpFactor = LERP_BTN;
                     targetProgress -= 0.334;
                     if (targetProgress < 0) goPhase(1);
                 }
@@ -372,6 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.deltaY > 0) goPhase(2);
                 else if (e.deltaY < 0) goPhase(0);
             } else if (currentPhase === 2) {
+                lerpFactor = LERP_WHEEL;
                 targetProgress += e.deltaY * 0.0006;
                 if (targetProgress < -0.05) {
                     goPhase(1);
