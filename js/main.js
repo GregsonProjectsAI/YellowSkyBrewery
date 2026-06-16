@@ -140,47 +140,177 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Story Overlay Controller
+    // Story Overlay Controller (Canvas Frame Scrubber — smooth as the intro animation)
     (function () {
         const overlay    = document.getElementById('story-overlay');
         const openBtn    = document.getElementById('story-open-btn');
         const closeBtn   = document.getElementById('story-close-btn');
-        const continueBtn = document.getElementById('story-continue-btn');
-        const track      = document.getElementById('story-slides-track');
-        const dots       = document.querySelectorAll('.story-dot');
         const prevBtn    = document.getElementById('story-prev');
         const nextBtn    = document.getElementById('story-next');
+        const continueBtn = document.getElementById('story-continue-btn');
 
         if (!overlay || !openBtn) return;
 
-        const TOTAL_SLIDES = 6;
-        let currentSlide = 0;
-        let isOpen = false;
-        let touchStartX = 0;
-        let wheelTimer = null;
+        // ── Canvas setup ──────────────────────────────────────────────────────
+        const canvas      = document.getElementById('story-canvas');
+        const ctx         = canvas ? canvas.getContext('2d') : null;
+        const loadingEl   = document.getElementById('story-loading');
+        const loadingText = document.getElementById('story-loading-text');
 
-        function goToSlide(index) {
-            // Clamp — do not go beyond the last slide or before the first
-            index = Math.max(0, Math.min(TOTAL_SLIDES - 1, index));
-            currentSlide = index;
+        const FRAME_COUNT  = 240;
+        const FRAME_PREFIX = 'assets/story_frames/frame_';
+        const storyFrames  = [];
+        let framesLoaded   = 0;
+        let framesReady    = false;
 
-            // Slide the track — each slide occupies (100/TOTAL_SLIDES)% of the track
-            track.style.transform = `translateX(${-(index * 100 / TOTAL_SLIDES)}%)`;
-
-            // Sync dots
-            dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
-
-            // Sync arrows — only disable prev on slide 0; next is always active
-            prevBtn.disabled = index === 0;
-            nextBtn.disabled = false;
+        // Preload all story frames immediately so they're ready when user opens overlay
+        for (let i = 1; i <= FRAME_COUNT; i++) {
+            const img = new Image();
+            const pad = i.toString().padStart(4, '0');
+            img.src = `${FRAME_PREFIX}${pad}.jpg`;
+            img.onload = img.onerror = () => {
+                framesLoaded++;
+                if (loadingText && loadingEl && !loadingEl.classList.contains('is-hidden')) {
+                    loadingText.textContent = `Loading story... ${Math.round((framesLoaded / FRAME_COUNT) * 100)}%`;
+                }
+                if (framesLoaded === FRAME_COUNT) framesReady = true;
+            };
+            storyFrames.push(img);
         }
 
+        function renderStoryFrame(progress) {
+            if (!ctx || !framesReady) return;
+            const index = Math.min(FRAME_COUNT - 1, Math.floor(progress * FRAME_COUNT));
+            const img   = storyFrames[index];
+            if (img && img.complete && img.naturalWidth > 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // ── Slides & text panels ──────────────────────────────────────────────
+        const slides = [
+            document.getElementById('slide-0'),
+            document.getElementById('slide-1'),
+            document.getElementById('slide-2'),
+            document.getElementById('slide-3'),
+            document.getElementById('slide-4'),
+            document.getElementById('slide-5')
+        ];
+        const texts = [slides[2], slides[3], slides[4], slides[5]];
+
+        // ── State ─────────────────────────────────────────────────────────────
+        let isOpen       = false;
+        let currentPhase = 0;   // 0 = slide0 | 1 = slide1 | 2 = canvas scrub
+        let isAnimating  = false;
+
+        let targetProgress  = 0; // where the user wants to be
+        let currentProgress = 0; // lerped value — drives canvas + text
+        let isLooping       = false;
+
+        // ── Cross-fade config ─────────────────────────────────────────────────
+        const FADE_ZONE = 0.07; // edge overlap fraction per panel
+        const LERP      = 0.10; // smoothing — higher = snappier, lower = more glide
+
+        function panelOpacity(progress, index, count) {
+            const segment = 1 / count;
+            const start   = index * segment;
+            const end     = start + segment;
+            if (progress >= end) return 0;
+            // First panel: no fade-in — visible from frame 1, only fades out at the end
+            if (index === 0) {
+                if (progress > end - FADE_ZONE) return (end - progress) / FADE_ZONE;
+                return 1;
+            }
+            if (progress <= start) return 0;
+            if (progress < start + FADE_ZONE) return (progress - start) / FADE_ZONE;
+            if (progress > end   - FADE_ZONE) return (end - progress)   / FADE_ZONE;
+            return 1;
+        }
+
+        function applyTextOpacities(progress) {
+            const count = texts.length;
+            texts.forEach((txt, i) => {
+                if (!txt) return;
+                const isLast  = (i === count - 1);
+                const opacity = (isLast && progress >= 1 - 0.01)
+                    ? 1 : panelOpacity(progress, i, count);
+                txt.style.opacity = opacity.toFixed(3);
+            });
+        }
+
+        // ── Render loop ───────────────────────────────────────────────────────
+        // Sole writer of canvas frames and text opacities.
+        // Wheel/button events only update targetProgress.
+        function renderLoop() {
+            if (!isOpen) { isLooping = false; return; }
+
+            if (currentPhase === 2) {
+                currentProgress += (targetProgress - currentProgress) * LERP;
+                renderStoryFrame(currentProgress);
+                applyTextOpacities(currentProgress);
+            }
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        // ── Phase controller ──────────────────────────────────────────────────
+        function goPhase(phase) {
+            if (isAnimating || phase < 0 || phase > 2) return;
+            isAnimating = true;
+
+            slides[0].classList.remove('is-active');
+            slides[1].classList.remove('is-active');
+            texts.forEach(t => {
+                if (!t) return;
+                t.classList.remove('is-active', 'phase-active');
+                t.style.opacity = '0';
+            });
+
+            currentPhase = phase;
+
+            if (phase === 0) {
+                slides[0].classList.add('is-active');
+                if (canvas) canvas.classList.remove('is-visible');
+                if (prevBtn) prevBtn.disabled = true;
+                if (nextBtn) nextBtn.disabled = false;
+            } else if (phase === 1) {
+                slides[1].classList.add('is-active');
+                if (canvas) canvas.classList.remove('is-visible');
+                if (prevBtn) prevBtn.disabled = false;
+                if (nextBtn) nextBtn.disabled = false;
+            } else if (phase === 2) {
+                // Show loading overlay if frames aren't ready yet
+                if (loadingEl) {
+                    if (!framesReady) {
+                        loadingEl.classList.remove('is-hidden');
+                    } else {
+                        loadingEl.classList.add('is-hidden');
+                    }
+                }
+                if (canvas) canvas.classList.add('is-visible');
+                texts.forEach(t => {
+                    if (!t) return;
+                    t.classList.add('phase-active');
+                    t.style.opacity = '0';
+                });
+                targetProgress  = 0;
+                currentProgress = 0;
+                renderStoryFrame(0); // paint frame 1 immediately
+                if (prevBtn) prevBtn.disabled = false;
+            }
+
+            setTimeout(() => { isAnimating = false; }, 800);
+        }
+
+        // ── Overlay open / close ──────────────────────────────────────────────
         function openOverlay() {
             isOpen = true;
-            goToSlide(0);
             overlay.classList.add('is-open');
             overlay.setAttribute('aria-hidden', 'false');
             document.body.classList.add('no-scroll');
+            goPhase(0);
+            if (!isLooping) { isLooping = true; requestAnimationFrame(renderLoop); }
         }
 
         function closeOverlay(continueStory) {
@@ -189,79 +319,80 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('no-scroll');
             if (continueStory) {
-                // Scroll back to the story section but a little further in,
-                // so the page implies "keep scrolling" rather than jumping away.
-                const storySection = document.getElementById('story');
-                if (storySection) {
-                    const rect = storySection.getBoundingClientRect();
-                    const nudge = window.innerHeight * 0.35; // 35vh into the section
+                const sec = document.getElementById('story');
+                if (sec) {
                     window.scrollTo({
-                        top: window.scrollY + rect.top + nudge,
+                        top: window.scrollY + sec.getBoundingClientRect().top + window.innerHeight * 0.35,
                         behavior: 'smooth'
                     });
                 }
             }
         }
 
-        // Open via CTA button
+        // ── Event listeners ───────────────────────────────────────────────────
         openBtn.addEventListener('click', openOverlay);
+        if (closeBtn)    closeBtn.addEventListener('click',    () => closeOverlay(false));
+        if (continueBtn) continueBtn.addEventListener('click', () => closeOverlay(true));
 
-        // Close via ✕ button
-        closeBtn.addEventListener('click', () => closeOverlay(false));
-
-        // Continue → close overlay and nudge into the story section
-        if (continueBtn) {
-            continueBtn.addEventListener('click', () => closeOverlay(true));
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                if      (currentPhase === 0) goPhase(1);
+                else if (currentPhase === 1) goPhase(2);
+                else if (currentPhase === 2) targetProgress = Math.min(1, targetProgress + 0.334);
+            });
+        }
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if      (currentPhase === 1) goPhase(0);
+                else if (currentPhase === 2) {
+                    targetProgress -= 0.334;
+                    if (targetProgress < 0) goPhase(1);
+                }
+            });
         }
 
-        // Click on dark backdrop (not on overlay children)
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeOverlay(false);
-        });
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeOverlay(false); });
 
-        // Arrow buttons
-        prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
-        nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1));
-
-        // Dot clicks
-        dots.forEach(dot => {
-            dot.addEventListener('click', () => {
-                goToSlide(parseInt(dot.getAttribute('data-index'), 10));
-            });
-        });
-
-        // Keyboard — arrow keys + Escape
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', e => {
             if (!isOpen) return;
-            if (e.key === 'ArrowRight') goToSlide(currentSlide + 1);
-            if (e.key === 'ArrowLeft')  goToSlide(currentSlide - 1);
-            if (e.key === 'Escape')     closeOverlay(false);
+            if (e.key === 'Escape')               closeOverlay(false);
+            if (e.key === 'ArrowRight' && nextBtn) nextBtn.click();
+            if (e.key === 'ArrowLeft'  && prevBtn) prevBtn.click();
         });
 
-        // Scroll wheel — debounced so one notch = one slide
-        overlay.addEventListener('wheel', (e) => {
+        // Wheel — only updates targetProgress; renderLoop does all the drawing
+        overlay.addEventListener('wheel', e => {
+            if (!isOpen) return;
             e.preventDefault();
-            if (wheelTimer) return;
-            if (e.deltaY > 0 || e.deltaX > 0) {
-                goToSlide(currentSlide + 1);
-            } else {
-                goToSlide(currentSlide - 1);
+            if (isAnimating) return;
+
+            if (currentPhase === 0) {
+                if (e.deltaY > 0) goPhase(1);
+            } else if (currentPhase === 1) {
+                if (e.deltaY > 0) goPhase(2);
+                else if (e.deltaY < 0) goPhase(0);
+            } else if (currentPhase === 2) {
+                targetProgress += e.deltaY * 0.0006;
+                if (targetProgress < -0.05) {
+                    goPhase(1);
+                    targetProgress = 0;
+                } else {
+                    targetProgress = Math.max(0, Math.min(1, targetProgress));
+                }
             }
-            wheelTimer = setTimeout(() => { wheelTimer = null; }, 650);
         }, { passive: false });
 
-        // Touch swipe
-        overlay.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-        }, { passive: true });
-
-        overlay.addEventListener('touchend', (e) => {
-            const delta = touchStartX - e.changedTouches[0].clientX;
-            if (Math.abs(delta) > 50) {
-                goToSlide(delta > 0 ? currentSlide + 1 : currentSlide - 1);
+        // Hide loading overlay once frames become ready (may already be true)
+        const checkFrames = setInterval(() => {
+            if (framesReady && loadingEl) {
+                loadingEl.classList.add('is-hidden');
+                clearInterval(checkFrames);
             }
-        }, { passive: true });
+        }, 200);
+
     })();
+
+
 
     // ── Nav Dropdown Controller ───────────────────────────────────────────────
     // Uses elementFromPoint for the logo hit-test so CSS scale transforms don't

@@ -1136,11 +1136,22 @@
            --------------------------------------------------- */
         .story-entry-section {
             position: relative;
-            height: 100vh;
+            padding: var(--space-xl) 0;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .story-entry__card {
+            position: relative;
             overflow: hidden;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
         }
 
@@ -1160,14 +1171,14 @@
             flex-direction: column;
             align-items: center;
             gap: var(--space-md);
-            padding: var(--space-lg);
+            padding: var(--space-xl) var(--space-lg);
             max-width: 700px;
         }
 
         .story-entry__heading {
             color: var(--color-brand-primary);
             font-family: var(--font-primary);
-            font-size: clamp(3.5rem, 9vw, 7rem);
+            font-size: clamp(3rem, 7vw, 6rem);
             text-transform: uppercase;
             letter-spacing: 8px;
             margin: 0;
@@ -1212,6 +1223,8 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.45s ease;
+            overflow-y: auto;
+            scroll-behavior: smooth;
         }
 
         .story-overlay.is-open {
@@ -1221,20 +1234,20 @@
 
         /* Close button */
         .story-overlay__close {
-            position: absolute;
+            position: fixed;
             top: 20px;
             right: 24px;
-            background: transparent;
+            background: rgba(0,0,0,0.5);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: rgba(255, 255, 255, 0.55);
             font-family: var(--font-primary);
             font-size: 0.8rem;
             letter-spacing: 2px;
             text-transform: uppercase;
-            padding: 8px 18px;
-            border-radius: var(--border-radius-sm);
+            padding: 10px 20px;
+            border-radius: 30px;
             cursor: pointer;
-            z-index: 10;
+            z-index: 10000;
             transition: color 0.2s ease, border-color 0.2s ease;
         }
 
@@ -1247,53 +1260,141 @@
         .story-slides-wrapper {
             position: absolute;
             inset: 0;
-            overflow: hidden;
         }
 
-        .story-slides-track {
-            display: flex;
+        .story-slides-wrapper {
+            position: absolute;
+            inset: 0;
+        }
+
+        #story-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
             height: 100%;
-            width: 600%;
-            transform: translateX(0);
-            transition: transform 0.65s cubic-bezier(0.65, 0, 0.35, 1);
-            will-change: transform;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.65s ease;
+            z-index: 0;
+            pointer-events: none;
         }
 
-        /* Individual slide */
+        #story-canvas.is-visible {
+            opacity: 1;
+        }
+
+        .story-loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            background: rgba(0, 0, 0, 0.75);
+            color: var(--color-brand-primary);
+            font-family: var(--font-primary);
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .story-loading.is-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         .story-slide {
-            width: calc(100% / 6);
-            height: 100%;
+            position: absolute;
+            inset: 0;
             display: flex;
-            flex-direction: row;
             align-items: center;
             padding: 80px 100px;
             box-sizing: border-box;
             gap: var(--space-2xl);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.65s ease, visibility 0.65s ease;
+            z-index: 1;
         }
 
-        /* Centred full-width slide variant (slide 1) */
+        .story-slide.is-active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        /* Scroll-driven text slides: JS sets opacity directly — no CSS transition fighting */
+        .story-slide--scroll-driven {
+            transition: none;
+            visibility: hidden; /* JS will set inline visibility when phase 2 is active */
+        }
+
+        .story-slide--scroll-driven.phase-active {
+            visibility: visible;
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .story-slide--video-bg {
+            justify-content: flex-end;
+        }
+
         .story-slide--centred {
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Slide 0 — force everything centred regardless of inherited text-align */
+        #slide-0 {
+            align-items: center;
+            justify-content: center;
+        }
+
+        #slide-0 .story-slide__number,
+        #slide-0 .story-slide__title {
+            text-align: center;
+            width: 100%;
+        }
+
+        #slide-0 .story-slide__video-container {
+            margin: 0 auto;
+        }
+
+        .video-overlay-box {
+            background: rgba(0, 0, 0, 0.65);
+            padding: 40px;
+            border-radius: var(--border-radius-lg);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            max-width: 500px;
+        }
             justify-content: center;
             overflow: hidden;
         }
 
         .story-slide__content-side--full {
-            flex: 1;
+            flex: none;
             max-width: 900px;
             width: 100%;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             text-align: center;
             gap: var(--space-lg);
         }
 
         .story-slide__video-container {
             position: relative;
-            width: 100%;
-            max-width: 100%;
-            height: 55vh;
+            width: 55%;
+            max-width: 600px;
+            height: 62vh;
             border-radius: var(--border-radius-lg);
             overflow: hidden;
             display: flex;
