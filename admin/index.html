@@ -476,6 +476,11 @@
                         <div class="template-name">Send Mailshot</div>
                         <div class="template-desc">Blast a direct email to all current subscribers on the mailing list.</div>
                     </div>
+                    <div class="template-card" data-type="reply-to-one">
+                        <div class="template-icon">🎯</div>
+                        <div class="template-name">Reply to One</div>
+                        <div class="template-desc">Pick a single person from the mailing list and send them a personal email.</div>
+                    </div>
                 </div>
             </section>
 
@@ -581,6 +586,24 @@
                         <div class="form-group form-grid--full">
                             <label for="mailshot-message">Email Message *</label>
                             <textarea id="mailshot-message" class="form-control" style="min-height: 200px;" placeholder="Write your email here... It will automatically start with 'Hi [Name],' and end with '— The Nitwits'."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Form Fields: Reply to One -->
+                    <div id="fields-reply-to-one" class="form-fields form-grid hidden">
+                        <div class="form-group form-grid--full">
+                            <label for="single-recipient">Recipient *</label>
+                            <select id="single-recipient" class="form-control">
+                                <option value="">— Loading subscribers... —</option>
+                            </select>
+                        </div>
+                        <div class="form-group form-grid--full">
+                            <label for="single-subject">Email Subject *</label>
+                            <input type="text" id="single-subject" class="form-control" placeholder="Hey, just wanted to let you know...">
+                        </div>
+                        <div class="form-group form-grid--full">
+                            <label for="single-message">Message *</label>
+                            <textarea id="single-message" class="form-control" style="min-height: 200px;" placeholder="Write your personal message here... It will start with 'Hi [Name],' and end with '— The Nitwits'."></textarea>
                         </div>
                     </div>
 
@@ -731,10 +754,39 @@
             if (type === 'mailshot') {
                 formPanelTitle.textContent = 'Blast Mailshot to List';
                 submitPostBtn.textContent = 'Send to All Subscribers';
+            } else if (type === 'reply-to-one') {
+                formPanelTitle.textContent = 'Reply to One Subscriber';
+                submitPostBtn.textContent = 'Send Personal Email';
+                fetchSubscribers();
             } else {
                 const capitalizedName = type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                 formPanelTitle.textContent = editingPostId ? `Edit ${capitalizedName}` : `Create New ${capitalizedName}`;
                 submitPostBtn.textContent = editingPostId ? 'Save Changes' : 'Publish Update';
+            }
+        }
+
+        // Fetch subscriber list and populate the reply-to-one dropdown
+        async function fetchSubscribers() {
+            const select = document.getElementById('single-recipient');
+            if (!select) return;
+            select.innerHTML = '<option value="">— Loading... —</option>';
+            try {
+                const token = localStorage.getItem('adminToken');
+                const res = await fetch(`${API_URL}/subscribers`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Could not fetch subscribers');
+                const data = await res.json();
+                const subs = data.subscribers || [];
+                if (subs.length === 0) {
+                    select.innerHTML = '<option value="">— No subscribers yet —</option>';
+                    return;
+                }
+                select.innerHTML = '<option value="">— Select a person —</option>' +
+                    subs.map(s => `<option value="${s.id}">${s.name || '(no name)'} &lt;${s.email}&gt;</option>`).join('');
+            } catch (err) {
+                select.innerHTML = '<option value="">— Failed to load —</option>';
+                showToast(err.message, 'error');
             }
         }
 
@@ -895,7 +947,6 @@
                         }
                         throw new Error(data.error || 'Failed to send mailshot');
                     }
-                    
                     showToast(`Mailshot sent successfully to ${data.count} subscribers!`);
                     resetForm();
                 } catch (err) {
@@ -903,7 +954,48 @@
                 } finally {
                     submitPostBtn.disabled = false;
                 }
-                return; // Early return to avoid running the standard blog post logic
+                return;
+
+            } else if (currentType === 'reply-to-one') {
+                const subscriberId = document.getElementById('single-recipient').value;
+                const subject     = document.getElementById('single-subject').value.trim();
+                const message     = document.getElementById('single-message').value.trim();
+                if (!subscriberId || !subject || !message) {
+                    showToast('Please select a recipient and fill in all fields.', 'error');
+                    return;
+                }
+                const recipientText = document.getElementById('single-recipient').selectedOptions[0]?.text || '';
+                if (!confirm(`Send a personal email to ${recipientText}?`)) return;
+
+                const token = localStorage.getItem('adminToken');
+                try {
+                    submitPostBtn.textContent = 'Sending...';
+                    submitPostBtn.disabled = true;
+                    const res = await fetch(`${API_URL}/mailshot/single`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ subscriberId, subject, message })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        if (res.status === 401) {
+                            localStorage.removeItem('adminToken');
+                            showLogin();
+                            throw new Error('Session expired — please log in again.');
+                        }
+                        throw new Error(data.error || 'Failed to send email');
+                    }
+                    showToast(`Email sent to ${data.to} ✓`);
+                    resetForm();
+                } catch (err) {
+                    showToast(err.message, 'error');
+                } finally {
+                    submitPostBtn.disabled = false;
+                }
+                return;
             }
 
             const token = localStorage.getItem('adminToken');

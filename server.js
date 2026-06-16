@@ -311,7 +311,7 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
     to: sub.email,
     subject: subject,
     html: getThemedEmailHtml(`
-      <h2>Hi ${sub.name},</h2>
+      <h2>Hi ${sub.name || 'there'},</h2>
       <p>${message.replace(/\n/g, '<br>')}</p>
       <br>
       <p>— The Nitwits</p>
@@ -334,6 +334,64 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Mailshot error:', err);
     res.status(500).json({ error: 'Failed to send mailshot.' });
+  }
+});
+
+// GET /api/subscribers — authenticated, returns subscriber list for admin UI
+app.get('/api/subscribers', requireAuth, (req, res) => {
+  try {
+    const data = JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8'));
+    res.json({ subscribers: data.subscribers });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to read subscribers list.' });
+  }
+});
+
+// POST /api/mailshot/single — authenticated, sends to one subscriber by id
+app.post('/api/mailshot/single', requireAuth, async (req, res) => {
+  const { subscriberId, subject, message } = req.body || {};
+
+  if (!subscriberId || !subject || !message) {
+    return res.status(400).json({ error: 'subscriberId, subject and message are required.' });
+  }
+
+  if (!resend) {
+    return res.status(500).json({ error: 'Resend API key is not configured or invalid.' });
+  }
+
+  let data = { subscribers: [] };
+  try {
+    data = JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8'));
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to read subscribers list.' });
+  }
+
+  const sub = data.subscribers.find(s => s.id === subscriberId);
+  if (!sub) {
+    return res.status(404).json({ error: 'Subscriber not found.' });
+  }
+
+  try {
+    const result = await resend.emails.send({
+      from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
+      to: sub.email,
+      subject: subject,
+      html: getThemedEmailHtml(`
+        <h2>Hi ${sub.name || 'there'},</h2>
+        <p>${message.replace(/\n/g, '<br>')}</p>
+        <br>
+        <p>— The Nitwits</p>
+      `)
+    });
+
+    if (result.error) {
+      return res.status(500).json({ error: `Resend Error: ${result.error.message}` });
+    }
+
+    res.json({ success: true, to: sub.email });
+  } catch (err) {
+    console.error('Single mailshot error:', err);
+    res.status(500).json({ error: 'Failed to send email.' });
   }
 });
 
