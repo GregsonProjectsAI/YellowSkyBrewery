@@ -1237,9 +1237,11 @@
 
         /* Close button */
         .story-overlay__close {
-            position: fixed;
+            position: sticky;
             top: 20px;
-            right: 24px;
+            float: right;
+            margin: 20px 24px 0 auto;
+            display: block;
             background: rgba(0,0,0,0.5);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: rgba(255, 255, 255, 0.55);
@@ -1250,7 +1252,7 @@
             padding: 10px 20px;
             border-radius: 30px;
             cursor: pointer;
-            z-index: 10000;
+            z-index: 10;
             transition: color 0.2s ease, border-color 0.2s ease;
         }
 
@@ -1597,7 +1599,6 @@
 
             .story-overlay__close {
                 top: 12px;
-                right: 12px;
                 font-size: 0.72rem;
                 padding: 6px 12px;
             }
