@@ -204,20 +204,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const hopVideo = slides[1] ? slides[1].querySelector('video') : null;
         if (hopVideo) hopVideo.pause(); // start paused until slide-1 is shown
 
+
         // ── State ─────────────────────────────────────────────────────────────
         let isOpen       = false;
         let currentPhase = 0;   // 0 = slide0 | 1 = slide1 | 2 = canvas scrub
         let isAnimating  = false;
 
-        let targetProgress  = 0; // where the user wants to be
-        let currentProgress = 0; // lerped value — drives canvas + text
-        let isLooping       = false;
+        let targetProgress    = 0; // destination (set by buttons)
+        let currentProgress  = 0; // drives canvas + text
+        let animStartProgress = 0; // progress at the moment a button was pressed
+        let animStartTime     = null; // performance.now() timestamp when animation began
+        let isLooping        = false;
 
         // ── Cross-fade config ─────────────────────────────────────────────────
-        const FADE_ZONE  = 0.07;  // edge overlap fraction per panel
-        const LERP_WHEEL = 0.10;  // wheel feel — snappy, tracks the scroll directly
-        const LERP_BTN   = 0.03;  // button/key feel — slow, cinematic glide between stops
-        let   lerpFactor = LERP_WHEEL;
+        const FADE_ZONE     = 0.07;  // edge overlap fraction per panel
+        const ANIM_DURATION = 900;   // ms — fixed-length ease-out (no asymptotic tail)
 
         function panelOpacity(progress, index, count) {
             const segment = 1 / count;
@@ -248,17 +249,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ── Render loop ───────────────────────────────────────────────────────
         // Sole writer of canvas frames and text opacities.
-        // Wheel/button events only update targetProgress.
-        function renderLoop() {
+        // Uses a fixed-duration ease-out cubic so it always reaches the exact
+        // target frame cleanly — no asymptotic tail, no slow-crawl stutter.
+        function renderLoop(timestamp) {
             if (!isOpen) { isLooping = false; return; }
 
-            if (currentPhase === 2) {
-                currentProgress += (targetProgress - currentProgress) * lerpFactor;
+            if (currentPhase === 2 && animStartTime !== null) {
+                const elapsed = timestamp - animStartTime;
+                const t       = Math.min(1, elapsed / ANIM_DURATION);
+                const eased   = 1 - Math.pow(1 - t, 3); // ease-out cubic
+                currentProgress = animStartProgress + (targetProgress - animStartProgress) * eased;
+
+                // Snap as soon as we've reached the target FRAME INDEX — not just the target
+                // progress value. Once the canvas is showing the right frame, any remaining
+                // animation time is invisible, so stopping here eliminates the slow-tail
+                // stutter (the single frame jump after many frames of apparent stillness).
+                const targetFrame  = Math.min(FRAME_COUNT - 1, Math.floor(targetProgress * FRAME_COUNT));
+                const currentFrame = Math.min(FRAME_COUNT - 1, Math.floor(currentProgress * FRAME_COUNT));
+                const isForward    = targetProgress >= animStartProgress;
+                const reachedTarget = isForward ? currentFrame >= targetFrame : currentFrame <= targetFrame;
+
+                if (reachedTarget || t >= 1) {
+                    currentProgress = targetProgress; // snap exactly
+                    animStartTime   = null;           // animation complete
+                }
                 renderStoryFrame(currentProgress);
                 applyTextOpacities(currentProgress);
             }
 
             requestAnimationFrame(renderLoop);
+        }
+
+        // Start a new animation toward a target progress value (0–1).
+        // Interrupts any in-progress animation from wherever currentProgress currently is.
+        function startAnimation(target) {
+            targetProgress    = Math.max(0, Math.min(1, target));
+            animStartProgress = currentProgress;
+            animStartTime     = performance.now();
         }
 
         // ── Phase controller ──────────────────────────────────────────────────
@@ -303,9 +330,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     t.classList.add('phase-active');
                     t.style.opacity = '0';
                 });
-                targetProgress  = 0;
-                currentProgress = 0;
-                renderStoryFrame(0); // paint frame 1 immediately
+                targetProgress    = 0;
+                currentProgress   = 0;
+                animStartProgress = 0;
+                animStartTime     = null;
+                renderStoryFrame(0);    // paint frame 1 immediately
+                applyTextOpacities(0);  // show first text box immediately at rest
                 if (prevBtn) prevBtn.disabled = false;
                 if (hopVideo) hopVideo.pause();
             }
@@ -329,10 +359,11 @@ document.addEventListener('DOMContentLoaded', () => {
             isAnimating  = false;  // always unblock — may have been mid-transition
             isLooping    = false;
             currentPhase    = 0;
-            targetProgress  = 0;
-            currentProgress = 0;
+            targetProgress    = 0;
+            currentProgress   = 0;
+            animStartProgress = 0;
+            animStartTime     = null;
             if (hopVideo) hopVideo.pause();
-            lerpFactor      = LERP_WHEEL;
 
             overlay.classList.remove('is-open');
             overlay.setAttribute('aria-hidden', 'true');
@@ -376,8 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if      (currentPhase === 0) goPhase(1);
                 else if (currentPhase === 1) goPhase(2);
                 else if (currentPhase === 2) {
-                    lerpFactor = LERP_BTN;
-                    targetProgress = Math.min(1, targetProgress + 0.334);
+                    startAnimation(Math.min(1, targetProgress + 0.334));
                 }
             });
         }
@@ -385,9 +415,9 @@ document.addEventListener('DOMContentLoaded', () => {
             prevBtn.addEventListener('click', () => {
                 if      (currentPhase === 1) goPhase(0);
                 else if (currentPhase === 2) {
-                    lerpFactor = LERP_BTN;
-                    targetProgress -= 0.334;
-                    if (targetProgress < 0) goPhase(1);
+                    const newTarget = targetProgress - 0.334;
+                    if (newTarget < 0) goPhase(1);
+                    else startAnimation(newTarget);
                 }
             });
         }
@@ -401,28 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'ArrowLeft'  && prevBtn) prevBtn.click();
         });
 
-        // Wheel — only updates targetProgress; renderLoop does all the drawing
-        overlay.addEventListener('wheel', e => {
-            if (!isOpen) return;
-            e.preventDefault();
-            if (isAnimating) return;
-
-            if (currentPhase === 0) {
-                if (e.deltaY > 0) goPhase(1);
-            } else if (currentPhase === 1) {
-                if (e.deltaY > 0) goPhase(2);
-                else if (e.deltaY < 0) goPhase(0);
-            } else if (currentPhase === 2) {
-                lerpFactor = LERP_WHEEL;
-                targetProgress += e.deltaY * 0.0006;
-                if (targetProgress < -0.05) {
-                    goPhase(1);
-                    targetProgress = 0;
-                } else {
-                    targetProgress = Math.max(0, Math.min(1, targetProgress));
-                }
-            }
-        }, { passive: false });
+        // Wheel/scroll is intentionally disabled — navigation is buttons and keyboard only.
 
         // Hide loading overlay once frames become ready (may already be true)
         const checkFrames = setInterval(() => {
