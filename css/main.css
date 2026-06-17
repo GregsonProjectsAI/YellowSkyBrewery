@@ -1343,6 +1343,12 @@
             justify-content: flex-end;
         }
 
+        /* Slides 3 & 5 — text box on the left */
+        #slide-3,
+        #slide-5 {
+            justify-content: flex-start;
+        }
+
         .story-slide--centred {
             justify-content: center;
             align-items: center;
@@ -1364,11 +1370,61 @@
             margin: 0 auto;
         }
 
+        /* Slide 0 — fullscreen video/animation with overlaid title */
+        .story-slide--fullscreen-video {
+            padding: 0;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .story-slide--fullscreen-video .story-slide__video-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            z-index: 1;
+        }
+
+        .story-slide--fullscreen-video .story-slide__content-side {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        /* Slide 1 — full-bleed video background, centred text overlay */
+        .story-slide--fullscreen-bg {
+            padding: 80px 100px;
+            overflow: hidden;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .story-slide__fullbg-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .story-slide--fullscreen-bg .story-slide__content-side {
+            position: relative;
+            z-index: 2;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
         .video-overlay-box {
-            background: rgba(0, 0, 0, 0.65);
+            background: rgba(0, 0, 0, 0.32);
             padding: 40px;
             border-radius: var(--border-radius-lg);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(6px);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(212, 175, 55, 0.15);
             max-width: 500px;

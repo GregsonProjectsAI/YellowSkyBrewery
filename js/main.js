@@ -199,6 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         const texts = [slides[2], slides[3], slides[4], slides[5]];
 
+        // Hop animation video on slide-1 — managed manually to avoid
+        // competing with slide-0's tea towel autoplay videos
+        const hopVideo = slides[1] ? slides[1].querySelector('video') : null;
+        if (hopVideo) hopVideo.pause(); // start paused until slide-1 is shown
+
         // ── State ─────────────────────────────────────────────────────────────
         let isOpen       = false;
         let currentPhase = 0;   // 0 = slide0 | 1 = slide1 | 2 = canvas scrub
@@ -276,11 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (canvas) canvas.classList.remove('is-visible');
                 if (prevBtn) prevBtn.disabled = true;
                 if (nextBtn) nextBtn.disabled = false;
+                if (hopVideo) hopVideo.pause();
             } else if (phase === 1) {
                 slides[1].classList.add('is-active');
                 if (canvas) canvas.classList.remove('is-visible');
                 if (prevBtn) prevBtn.disabled = false;
                 if (nextBtn) nextBtn.disabled = false;
+                if (hopVideo) { hopVideo.currentTime = 0; hopVideo.play().catch(() => {}); }
             } else if (phase === 2) {
                 // Show loading overlay if frames aren't ready yet
                 if (loadingEl) {
@@ -300,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentProgress = 0;
                 renderStoryFrame(0); // paint frame 1 immediately
                 if (prevBtn) prevBtn.disabled = false;
+                if (hopVideo) hopVideo.pause();
             }
 
             setTimeout(() => { isAnimating = false; }, 800);
@@ -323,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPhase    = 0;
             targetProgress  = 0;
             currentProgress = 0;
+            if (hopVideo) hopVideo.pause();
             lerpFactor      = LERP_WHEEL;
 
             overlay.classList.remove('is-open');
