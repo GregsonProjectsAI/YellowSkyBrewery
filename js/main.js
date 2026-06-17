@@ -280,6 +280,79 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
+        // ── Steam video overlay — dual-video crossfade ────────────────────────────────
+        // Two video elements play the same clip in alternation. When the primary
+        // is XFADE_S from its end the standby starts from t=0 and both cross-
+        // fade — hiding the loop cut entirely.
+        const steamA    = document.getElementById('story-steam-a');
+        const steamB    = document.getElementById('story-steam-b');
+        const STEAM_STEP  = 2;
+        const XFADE_S     = 1.0;    // crossfade duration in seconds
+        const FADE_IN_S   = 1.2;    // slow fade-in when arriving at step 2
+
+        let steamIsActive = false;
+        let steamPrimary  = steamA;
+        let steamStandby  = steamB;
+        let crossfading   = false;
+
+        function steamShow(vid, dur) {
+            vid.style.transition = `opacity ${dur}s linear`;
+            vid.style.opacity    = '1';
+        }
+        function steamHide(vid, dur) {
+            vid.style.transition = dur > 0 ? `opacity ${dur}s linear` : 'none';
+            vid.style.opacity    = '0';
+        }
+        function steamReset(vid) {
+            vid.style.transition = 'none';
+            vid.style.opacity    = '0';
+            vid.pause();
+            vid.currentTime = 0;
+        }
+
+        function doCrossfade() {
+            if (!steamIsActive || crossfading) return;
+            crossfading = true;
+            steamStandby.currentTime = 0;
+            steamStandby.play().catch(() => {});
+            steamShow(steamStandby, XFADE_S);
+            steamHide(steamPrimary, XFADE_S);
+            setTimeout(() => {
+                steamReset(steamPrimary);
+                [steamPrimary, steamStandby] = [steamStandby, steamPrimary];
+                crossfading = false;
+            }, XFADE_S * 1000 + 100);
+        }
+
+        function onSteamTimeUpdate() {
+            if (!steamIsActive || crossfading || !this.duration) return;
+            if (this !== steamPrimary) return;
+            if ((this.duration - this.currentTime) <= XFADE_S) doCrossfade();
+        }
+
+        if (steamA) steamA.addEventListener('timeupdate', onSteamTimeUpdate);
+        if (steamB) steamB.addEventListener('timeupdate', onSteamTimeUpdate);
+
+        function startSteamEffect(step) {
+            if (!steamA || step !== STEAM_STEP) return;
+            steamIsActive = true;
+            crossfading   = false;
+            steamPrimary  = steamA;
+            steamStandby  = steamB;
+            steamReset(steamB);
+            steamA.currentTime = 0;
+            steamA.play().catch(() => {});
+            steamShow(steamA, FADE_IN_S);
+        }
+
+        function stopSteamEffect() {
+            if (!steamA) return;
+            steamIsActive = false;
+            crossfading   = false;
+            steamReset(steamA);
+            steamReset(steamB);
+        }
+
         // ── Render loop ───────────────────────────────────────────────────────
         // Sole writer of canvas frames and text opacities.
         // Uses a fixed-duration ease-out cubic so it always reaches the exact
@@ -305,6 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (reachedTarget || t >= 1) {
                     currentProgress = targetProgress; // snap exactly
                     animStartTime   = null;           // animation complete
+                    startSteamEffect(currentStep);    // start steam if this is the kettle step
                 }
                 renderStoryFrame(currentProgress);
                 applyTextOpacities(currentProgress);
@@ -316,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Start a new animation toward a target progress value (0–1).
         // Duration scales with the number of frames covered to keep visual speed uniform.
         function startAnimation(target) {
+            stopSteamEffect();
             targetProgress      = Math.max(0, Math.min(1, target));
             animStartProgress   = currentProgress;
             animStartTime       = performance.now();
@@ -394,6 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isOpen       = false;
             isAnimating  = false;  // always unblock — may have been mid-transition
             isLooping    = false;
+            stopSteamEffect();
             currentPhase    = 0;
             targetProgress    = 0;
             currentProgress   = 0;

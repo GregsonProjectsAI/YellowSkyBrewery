@@ -293,6 +293,13 @@
         <div class="story-slides-wrapper" id="story-slides-wrapper">
             <!-- Canvas-based frame scrubber (replaces video for smooth seeking) -->
             <canvas id="story-canvas" width="1920" height="1080"></canvas>
+            <!-- Steam overlay: dual-video crossfade for seamless looping -->
+            <video id="story-steam-a" class="story-steam-video" muted playsinline preload="auto">
+                <source src="assets/steam_loop.mp4" type="video/mp4">
+            </video>
+            <video id="story-steam-b" class="story-steam-video" muted playsinline preload="auto">
+                <source src="assets/steam_loop.mp4" type="video/mp4">
+            </video>
             <div id="story-loading" class="story-loading">
                 <span id="story-loading-text">Loading story...</span>
             </div>
