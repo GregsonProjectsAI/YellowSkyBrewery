@@ -209,43 +209,76 @@ document.addEventListener('DOMContentLoaded', () => {
         let isOpen       = false;
         let currentPhase = 0;   // 0 = slide0 | 1 = slide1 | 2 = canvas scrub
         let isAnimating  = false;
+        let currentStep  = 0;   // integer step within phase 2: 0, 1, 2, 3
+        // Custom stop points (progress 0–1) for each canvas-scrub panel.
+        // progress = frame_index / FRAME_COUNT, where frame_index is 0-based.
+        // Frame filename 0104 → index 103 → progress 103/240 = 0.4292
+        const STOP_POINTS = [
+            0,       // step 0 — Well, Now What?      (frame 001)
+            0.225,   // step 1 — There's No Room Here! (frame 055)
+            0.45,    // step 2 — Well, Serious-ish     (frame 109, index 108 → 108/240)
+            1.0,     // step 3 — slide-5, final        (frame 240)
+        ];
+        const STEP_COUNT = STOP_POINTS.length;
 
         let targetProgress    = 0; // destination (set by buttons)
         let currentProgress  = 0; // drives canvas + text
         let animStartProgress = 0; // progress at the moment a button was pressed
         let animStartTime     = null; // performance.now() timestamp when animation began
         let isLooping        = false;
+        let activeAnimDuration = 1616;    // ms — recalculated per transition in startAnimation
 
         // ── Cross-fade config ─────────────────────────────────────────────────
-        const FADE_ZONE     = 0.07;  // edge overlap fraction per panel
-        const ANIM_DURATION = 900;   // ms — fixed-length ease-out (no asymptotic tail)
+        const FADE_ZONE          = 0.07;   // fade-in width per panel
+        const FADE_OUT_ZONE      = 0.125;  // fade-out width: 30 frames (30/240) from each stop point
+        const ANIM_DURATION      = 900;    // ms — fixed-length ease-out for phase 0/1 transitions
+        const MS_PER_FRAME       = 1373 / 54; // ~25.4ms per canvas frame — uniform speed across all transitions
 
-        function panelOpacity(progress, index, count) {
-            const segment = 1 / count;
-            const start   = index * segment;
-            const end     = start + segment;
-            if (progress >= end) return 0;
-            // First panel: no fade-in — visible from frame 1, only fades out at the end
-            if (index === 0) {
-                if (progress > end - FADE_ZONE) return (end - progress) / FADE_ZONE;
-                return 1;
-            }
-            if (progress <= start) return 0;
-            if (progress < start + FADE_ZONE) return (progress - start) / FADE_ZONE;
-            if (progress > end   - FADE_ZONE) return (end - progress)   / FADE_ZONE;
-            return 1;
-        }
+        // Progress at which each text panel STARTS fading in.
+        // Fully visible FADE_ZONE (0.07) after this point.
+        // frame 55 → index 54 → progress 54/240 = 0.225 → fade-in starts at 0.225 - 0.07 = 0.155
+        const TEXT_FADE_IN = [
+            0,      // panel 0 — Well, Now What?       (visible immediately)
+            0.155,  // panel 1 — There's No Room Here! (fully visible at frame 55)
+            0.38,   // panel 2 — Well, Serious-ish     (fully visible at frame 109 → 0.38 + 0.07 = 0.45)
+            0.5758, // panel 3 — Can we join in (fully visible at frame 156 → 0.5758 + 0.07 = 0.6458)
+        ];
 
         function applyTextOpacities(progress) {
-            const count = texts.length;
             texts.forEach((txt, i) => {
                 if (!txt) return;
-                const isLast  = (i === count - 1);
-                const opacity = (isLast && progress >= 1 - 0.01)
-                    ? 1 : panelOpacity(progress, i, count);
+                let opacity;
+
+                if (i === texts.length - 1) {
+                    // Last panel: fade in only — never fades out
+                    const fadeStart = TEXT_FADE_IN[i];
+                    const fadeEnd   = fadeStart + FADE_ZONE;
+                    if (progress <= fadeStart)               opacity = 0;
+                    else if (progress < fadeEnd)             opacity = (progress - fadeStart) / FADE_ZONE;
+                    else                                     opacity = 1;
+
+                } else if (i === 0) {
+                    // First panel: no fade-in, fades out over 30 frames from stop point 0
+                    const fadeOutEnd = STOP_POINTS[0] + FADE_OUT_ZONE;
+                    if (progress >= fadeOutEnd)              opacity = 0;
+                    else                                     opacity = (fadeOutEnd - progress) / FADE_OUT_ZONE;
+
+                } else {
+                    // Middle panels: fade in over FADE_ZONE, hold, fade out over FADE_OUT_ZONE
+                    const fadeInStart  = TEXT_FADE_IN[i];
+                    const fadeInEnd    = fadeInStart + FADE_ZONE;
+                    const fadeOutStart = STOP_POINTS[i];
+                    const fadeOutEnd   = fadeOutStart + FADE_OUT_ZONE;
+                    if (progress <= fadeInStart)             opacity = 0;
+                    else if (progress < fadeInEnd)           opacity = (progress - fadeInStart) / FADE_ZONE;
+                    else if (progress >= fadeOutEnd)         opacity = 0;
+                    else if (progress > fadeOutStart)        opacity = (fadeOutEnd - progress) / FADE_OUT_ZONE;
+                    else                                     opacity = 1;
+                }
                 txt.style.opacity = opacity.toFixed(3);
             });
         }
+
 
         // ── Render loop ───────────────────────────────────────────────────────
         // Sole writer of canvas frames and text opacities.
@@ -256,8 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (currentPhase === 2 && animStartTime !== null) {
                 const elapsed = timestamp - animStartTime;
-                const t       = Math.min(1, elapsed / ANIM_DURATION);
-                const eased   = 1 - Math.pow(1 - t, 3); // ease-out cubic
+                const t       = Math.min(1, elapsed / activeAnimDuration);
+                const eased   = 1 - Math.pow(1 - t, 1.2); // ease-out gentle — keeps frame velocity ~1/render throughout, eliminating penultimate-frame hang
                 currentProgress = animStartProgress + (targetProgress - animStartProgress) * eased;
 
                 // Snap as soon as we've reached the target FRAME INDEX — not just the target
@@ -281,11 +314,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Start a new animation toward a target progress value (0–1).
-        // Interrupts any in-progress animation from wherever currentProgress currently is.
+        // Duration scales with the number of frames covered to keep visual speed uniform.
         function startAnimation(target) {
-            targetProgress    = Math.max(0, Math.min(1, target));
-            animStartProgress = currentProgress;
-            animStartTime     = performance.now();
+            targetProgress      = Math.max(0, Math.min(1, target));
+            animStartProgress   = currentProgress;
+            animStartTime       = performance.now();
+            const framesToCover = Math.abs(targetProgress - animStartProgress) * FRAME_COUNT;
+            activeAnimDuration  = Math.round(framesToCover * MS_PER_FRAME);
         }
 
         // ── Phase controller ──────────────────────────────────────────────────
@@ -330,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     t.classList.add('phase-active');
                     t.style.opacity = '0';
                 });
+                currentStep       = 0;
                 targetProgress    = 0;
                 currentProgress   = 0;
                 animStartProgress = 0;
@@ -405,19 +441,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nextBtn) {
             nextBtn.addEventListener('click', () => {
                 if      (currentPhase === 0) goPhase(1);
-                else if (currentPhase === 1) goPhase(2);
+                else if (currentPhase === 1) { isAnimating = false; goPhase(2); }
                 else if (currentPhase === 2) {
-                    startAnimation(Math.min(1, targetProgress + 0.334));
+                    if (currentStep < STEP_COUNT - 1) {
+                        currentStep++;
+                        startAnimation(STOP_POINTS[currentStep]);
+                    }
                 }
             });
         }
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
-                if      (currentPhase === 1) goPhase(0);
+                if      (currentPhase === 1) { isAnimating = false; goPhase(0); }
                 else if (currentPhase === 2) {
-                    const newTarget = targetProgress - 0.334;
-                    if (newTarget < 0) goPhase(1);
-                    else startAnimation(newTarget);
+                    if (currentStep > 0) {
+                        currentStep--;
+                        startAnimation(STOP_POINTS[currentStep]);
+                    } else {
+                        isAnimating = false; goPhase(1);
+                    }
                 }
             });
         }

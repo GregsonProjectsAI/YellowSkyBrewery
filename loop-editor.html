@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loop Editor — Steam Mash Tun</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #e0e0e0;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #aaa;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    /* ── Video ─────────────────────────────────────────────────── */
+    #video-wrap {
+      position: relative;
+      display: inline-block;
+      background: #000;
+      line-height: 0;
+    }
+
+    video {
+      display: block;
+      max-width: 100%;
+      max-height: 480px;
+    }
+
+    /* ── Timeline scrubber ──────────────────────────────────────── */
+    #scrubber-row {
+      margin-top: 10px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #2a2a2a;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* ── Control rows ───────────────────────────────────────────── */
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #1e1e1e;
+      color: #e0e0e0;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 5px 12px;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    button:hover { background: #2a2a2a; border-color: #555; }
+    button:active { background: #333; }
+
+    button.primary {
+      background: #1a1a1a;
+      border-color: #555;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    button#btn-play {
+      min-width: 80px;
+    }
+
+    button#btn-in  { border-color: #c8a96e; color: #c8a96e; }
+    button#btn-out { border-color: #4ea8de; color: #4ea8de; }
+
+    button#btn-preview.active {
+      background: #1e3a50;
+      border-color: #4ea8de;
+      color: #4ea8de;
+    }
+
+    button#btn-in:hover  { background: #2a1f0a; }
+    button#btn-out:hover { background: #0a1e2a; }
+
+    /* ── Info panel ─────────────────────────────────────────────── */
+    #info {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 6px 16px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 4px;
+      padding: 5px 10px;
+    }
+
+    .info-label { color: #777; }
+
+    .info-value { color: #e0e0e0; font-weight: 600; }
+    .info-value.in-color  { color: #c8a96e; }
+    .info-value.out-color { color: #4ea8de; }
+
+    /* ── Frame preview canvases ─────────────────────────────────── */
+    #frames {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .frame-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .frame-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .frame-label.in-color  { color: #c8a96e; }
+    .frame-label.out-color { color: #4ea8de; }
+
+    canvas {
+      border: 1px solid #333;
+      border-radius: 3px;
+      background: #111;
+    }
+
+    canvas.in-border  { border-color: #c8a96e; }
+    canvas.out-border { border-color: #4ea8de; }
+
+    /* ── ffmpeg command ─────────────────────────────────────────── */
+    #ffmpeg-wrap {
+      margin-top: 14px;
+    }
+
+    #ffmpeg-wrap label {
+      display: block;
+      font-size: 11px;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 5px;
+    }
+
+    #ffmpeg-cmd {
+      width: 100%;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      color: #b0cfb0;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 8px 10px;
+      resize: none;
+      cursor: text;
+      outline: none;
+    }
+
+    #ffmpeg-cmd:focus { border-color: #444; }
+
+    /* ── Keyboard hint ──────────────────────────────────────────── */
+    #hints {
+      margin-top: 14px;
+      color: #444;
+      font-size: 11px;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Loop Editor</h1>
+
+<div id="video-wrap">
+  <video id="vid" preload="auto" src="assets/Steam_rising_from_mash_tun_202606172213.mp4"></video>
+</div>
+
+<div id="scrubber-row">
+  <input type="range" id="scrubber" min="0" max="1000" value="0" step="1">
+</div>
+
+<div class="row">
+  <button id="btn-play" class="primary">▶ Play</button>
+  <button id="btn-step-back10">⟨⟨ −10f</button>
+  <button id="btn-step-back">⟨ −1f</button>
+  <button id="btn-step-fwd">+1f ⟩</button>
+  <button id="btn-step-fwd10">+10f ⟩⟩</button>
+</div>
+
+<div class="row">
+  <button id="btn-in">Set In [I]</button>
+  <button id="btn-out">Set Out [O]</button>
+  <button id="btn-preview">Preview Loop [L]</button>
+</div>
+
+<div id="info">
+  <div class="info-item">
+    <span class="info-label">Current time</span>
+    <span class="info-value" id="disp-time">0.0000 s</span>
+  </div>
+  <div class="info-item">
+    <span class="info-label">Frame #</span>
+    <span class="info-value" id="disp-frame">0</span>
+  </div>
+  <div class="info-item">
+    <span class="info-label">In point</span>
+    <span class="info-value in-color" id="disp-in">—</span>
+  </div>
+  <div class="info-item">
+    <span class="info-label">Out point</span>
+    <span class="info-value out-color" id="disp-out">—</span>
+  </div>
+  <div class="info-item">
+    <span class="info-label">Loop duration</span>
+    <span class="info-value" id="disp-dur">—</span>
+  </div>
+</div>
+
+<div id="frames">
+  <div class="frame-box">
+    <span class="frame-label in-color">In frame</span>
+    <canvas id="canvas-in" class="in-border" width="320" height="180"></canvas>
+  </div>
+  <div class="frame-box">
+    <span class="frame-label out-color">Out frame</span>
+    <canvas id="canvas-out" class="out-border" width="320" height="180"></canvas>
+  </div>
+</div>
+
+<div id="ffmpeg-wrap">
+  <label>ffmpeg command</label>
+  <textarea id="ffmpeg-cmd" rows="3" readonly spellcheck="false"></textarea>
+</div>
+
+<div id="hints">
+  Space: play/pause &nbsp;|&nbsp; ←/→: ±1 frame &nbsp;|&nbsp; Shift+←/→: ±10 frames &nbsp;|&nbsp; I: set in &nbsp;|&nbsp; O: set out &nbsp;|&nbsp; L: toggle loop preview
+</div>
+
+<script>
+  const FPS = 30;
+  const FRAME = 1 / FPS;
+  const VIDEO_SRC = 'Steam_rising_from_mash_tun_202606172213.mp4'; // for ffmpeg display
+
+  const vid        = document.getElementById('vid');
+  const scrubber   = document.getElementById('scrubber');
+  const btnPlay    = document.getElementById('btn-play');
+  const btnIn      = document.getElementById('btn-in');
+  const btnOut     = document.getElementById('btn-out');
+  const btnPreview = document.getElementById('btn-preview');
+  const dispTime   = document.getElementById('disp-time');
+  const dispFrame  = document.getElementById('disp-frame');
+  const dispIn     = document.getElementById('disp-in');
+  const dispOut    = document.getElementById('disp-out');
+  const dispDur    = document.getElementById('disp-dur');
+  const canvasIn   = document.getElementById('canvas-in');
+  const canvasOut  = document.getElementById('canvas-out');
+  const ffmpegCmd  = document.getElementById('ffmpeg-cmd');
+
+  const ctxIn  = canvasIn.getContext('2d');
+  const ctxOut = canvasOut.getContext('2d');
+
+  let inTime   = null;
+  let outTime  = null;
+  let looping  = false;
+  let dragging = false;
+
+  // ── Helpers ──────────────────────────────────────────────────────
+
+  function fmt4(t) { return t.toFixed(4); }
+
+  function updateDisplay() {
+    const t = vid.currentTime;
+    dispTime.textContent  = fmt4(t) + ' s';
+    dispFrame.textContent = Math.round(t * FPS);
+
+    if (!dragging && vid.duration > 0) {
+      scrubber.value = (t / vid.duration) * 1000;
+    }
+  }
+
+  function updateInfo() {
+    if (inTime !== null) {
+      dispIn.textContent = fmt4(inTime) + ' s  (f' + Math.round(inTime * FPS) + ')';
+    }
+    if (outTime !== null) {
+      dispOut.textContent = fmt4(outTime) + ' s  (f' + Math.round(outTime * FPS) + ')';
+    }
+    if (inTime !== null && outTime !== null) {
+      const dur = outTime - inTime;
+      dispDur.textContent = fmt4(dur) + ' s  (' + Math.round(dur * FPS) + ' frames)';
+    }
+    updateFfmpeg();
+  }
+
+  function updateFfmpeg() {
+    const inStr  = inTime  !== null ? fmt4(inTime)  : '0.0000';
+    const outStr = outTime !== null ? fmt4(outTime) : '0.0000';
+    ffmpegCmd.value =
+      `ffmpeg -i ${VIDEO_SRC} -ss ${inStr} -to ${outStr}` +
+      ` -vf "scale=iw:ih" -c:v libvpx-vp9 -b:v 0 -crf 30 -an steam_loop.webm`;
+  }
+
+  function captureFrame(canvas, ctx) {
+    // Resize canvas to video natural dimensions (capped for display)
+    const vw = vid.videoWidth  || 640;
+    const vh = vid.videoHeight || 360;
+    // Keep canvas at 320×180 display but draw at natural ratio
+    const aspect = vw / vh;
+    let dw = canvas.width;
+    let dh = Math.round(dw / aspect);
+    if (dh > canvas.height) { dh = canvas.height; dw = Math.round(dh * aspect); }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const ox = Math.round((canvas.width  - dw) / 2);
+    const oy = Math.round((canvas.height - dh) / 2);
+    ctx.drawImage(vid, ox, oy, dw, dh);
+  }
+
+  // ── Playback controls ─────────────────────────────────────────────
+
+  function togglePlay() {
+    if (vid.paused) { vid.play(); } else { vid.pause(); }
+  }
+
+  function stepFrames(n) {
+    vid.pause();
+    vid.currentTime = Math.max(0, Math.min(vid.duration || 0, vid.currentTime + n * FRAME));
+  }
+
+  // ── In / Out ──────────────────────────────────────────────────────
+
+  function setIn() {
+    inTime = vid.currentTime;
+    captureFrame(canvasIn, ctxIn);
+    updateInfo();
+  }
+
+  function setOut() {
+    outTime = vid.currentTime;
+    captureFrame(canvasOut, ctxOut);
+    updateInfo();
+  }
+
+  // ── Loop preview ──────────────────────────────────────────────────
+
+  function toggleLoop() {
+    looping = !looping;
+    btnPreview.classList.toggle('active', looping);
+    btnPreview.textContent = looping ? '⏹ Stop Loop [L]' : 'Preview Loop [L]';
+
+    if (looping) {
+      if (inTime !== null) vid.currentTime = inTime;
+      vid.play();
+    }
+  }
+
+  function onTimeUpdate() {
+    updateDisplay();
+    if (looping && outTime !== null && vid.currentTime >= outTime) {
+      vid.currentTime = inTime !== null ? inTime : 0;
+    }
+  }
+
+  // ── Scrubber ──────────────────────────────────────────────────────
+
+  scrubber.addEventListener('mousedown', () => { dragging = true; });
+  scrubber.addEventListener('touchstart', () => { dragging = true; });
+
+  scrubber.addEventListener('input', () => {
+    if (vid.duration > 0) {
+      vid.currentTime = (scrubber.value / 1000) * vid.duration;
+    }
+  });
+
+  scrubber.addEventListener('mouseup',   () => { dragging = false; });
+  scrubber.addEventListener('touchend',  () => { dragging = false; });
+
+  // ── Video events ──────────────────────────────────────────────────
+
+  vid.addEventListener('timeupdate', onTimeUpdate);
+
+  vid.addEventListener('play',  () => { btnPlay.textContent = '⏸ Pause'; });
+  vid.addEventListener('pause', () => { btnPlay.textContent = '▶ Play'; });
+
+  vid.addEventListener('loadedmetadata', () => {
+    updateDisplay();
+    updateFfmpeg();
+  });
+
+  vid.addEventListener('ended', () => {
+    if (!looping) { btnPlay.textContent = '▶ Play'; }
+  });
+
+  // ── Button events ─────────────────────────────────────────────────
+
+  btnPlay.addEventListener('click',    togglePlay);
+  btnIn.addEventListener('click',      setIn);
+  btnOut.addEventListener('click',     setOut);
+  btnPreview.addEventListener('click', toggleLoop);
+
+  document.getElementById('btn-step-back').addEventListener('click',   () => stepFrames(-1));
+  document.getElementById('btn-step-fwd').addEventListener('click',    () => stepFrames(1));
+  document.getElementById('btn-step-back10').addEventListener('click', () => stepFrames(-10));
+  document.getElementById('btn-step-fwd10').addEventListener('click',  () => stepFrames(10));
+
+  // ── ffmpeg textarea: click to select all ─────────────────────────
+
+  ffmpegCmd.addEventListener('click', function() { this.select(); });
+
+  // ── Keyboard shortcuts ────────────────────────────────────────────
+
+  document.addEventListener('keydown', (e) => {
+    // Don't steal keys when focus is in a text control
+    const tag = document.activeElement ? document.activeElement.tagName : '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    switch (e.key) {
+      case ' ':
+        e.preventDefault();
+        togglePlay();
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        stepFrames(e.shiftKey ? -10 : -1);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        stepFrames(e.shiftKey ? 10 : 1);
+        break;
+      case 'i':
+      case 'I':
+        setIn();
+        break;
+      case 'o':
+      case 'O':
+        setOut();
+        break;
+      case 'l':
+      case 'L':
+        toggleLoop();
+        break;
+    }
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────
+
+  updateFfmpeg();
+</script>
+</body>
+</html>

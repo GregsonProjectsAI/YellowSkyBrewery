@@ -42,6 +42,14 @@ app.use(express.json());
 // Serve admin panel at /admin before the static middleware so it always hits
 app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
 
+// Disable caching for JS and CSS so edits are always picked up on refresh
+app.use((req, res, next) => {
+  if (req.path.endsWith('.js') || req.path.endsWith('.css')) {
+    res.setHeader('Cache-Control', 'no-store');
+  }
+  next();
+});
+
 // Serve all other static files (HTML, CSS, JS, assets)
 app.use(express.static(__dirname));
 
