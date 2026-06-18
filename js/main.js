@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Frame filename 0104 → index 103 → progress 103/240 = 0.4292
         const STOP_POINTS = [
             0,       // step 0 — Well, Now What?      (frame 001)
-            0.225,   // step 1 — There's No Room Here! (frame 055)
+            0.225,   // step 1 — There's No Room Here! (frame 055, index 54 → 54/240)
             0.45,    // step 2 — Well, Serious-ish     (frame 109, index 108 → 108/240)
             1.0,     // step 3 — slide-5, final        (frame 240)
         ];
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // frame 55 → index 54 → progress 54/240 = 0.225 → fade-in starts at 0.225 - 0.07 = 0.155
         const TEXT_FADE_IN = [
             0,      // panel 0 — Well, Now What?       (visible immediately)
-            0.155,  // panel 1 — There's No Room Here! (fully visible at frame 55)
+            0.155,  // panel 1 — There's No Room Here! (fully visible at frame 55 → 0.155 + 0.07 = 0.225)
             0.38,   // panel 2 — Well, Serious-ish     (fully visible at frame 109 → 0.38 + 0.07 = 0.45)
             0.5758, // panel 3 — Can we join in (fully visible at frame 156 → 0.5758 + 0.07 = 0.6458)
         ];
@@ -353,6 +353,222 @@ document.addEventListener('DOMContentLoaded', () => {
             steamReset(steamB);
         }
 
+        // ── Kettle steam overlay — step 1 (frame 56, "There's No Room Here!") ─
+        // Dual-video crossfade within a clipped loop window (1.3816s → 6.4811s).
+        // Uses setInterval at 100ms to poll currentTime — more reliable than
+        // timeupdate which can miss the trigger point after a seek or on slower
+        // devices, causing the video to play past the loop window and stop.
+        const kettleA      = document.getElementById('story-kettle-a');
+        const kettleB      = document.getElementById('story-kettle-b');
+        const frame55Overlay = document.getElementById('story-frame55-overlay');
+        const KETTLE_STEP  = 1;
+        const KETTLE_START = 1.3816;   // loop in-point (seconds)
+        const KETTLE_END   = 6.4811;   // loop out-point (seconds)
+        const KETTLE_XFADE = 1.0;      // crossfade duration in seconds
+        const KETTLE_FADE  = 0.35;      // fade-in duration — ease-in over ~8 frames (frames 47→55)
+
+        let kettleIsActive  = false;
+        let kettlePrimary   = kettleA;
+        let kettleStandby   = kettleB;
+        let kettleCrossfade = false;
+        let kettleMonitor   = null;    // setInterval handle
+
+        function kettleReset(vid) {
+            vid.style.transition = 'none';
+            vid.style.opacity    = '0';
+            vid.pause();
+            vid.currentTime = KETTLE_START;
+        }
+
+        // Separate show function for kettle steam — uses ease-in so the fade
+        // starts imperceptibly slow and accelerates, giving a very soft onset.
+        function kettleShow(vid, dur) {
+            vid.style.transition = `opacity ${dur}s ease-in`;
+            vid.style.opacity    = '1';
+        }
+
+        function doKettleCrossfade() {
+            if (!kettleIsActive || kettleCrossfade) return;
+            kettleCrossfade = true;
+            kettleStandby.currentTime = KETTLE_START;
+            kettleStandby.play().catch(() => {});
+            kettleShow(kettleStandby, KETTLE_XFADE);
+            steamHide(kettlePrimary, KETTLE_XFADE);
+            setTimeout(() => {
+                kettleReset(kettlePrimary);
+                [kettlePrimary, kettleStandby] = [kettleStandby, kettlePrimary];
+                kettleCrossfade = false;
+            }, KETTLE_XFADE * 1000 + 100);
+        }
+
+        // Poll the primary video's currentTime every 100ms — catches the
+        // crossfade trigger reliably regardless of timeupdate event frequency.
+        function startKettleMonitor() {
+            if (kettleMonitor) clearInterval(kettleMonitor);
+            kettleMonitor = setInterval(() => {
+                if (!kettleIsActive) { clearInterval(kettleMonitor); kettleMonitor = null; return; }
+                if (!kettleCrossfade && kettlePrimary.currentTime >= KETTLE_END - KETTLE_XFADE) {
+                    doKettleCrossfade();
+                }
+            }, 100);
+        }
+
+        function startKettleEffect(step) {
+            if (!kettleA || step !== KETTLE_STEP || kettleIsActive) return; // idempotent
+            kettleIsActive  = true;
+            kettleCrossfade = false;
+            kettlePrimary   = kettleA;
+            kettleStandby   = kettleB;
+            kettleReset(kettleB);
+            kettleA.currentTime = KETTLE_START;
+            kettleA.play().catch(() => {});
+            kettleShow(kettleA, KETTLE_FADE);
+            startKettleMonitor();
+        }
+
+        function stopKettleEffect() {
+            if (!kettleA) return;
+            kettleIsActive  = false;
+            kettleCrossfade = false;
+            if (kettleMonitor) { clearInterval(kettleMonitor); kettleMonitor = null; }
+            kettleReset(kettleA);
+            kettleReset(kettleB);
+            // Reset dissolve overlay instantly so it's hidden on next entry
+            if (frame55Overlay) { frame55Overlay.style.transition = 'none'; frame55Overlay.style.opacity = '0'; }
+        }
+
+        // ── Pint filling overlay — step 3 ("Can We Join In?") ─────────────────
+        // One-shot: plays once from the beginning and holds on the final frame.
+        // When the pour ends, the drip loop takes over seamlessly.
+        const pintVideo  = document.getElementById('story-pint');
+        const PINT_STEP  = 3;
+        const PINT_FADE  = 0.05;  // near-instant — pre-roll ensures video is ready before canvas snaps
+        let   pintIsActive = false;
+        let   pintMonitor  = null;
+
+        function startPintEffect(step) {
+            if (!pintVideo || step !== PINT_STEP || pintIsActive) return;
+            pintIsActive = true;
+            pintVideo.currentTime = 0;
+            pintVideo.play().catch(() => {});
+            pintVideo.style.transition = `opacity ${PINT_FADE}s ease-in`;
+            pintVideo.style.opacity    = '1';
+            startPintMonitor();
+        }
+
+        // Monitor the pour video and start the drip fade-in DRIP_XFADE seconds
+        // before it ends — so the drip reaches full opacity exactly as the pour
+        // finishes, with no gap between the two.
+        function startPintMonitor() {
+            if (pintMonitor) clearInterval(pintMonitor);
+            pintMonitor = setInterval(() => {
+                if (!pintIsActive) { clearInterval(pintMonitor); pintMonitor = null; return; }
+                if (pintVideo && !dripIsActive &&
+                    pintVideo.duration > 0 &&
+                    pintVideo.currentTime >= pintVideo.duration - DRIP_XFADE) {
+                    startDripLoop();
+                }
+            }, 50);
+        }
+
+        // ── Drip loop — plays after the pour completes ─────────────────────────
+        // Dual-video crossfade loop: 0.0000s → 7.7330s, 1.0s crossfade.
+        // Triggered automatically by the pour video's 'ended' event.
+        const dripA       = document.getElementById('story-drip-a');
+        const dripB       = document.getElementById('story-drip-b');
+        const DRIP_START  = 0.0000;
+        const DRIP_END    = 7.7330;
+        const DRIP_XFADE  = 1.0;
+        let dripIsActive  = false;
+        let dripPrimary, dripStandby;
+        let dripCrossfade = false;
+        let dripMonitor   = null;
+
+        function dripReset(vid) {
+            vid.style.transition = 'none';
+            vid.style.opacity    = '0';
+            vid.pause();
+            vid.currentTime = DRIP_START;
+        }
+
+        function doDripCrossfade() {
+            if (!dripIsActive || dripCrossfade) return;
+            dripCrossfade = true;
+            dripStandby.currentTime = DRIP_START;
+            dripStandby.play().catch(() => {});
+            // Fade standby IN to full opacity first — canvas stays covered throughout.
+            steamShow(dripStandby, DRIP_XFADE);
+            // Only fade primary OUT once standby is fully visible, then swap roles.
+            setTimeout(() => {
+                steamHide(dripPrimary, 0.3);
+                setTimeout(() => {
+                    dripReset(dripPrimary);
+                    [dripPrimary, dripStandby] = [dripStandby, dripPrimary];
+                    dripCrossfade = false;
+                }, 400);
+            }, DRIP_XFADE * 1000);
+        }
+
+        function startDripMonitor() {
+            if (dripMonitor) clearInterval(dripMonitor);
+            dripMonitor = setInterval(() => {
+                if (!dripIsActive) { clearInterval(dripMonitor); dripMonitor = null; return; }
+                if (!dripCrossfade && dripPrimary.currentTime >= DRIP_END - DRIP_XFADE) {
+                    doDripCrossfade();
+                }
+            }, 100);
+        }
+
+        function startDripLoop() {
+            if (!dripA || dripIsActive) return;
+            dripIsActive  = true;
+            dripCrossfade = false;
+            dripPrimary   = dripA;
+            dripStandby   = dripB;
+            dripReset(dripB);
+            dripA.currentTime = DRIP_START;
+            dripA.play().catch(() => {});
+            // Fade drip in while keeping the pour video at full opacity behind it —
+            // this prevents the canvas frame ever showing through during the handoff.
+            dripA.style.transition = `opacity ${DRIP_XFADE}s ease-in`;
+            dripA.style.opacity    = '1';
+            // Only fade the pour out once the drip is fully visible
+            setTimeout(() => {
+                if (pintVideo) {
+                    pintVideo.style.transition = 'opacity 0.3s ease-out';
+                    pintVideo.style.opacity    = '0';
+                }
+            }, DRIP_XFADE * 1000);
+            startDripMonitor();
+        }
+
+        function stopDripLoop() {
+            if (!dripA) return;
+            dripIsActive  = false;
+            dripCrossfade = false;
+            if (dripMonitor) { clearInterval(dripMonitor); dripMonitor = null; }
+            dripReset(dripA);
+            dripReset(dripB);
+        }
+
+        // Trigger drip loop automatically when the pour video finishes
+        if (pintVideo) {
+            pintVideo.addEventListener('ended', () => {
+                if (pintIsActive) startDripLoop();
+            });
+        }
+
+        function stopPintEffect() {
+            if (!pintVideo) return;
+            pintIsActive = false;
+            if (pintMonitor) { clearInterval(pintMonitor); pintMonitor = null; }
+            pintVideo.pause();
+            pintVideo.currentTime = 0;
+            pintVideo.style.transition = 'none';
+            pintVideo.style.opacity    = '0';
+            stopDripLoop();
+        }
+
         // ── Render loop ───────────────────────────────────────────────────────
         // Sole writer of canvas frames and text opacities.
         // Uses a fixed-duration ease-out cubic so it always reaches the exact
@@ -375,10 +591,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isForward    = targetProgress >= animStartProgress;
                 const reachedTarget = isForward ? currentFrame >= targetFrame : currentFrame <= targetFrame;
 
+                // Pre-roll kettle steam: start the fade-in at frame 52/53 (3 frames
+                // before the stop) so steam is fully opaque when frame 55 lands.
+                if (targetProgress === STOP_POINTS[KETTLE_STEP] && !kettleIsActive) {
+                    const framesRemaining = (targetProgress - currentProgress) * FRAME_COUNT;
+                    if (framesRemaining <= 8) startKettleEffect(KETTLE_STEP);
+                }
+
+                // Pre-roll pint video: start 2 frames early so the video's first
+                // frame is already painted when the canvas snaps to frame 240.
+                if (targetProgress === STOP_POINTS[PINT_STEP] && !pintIsActive) {
+                    const framesRemaining = (targetProgress - currentProgress) * FRAME_COUNT;
+                    if (framesRemaining <= 2) startPintEffect(PINT_STEP);
+                }
+
                 if (reachedTarget || t >= 1) {
                     currentProgress = targetProgress; // snap exactly
                     animStartTime   = null;           // animation complete
-                    startSteamEffect(currentStep);    // start steam if this is the kettle step
+                    startSteamEffect(currentStep);    // start mash-kettle steam if this is step 2
+                    startKettleEffect(currentStep);   // no-op if pre-roll already fired
+                    startPintEffect(currentStep);     // start pint fill if this is step 3
+
+                    // Dissolve bridge: instantly show the original frame 55 (with real
+                    // steam) over the clean canvas frame so the switch is invisible.
+                    // Then fade it out over 1.2s — real steam dissolves into animated.
+                    if (targetProgress === STOP_POINTS[KETTLE_STEP] && frame55Overlay) {
+                        frame55Overlay.style.transition = 'none';
+                        frame55Overlay.style.opacity    = '1';
+                        setTimeout(() => {
+                            frame55Overlay.style.transition = 'opacity 1.2s ease-out';
+                            frame55Overlay.style.opacity    = '0';
+                        }, 400);
+                    }
                 }
                 renderStoryFrame(currentProgress);
                 applyTextOpacities(currentProgress);
@@ -391,6 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Duration scales with the number of frames covered to keep visual speed uniform.
         function startAnimation(target) {
             stopSteamEffect();
+            stopKettleEffect();
+            stopPintEffect();
             targetProgress      = Math.max(0, Math.min(1, target));
             animStartProgress   = currentProgress;
             animStartTime       = performance.now();
@@ -470,6 +716,8 @@ document.addEventListener('DOMContentLoaded', () => {
             isAnimating  = false;  // always unblock — may have been mid-transition
             isLooping    = false;
             stopSteamEffect();
+            stopKettleEffect();
+            stopPintEffect();
             currentPhase    = 0;
             targetProgress    = 0;
             currentProgress   = 0;

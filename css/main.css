@@ -954,8 +954,9 @@
         }
 
         .beer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: var(--space-md);
             align-items: start;
             background-color: rgba(10, 10, 10, 0.8);
@@ -967,6 +968,7 @@
 
         .beer-card {
             box-sizing: border-box;
+            flex: 0 0 110px;
             background-color: #1a1a1a;
             border: 2px solid transparent;
             border-radius: var(--border-radius-sm);
@@ -974,7 +976,9 @@
             cursor: pointer;
             transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), 
                         border-color 0.3s ease, 
-                        box-shadow 0.3s ease;
+                        box-shadow 0.3s ease,
+                        filter 0.4s ease,
+                        opacity 0.4s ease;
             position: relative;
             z-index: 1;
             /* Enforce consistent poster ratio for all tiles */
@@ -998,6 +1002,18 @@
 
         .beer-card:hover .beer-card__img, .beer-card.is-active .beer-card__img {
             filter: brightness(1.1);
+        }
+
+        /* Sibling dimming — hover: only active when nothing is locked */
+        .beer-grid:not(:has(.beer-card.is-active)):has(.beer-card:hover) .beer-card:not(:hover) {
+            filter: blur(3px);
+            opacity: 0.45;
+        }
+
+        /* Sibling dimming — locked: persist fade while a card is active */
+        .beer-grid:has(.beer-card.is-active) .beer-card:not(.is-active) {
+            filter: blur(3px);
+            opacity: 0.45;
         }
 
         .beer-preview-panel {
@@ -1292,6 +1308,63 @@
             pointer-events: none;
             z-index: 2;
             opacity: 0;
+        }
+
+        /* Original frame 55 dissolve bridge — sits between canvas (z0) and
+           animated steam (z2). Shown instantly at the snap point to hide the
+           canvas switch, then faded out so real steam dissolves into animated. */
+        .story-frame55-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0;
+        }
+
+        /* Black-background steam composite — screen blend makes pure black
+           invisible, leaving only the bright white steam visible over the
+           canvas frame beneath. No background mismatch possible. */
+        #story-kettle-a,
+        #story-kettle-b {
+            mix-blend-mode: screen;
+        }
+
+        /* Pint filling video (step 3) — full-frame replacement of the static
+           canvas. No blend mode: the video was generated from frame 240 as seed
+           so it covers the canvas directly. Fades in over 0.4s on arrival. */
+        .story-pint-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0;
+        }
+
+        /* Drip loop mask — soft radial ellipse centred on the glass and tap.
+           Fully opaque through the full glass width and drip zone; fades to
+           transparent before reaching the background edges where figures move.
+           The static canvas frame 240 shows through in the transparent areas,
+           giving a perfectly still background with an animated centre. */
+        #story-drip-a,
+        #story-drip-b {
+            -webkit-mask-image: radial-gradient(ellipse 52% 70% at 50% 52%, black 50%, transparent 88%);
+                    mask-image: radial-gradient(ellipse 52% 70% at 50% 52%, black 50%, transparent 88%);
+        }
+
+        /* Mash kettle steam mask — steam rises entirely from the kettle rim
+           upward (top ~40% of frame). Fading to transparent by 62% cleanly
+           hides the handle zone where the crossfade ghost appears, while
+           keeping all steam fully visible. Kettle body stays in canvas below. */
+        #story-steam-a,
+        #story-steam-b {
+            -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 62%);
+                    mask-image: linear-gradient(to bottom, black 40%, transparent 62%);
         }
 
         .story-loading {

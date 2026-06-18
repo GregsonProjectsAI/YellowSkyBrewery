@@ -293,12 +293,36 @@
         <div class="story-slides-wrapper" id="story-slides-wrapper">
             <!-- Canvas-based frame scrubber (replaces video for smooth seeking) -->
             <canvas id="story-canvas" width="1920" height="1080"></canvas>
-            <!-- Steam overlay: dual-video crossfade for seamless looping -->
+            <!-- Original frame 55 (with real steam) — shown instantly when the canvas
+                 snaps to the clean replacement frame, then dissolved away over ~1.2s
+                 so the real steam smoothly hands off to the animated steam overlay. -->
+            <img id="story-frame55-overlay" class="story-frame55-overlay"
+                 src="assets/story_frames/frame_0055_original.jpg"
+                 alt="" aria-hidden="true">
+            <!-- Steam overlay (step 2 — mash kettle interior): dual-video crossfade for seamless looping -->
             <video id="story-steam-a" class="story-steam-video" muted playsinline preload="auto">
                 <source src="assets/steam_loop.mp4" type="video/mp4">
             </video>
             <video id="story-steam-b" class="story-steam-video" muted playsinline preload="auto">
                 <source src="assets/steam_loop.mp4" type="video/mp4">
+            </video>
+            <!-- Kettle steam overlay (step 1 — garage exterior, frame 55): dual-video crossfade -->
+            <video id="story-kettle-a" class="story-steam-video" muted playsinline preload="auto">
+                <source src="assets/Steam_rising_black_background.mp4" type="video/mp4">
+            </video>
+            <video id="story-kettle-b" class="story-steam-video" muted playsinline preload="auto">
+                <source src="assets/Steam_rising_black_background.mp4" type="video/mp4">
+            </video>
+            <!-- Pint filling overlay (step 3 — "Can We Join In?"): one-shot, plays once to completion -->
+            <video id="story-pint" class="story-pint-video" muted playsinline preload="auto">
+                <source src="assets/Beer_filling_in_pint_glass_202606181727.mp4" type="video/mp4">
+            </video>
+            <!-- Drip loop overlay (step 3 — after pour completes): dual-video crossfade 0.000s→7.733s -->
+            <video id="story-drip-a" class="story-pint-video" muted playsinline preload="auto">
+                <source src="assets/Beer_with_carbonation_and_drip_202606181759.mp4" type="video/mp4">
+            </video>
+            <video id="story-drip-b" class="story-pint-video" muted playsinline preload="auto">
+                <source src="assets/Beer_with_carbonation_and_drip_202606181759.mp4" type="video/mp4">
             </video>
             <div id="story-loading" class="story-loading">
                 <span id="story-loading-text">Loading story...</span>
