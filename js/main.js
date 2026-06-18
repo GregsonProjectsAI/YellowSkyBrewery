@@ -662,12 +662,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // ── Drip loop — plays after the pour completes ─────────────────────────
-        // Dual-video crossfade loop: 0.0000s → 7.7330s, 1.0s crossfade.
+        // Dual-video crossfade loop: 0.0000s → 19.3325s (Beer_drip_slow.mp4 — 40% speed), 1.0s crossfade.
         // Triggered automatically by the pour video's 'ended' event.
         const dripA       = document.getElementById('story-drip-a');
         const dripB       = document.getElementById('story-drip-b');
         const DRIP_START  = 0.0000;
-        const DRIP_END    = 7.7330;
+        const DRIP_END    = 19.3325;
         const DRIP_XFADE  = 1.0;
         let dripIsActive  = false;
         let dripPrimary, dripStandby;
