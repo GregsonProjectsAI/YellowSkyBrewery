@@ -74,12 +74,12 @@
         </div>
     </section>
 
-    <!-- Dashboard Strip -->
+    <!-- Dashboard Strip — scrolling ticker -->
     <div class="dashboard-strip">
-        <div class="container">
-            <div class="dashboard-grid">
+        <div class="dashboard-ticker" id="dashboard-ticker">
+            <div class="dashboard-ticker__track" id="dashboard-track">
 
-                <!-- Latest Bulletin Widget -->
+                <!-- Widget 1: Latest Bulletin -->
                 <div class="dashboard-widget dashboard-widget--bulletin">
                     <span class="dashboard-label">Latest Bulletin</span>
                     <div id="dashboard-latest-post" class="dashboard-post">
@@ -89,7 +89,7 @@
 
                 <div class="dashboard-divider"></div>
 
-                <!-- This Week's Brew Widget -->
+                <!-- Widget 2: This Week's Brew -->
                 <div class="dashboard-widget dashboard-widget--brew">
                     <span class="dashboard-label">This Week's Brew</span>
                     <div id="dashboard-this-weeks-brew" class="dashboard-brew">
@@ -99,7 +99,7 @@
 
                 <div class="dashboard-divider"></div>
 
-                <!-- Upcoming Events Widget -->
+                <!-- Widget 3: Upcoming Events -->
                 <div class="dashboard-widget dashboard-widget--events">
                     <span class="dashboard-label">
                         <svg class="dashboard-label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -114,7 +114,7 @@
 
                 <div class="dashboard-divider"></div>
 
-                <!-- Socials Widget -->
+                <!-- Widget 4: Socials -->
                 <div class="dashboard-widget dashboard-widget--socials">
                     <span class="dashboard-label">Social Media</span>
                     <div class="dashboard-socials">
@@ -133,12 +133,15 @@
                     </div>
                 </div>
 
-            </div>
-        </div>
+                <div class="dashboard-divider"></div>
+
+            </div><!-- /.dashboard-ticker__track -->
+        </div><!-- /.dashboard-ticker -->
     </div>
 
 
     <!-- Meet The Nitwits Section -->
+
     <section class="team-section" id="team">
         <div class="container">
             <h2 class="section-title">Meet The Nitwits</h2>

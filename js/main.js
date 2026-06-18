@@ -53,7 +53,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const fadeUpElements = document.querySelectorAll('.fade-up');
     fadeUpElements.forEach(el => observer.observe(el));
 
+    // ── Dashboard Ticker — seamless marquee ───────────────────────────────────
+    (function () {
+        const track = document.getElementById('dashboard-track');
+        if (!track) return;
+
+        // Clone all children, strip IDs to avoid duplicates, append for seamless loop
+        const originals = Array.from(track.children);
+        originals.forEach(child => {
+            const clone = child.cloneNode(true);
+            clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+            clone.removeAttribute('id');
+            track.appendChild(clone);
+        });
+
+        // Map each original dynamic container to its clone counterpart so that
+        // when blog.js renders content asynchronously, the clone stays in sync.
+        const dynamicIds = ['dashboard-latest-post', 'dashboard-this-weeks-brew', 'dashboard-latest-event'];
+        const clonedChildren = Array.from(track.children).slice(originals.length);
+
+        dynamicIds.forEach(id => {
+            const original = document.getElementById(id);
+            if (!original) return;
+
+            // Find the matching clone by its position in the original
+            const originalIndex = originals.indexOf(original.closest('.dashboard-widget'));
+            if (originalIndex === -1) return;
+            const cloneWidget = clonedChildren[originalIndex];
+            if (!cloneWidget) return;
+
+            // Find the content container inside the cloned widget
+            const cloneTarget = cloneWidget.querySelector('.' + original.className.split(' ')[0]);
+            if (!cloneTarget) return;
+
+            // Mirror content whenever blog.js writes into the original
+            const observer = new MutationObserver(() => {
+                cloneTarget.innerHTML = original.innerHTML;
+            });
+            observer.observe(original, { childList: true, subtree: true });
+        });
+    })();
+
     // Staggered Intersection Observer for Beer Grid
+
     const beerGridObserver = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
