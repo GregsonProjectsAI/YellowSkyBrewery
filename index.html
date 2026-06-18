@@ -7,7 +7,7 @@
     <title>Yellow Sky Brewery</title>
     <!-- CSS -->
     <link rel="stylesheet" href="css/variables.css?v=2">
-    <link rel="stylesheet" href="css/main.css?v=15">
+    <link rel="stylesheet" href="css/main.css?v=16">
 </head>
 
 <body class="no-scroll">
@@ -347,8 +347,20 @@
 
             <!-- Slide 1: But First... -->
             <div class="story-slide story-slide--centred story-slide--fullscreen-bg" id="slide-1">
-                <video class="story-slide__fullbg-video" muted playsinline>
+                <!-- Timelapse: plays forward on first visit -->
+                <video id="hop-timelapse" class="story-slide__fullbg-video" muted playsinline>
                     <source src="assets/hop_animation.mp4" type="video/mp4">
+                </video>
+                <!-- Reversed timelapse: plays when user presses back from slide-1 -->
+                <video id="hop-reversed" class="story-slide__fullbg-video" muted playsinline>
+                    <source src="assets/hop_animation_reversed.mp4" type="video/mp4">
+                </video>
+                <!-- Ambient loop A/B: dual-video crossfade for seamless looping -->
+                <video id="hop-loop-a" class="story-hop-loop-video" muted playsinline>
+                    <source src="assets/Hop natural movement 33pct.mp4" type="video/mp4">
+                </video>
+                <video id="hop-loop-b" class="story-hop-loop-video" muted playsinline>
+                    <source src="assets/Hop natural movement 33pct.mp4" type="video/mp4">
                 </video>
                 <div class="story-slide__content-side video-overlay-box">
                     <h3 class="story-slide__title">But First...</h3>
@@ -481,7 +493,7 @@
 
 
     <!-- JavaScript -->
-    <script src="js/main.js?v=4"></script>
+    <script src="js/main.js?v=7"></script>
     <script src="js/scroll-animation.js?v=2"></script>
     <script src="js/blog.js?v=2"></script>
 </body>

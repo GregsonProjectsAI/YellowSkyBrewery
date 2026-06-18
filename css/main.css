@@ -1535,7 +1535,26 @@
             height: 100%;
             object-fit: cover;
             z-index: 1;
+            opacity: 1;
+            transition: opacity 0.5s ease;
         }
+
+        /* Hop ambient loop videos (A/B) and reversed timelapse —
+           same positioning as the timelapse but start hidden.
+           Transition drives the 0.5s crossfade handoff. */
+        .story-hop-loop-video,
+        #hop-reversed {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
 
         .story-slide--fullscreen-bg .story-slide__content-side {
             position: relative;

@@ -241,10 +241,158 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         const texts = [slides[2], slides[3], slides[4], slides[5]];
 
-        // Hop animation video on slide-1 — managed manually to avoid
-        // competing with slide-0's tea towel autoplay videos
-        const hopVideo = slides[1] ? slides[1].querySelector('video') : null;
-        if (hopVideo) hopVideo.pause(); // start paused until slide-1 is shown
+        // ── Hop video system (slide-1) ────────────────────────────────────────
+        // Four video elements: timelapse forward, timelapse reversed,
+        // ambient loop A, ambient loop B.
+        const hopTimelapse = document.getElementById('hop-timelapse');
+        const hopReversed  = document.getElementById('hop-reversed');
+        const hopLoopA     = document.getElementById('hop-loop-a');
+        const hopLoopB     = document.getElementById('hop-loop-b');
+
+        // Ensure all start paused and invisible
+        [hopTimelapse, hopReversed, hopLoopA, hopLoopB].forEach(v => {
+            if (v) { v.pause(); v.currentTime = 0; }
+        });
+        if (hopTimelapse) hopTimelapse.style.opacity = '0';
+
+        let hasSeenTimelapse = false;   // true after first forward play completes
+        let hopLoopActive    = false;   // true while ambient loop is running
+        let hopReversePlaying = false;  // true while reverse transition is running
+
+        // HOP LOOP CROSSFADE — mirrors the steam/drip dual-video pattern
+        const HOP_LOOP_DURATION = 30; // seconds — length of ambient loop file
+        const HOP_CROSSFADE     = 1.0; // seconds before end to start dissolve
+        let hopLoopPrimary      = null;
+        let hopLoopSecondary    = null;
+        let hopLoopTimer        = null;
+
+        function stopHopLoop() {
+            hopLoopActive = false;
+            if (hopLoopTimer) { clearTimeout(hopLoopTimer); hopLoopTimer = null; }
+            [hopLoopA, hopLoopB].forEach(v => {
+                if (!v) return;
+                v.pause();
+                v.currentTime = 0;
+                v.style.opacity = '0';
+            });
+            hopLoopPrimary   = null;
+            hopLoopSecondary = null;
+        }
+
+        function scheduleHopCrossfade(primary, secondary) {
+            if (!hopLoopActive) return;
+            const remaining = (HOP_LOOP_DURATION - HOP_CROSSFADE) * 1000;
+            hopLoopTimer = setTimeout(() => {
+                if (!hopLoopActive) return;
+                // Bring secondary up, rewind it so it's ready
+                secondary.currentTime = 0;
+                secondary.play().catch(() => {});
+                secondary.style.opacity = '1';
+                // Fade primary out
+                primary.style.opacity = '0';
+                // After crossfade completes, primary becomes new secondary
+                setTimeout(() => {
+                    if (!hopLoopActive) return;
+                    primary.pause();
+                    primary.currentTime = 0;
+                    primary.style.opacity = '0';
+                    hopLoopPrimary   = secondary;
+                    hopLoopSecondary = primary;
+                    scheduleHopCrossfade(hopLoopPrimary, hopLoopSecondary);
+                }, HOP_CROSSFADE * 1000);
+            }, remaining);
+        }
+
+        function startHopLoop() {
+            stopHopLoop();
+            if (!hopLoopA || !hopLoopB) return;
+            hopLoopActive    = true;
+            hopLoopPrimary   = hopLoopA;
+            hopLoopSecondary = hopLoopB;
+            hopLoopA.currentTime = 0;
+            hopLoopA.play().catch(() => {});
+            hopLoopA.style.opacity = '1';
+            hopLoopB.style.opacity = '0';
+            scheduleHopCrossfade(hopLoopA, hopLoopB);
+        }
+
+        // Wire timelapse ended → crossfade to loop
+        if (hopTimelapse) {
+            hopTimelapse.addEventListener('ended', () => {
+                // Start loop FIRST so loop-a fades in on top of the timelapse's
+                // last frame — no black gap. Then fade timelapse out once covered.
+                startHopLoop();
+                setTimeout(() => { hopTimelapse.style.opacity = '0'; }, 500);
+            });
+        }
+
+        // Wire reversed timelapse ended → complete the back navigation
+        if (hopReversed) {
+            hopReversed.addEventListener('ended', () => {
+                hopReversePlaying = false;
+                hopReversed.style.opacity = '0';
+                hopReversed.pause();
+                hopReversed.currentTime = 0;
+                // Now actually go back to slide-0
+                isAnimating = false;
+                goPhase(0);
+            });
+        }
+
+        // ── Hop slide show/hide helpers ───────────────────────────────────────
+        // showSlide1Forward: called when entering slide-1 FROM slide-0 (next ►)
+        // Always plays the timelapse from the beginning.
+        function showSlide1Forward() {
+            stopHopLoop();
+            hopReversePlaying = false;
+            if (hopReversed) { hopReversed.style.opacity = '0'; hopReversed.pause(); }
+            if (hopTimelapse) {
+                hopTimelapse.currentTime = 0;
+                hopTimelapse.style.opacity = '1';
+                hopTimelapse.play().catch(() => {});
+            }
+        }
+
+        // showSlide1Backward: called when entering slide-1 FROM the canvas (◄ prev)
+        // Always jumps straight to the ambient loop.
+        function showSlide1Backward() {
+            stopHopLoop();
+            hopReversePlaying = false;
+            if (hopReversed)  { hopReversed.style.opacity  = '0'; hopReversed.pause(); }
+            if (hopTimelapse) { hopTimelapse.pause(); hopTimelapse.style.opacity = '0'; }
+            startHopLoop();
+        }
+
+        function hideSlide1() {
+            stopHopLoop();
+            if (hopTimelapse) { hopTimelapse.pause(); hopTimelapse.style.opacity = '0'; }
+            if (hopReversed)  { hopReversed.pause();  hopReversed.style.opacity  = '0'; }
+        }
+
+        // ── Back-from-slide-1 transition ──────────────────────────────────────
+        // Plays the reversed timelapse then calls goPhase(0) when done.
+        function playReverseAndGoBack() {
+            if (hopReversePlaying) return;
+            hopReversePlaying = true;
+            // Freeze whatever is showing
+            stopHopLoop();
+            if (hopTimelapse) { hopTimelapse.pause(); hopTimelapse.style.opacity = '0'; }
+            // Show and play reversed timelapse
+            if (hopReversed) {
+                hopReversed.currentTime = 0;
+                hopReversed.playbackRate = 2;
+                hopReversed.style.opacity = '1';
+                hopReversed.play().catch(() => {
+                    // Fallback: if play fails just navigate
+                    hopReversePlaying = false;
+                    isAnimating = false;
+                    goPhase(0);
+                });
+            } else {
+                isAnimating = false;
+                goPhase(0);
+            }
+        }
 
 
         // ── State ─────────────────────────────────────────────────────────────
@@ -687,7 +835,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // ── Phase controller ──────────────────────────────────────────────────
-        function goPhase(phase) {
+        // direction: 'forward' (from an earlier slide) | 'backward' (from a later slide)
+        // Only relevant when phase === 1.
+        function goPhase(phase, direction = 'forward') {
             if (isAnimating || phase < 0 || phase > 2) return;
             isAnimating = true;
 
@@ -706,13 +856,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (canvas) canvas.classList.remove('is-visible');
                 if (prevBtn) prevBtn.disabled = true;
                 if (nextBtn) nextBtn.disabled = false;
-                if (hopVideo) hopVideo.pause();
+                hideSlide1();
             } else if (phase === 1) {
                 slides[1].classList.add('is-active');
                 if (canvas) canvas.classList.remove('is-visible');
                 if (prevBtn) prevBtn.disabled = false;
                 if (nextBtn) nextBtn.disabled = false;
-                if (hopVideo) { hopVideo.currentTime = 0; hopVideo.play().catch(() => {}); }
+                if (direction === 'backward') showSlide1Backward();
+                else                          showSlide1Forward();
             } else if (phase === 2) {
                 // Show loading overlay if frames aren't ready yet
                 if (loadingEl) {
@@ -736,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderStoryFrame(0);    // paint frame 1 immediately
                 applyTextOpacities(0);  // show first text box immediately at rest
                 if (prevBtn) prevBtn.disabled = false;
-                if (hopVideo) hopVideo.pause();
+                hideSlide1();
             }
 
             setTimeout(() => { isAnimating = false; }, 800);
@@ -765,7 +916,8 @@ document.addEventListener('DOMContentLoaded', () => {
             currentProgress   = 0;
             animStartProgress = 0;
             animStartTime     = null;
-            if (hopVideo) hopVideo.pause();
+            hopReversePlaying = false;
+            hideSlide1();
 
             overlay.classList.remove('is-open');
             overlay.setAttribute('aria-hidden', 'true');
@@ -806,7 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (nextBtn) {
             nextBtn.addEventListener('click', () => {
-                if      (currentPhase === 0) goPhase(1);
+                if      (currentPhase === 0) goPhase(1, 'forward');
                 else if (currentPhase === 1) { isAnimating = false; goPhase(2); }
                 else if (currentPhase === 2) {
                     if (currentStep < STEP_COUNT - 1) {
@@ -818,13 +970,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
-                if      (currentPhase === 1) { isAnimating = false; goPhase(0); }
+                if (currentPhase === 1) {
+                    // Don't navigate immediately — play reversed timelapse first,
+                    // which calls goPhase(0) when it finishes via the 'ended' listener.
+                    isAnimating = true; // block other nav during transition
+                    playReverseAndGoBack();
+                }
                 else if (currentPhase === 2) {
                     if (currentStep > 0) {
                         currentStep--;
                         startAnimation(STOP_POINTS[currentStep]);
                     } else {
-                        isAnimating = false; goPhase(1);
+                        isAnimating = false; goPhase(1, 'backward');
                     }
                 }
             });
