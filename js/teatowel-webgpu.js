@@ -129,7 +129,7 @@ export async function init(containerEl, texturePath) {
     return true;
 }
 
-export function start() {
+export async function start() {
     if (animationId !== null) return;
 
     if (!renderer) {
@@ -156,7 +156,7 @@ export function start() {
     }
 
     timer.reset();
-    renderer.setAnimationLoop(render);
+    await renderer.setAnimationLoop(render);
     animationId = 1;
 }
 

@@ -862,13 +862,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (prevBtn) prevBtn.disabled = true;
                 if (nextBtn) nextBtn.disabled = false;
                 hideSlide1();
-                // Show fixed-position cloth canvas and start simulation
-                if (towelCanvas) towelCanvas.style.display = 'block';
+                // Cloth canvas is managed autonomously by the teatowel module's MutationObserver
             } else if (phase === 1) {
                 slides[1].classList.add('is-active');
                 if (canvas) canvas.classList.remove('is-visible');
-                // Hide cloth canvas when leaving slide 0
-                if (towelCanvas) towelCanvas.style.display = 'none';
+                // Cloth canvas lifecycle managed by teatowel module's MutationObserver
                 if (prevBtn) prevBtn.disabled = false;
                 if (nextBtn) nextBtn.disabled = false;
                 // Stop cloth sim to free resources while on other slides
