@@ -1544,7 +1544,12 @@
             position: fixed;
             inset: 0;
             z-index: 1001;
-            display: none;
+            /* display:none is intentionally omitted here. Appending a WebGPU canvas
+           to a display:none element causes some browsers to silently fail GPU
+           context creation (zero-dimension swap chain). The container is hidden
+           from the user by its parent slide's opacity:0 / visibility:hidden, so
+           we don't need display:none — the renderer initialises against a real
+           layout box and the cloth is never visible before the overlay opens. */
             pointer-events: none;
         }
 

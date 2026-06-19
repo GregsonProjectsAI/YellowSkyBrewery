@@ -7,7 +7,7 @@
     <title>Yellow Sky Brewery</title>
     <!-- CSS -->
     <link rel="stylesheet" href="css/variables.css?v=2">
-    <link rel="stylesheet" href="css/main.css?v=16">
+    <link rel="stylesheet" href="css/main.css?v=17">
 </head>
 
 <body class="no-scroll">
@@ -507,107 +507,266 @@
     }
     </script>
 
-    <!-- STEP 1 (classic, runs synchronously before main.js):
-         Stub that queues calls so main.js sees window.TeaTowelCloth immediately.
-         Module scripts always run AFTER classic scripts, so without this stub
-         window.TeaTowelCloth would be undefined when main.js executes. -->
-    <script>
-    (function () {
-        var _queue  = [];   // pending [method, args] pairs
-        var _ready  = false;
-        var _started = false;
+            </video>
+            <video id="story-kettle-b" class="story-steam-video" muted playsinline preload="auto">
+                <source src="assets/Steam_rising_black_background.mp4" type="video/mp4">
+            </video>
+            <!-- Pint filling overlay (step 3 — "Can We Join In?"): one-shot, plays once to completion -->
+            <video id="story-pint" class="story-pint-video" muted playsinline preload="auto">
+                <source src="assets/Beer_filling_in_pint_glass_202606181727.mp4" type="video/mp4">
+            </video>
+            <!-- Drip loop overlay (step 3 — after pour completes): dual-video crossfade 0.000s→19.333s -->
+            <video id="story-drip-a" class="story-pint-video" muted playsinline preload="auto">
+                <source src="assets/Beer_drip_slow.mp4" type="video/mp4">
+            </video>
+            <video id="story-drip-b" class="story-pint-video" muted playsinline preload="auto">
+                <source src="assets/Beer_drip_slow.mp4" type="video/mp4">
+            </video>
+            <div id="story-loading" class="story-loading">
+                <span id="story-loading-text">Loading story...</span>
+            </div>
 
-        window.TeaTowelCloth = {
-            // Queued until module loads
-            init:   function (c, p, h) { _queue.push(['init',  [c, p, h]]); },
-            start:  function ()        { _queue.push(['start', []]); },
-            stop:   function ()        { /* safe no-op before module loads */ },
-            resize: function ()        { /* handled internally */ },
+            <!-- Slide 0: In The Beginning — Interactive cloth simulation -->
+            <div class="story-slide story-slide--centred story-slide--cloth-sim" id="slide-0">
+                <!-- Background: stacked grain bags -->
+                <div class="cloth-sim-bg"></div>
+                <!-- WebGPU tea towel: module mounts its own canvas inside this div -->
+                <div id="teatowel-container" aria-label="Interactive Yellow Sky Brewery tea towel — grab and play"></div>
+                <!-- Static fallback image shown until/unless WebGPU initialises -->
+                <img id="teatowel-fallback"
+                     src="assets/YSB_TeaTowel_Modified_with_border.png"
+                     alt="Yellow Sky Brewery tea towel"
+                     class="teatowel-fallback">
+                <!-- "Grab me" hint — fades in after a delay, dismissed on first interaction -->
+                <div class="cloth-hint" id="cloth-hint" aria-hidden="true">
+                    <span class="cloth-hint__text">✦ grab & drag the towel</span>
+                </div>
+            </div>
 
-            // Called by the module once it has loaded to install real implementations
-            // and replay any queued calls.
-            _activate: function (impl) {
-                // Replace stub methods with real ones on THIS object so that any
-                // reference main.js already holds (window.TeaTowelCloth) continues
-                // to work — we mutate in place rather than replacing the object.
-                window.TeaTowelCloth.init   = impl.init.bind(impl);
-                window.TeaTowelCloth.start  = impl.start.bind(impl);
-                window.TeaTowelCloth.stop   = impl.stop.bind(impl);
-                window.TeaTowelCloth.resize = impl.resize.bind(impl);
-                // Replay anything main.js already queued
-                _queue.forEach(function (call) {
-                    impl[call[0]].apply(impl, call[1]);
-                });
-                _queue = [];
-            }
-        };
-    })();
+            <!-- Slide 1: But First... -->
+            <div class="story-slide story-slide--centred story-slide--fullscreen-bg" id="slide-1">
+                <!-- Timelapse: plays forward on first visit -->
+                <video id="hop-timelapse" class="story-slide__fullbg-video" muted playsinline>
+                    <source src="assets/hop_animation.mp4" type="video/mp4">
+                </video>
+                <!-- Reversed timelapse: plays when user presses back from slide-1 -->
+                <video id="hop-reversed" class="story-slide__fullbg-video" muted playsinline>
+                    <source src="assets/hop_animation_reversed.mp4" type="video/mp4">
+                </video>
+                <!-- Ambient loop A/B: dual-video crossfade for seamless looping -->
+                <video id="hop-loop-a" class="story-hop-loop-video" muted playsinline>
+                    <source src="assets/Hop natural movement 33pct.mp4" type="video/mp4">
+                </video>
+                <video id="hop-loop-b" class="story-hop-loop-video" muted playsinline>
+                    <source src="assets/Hop natural movement 33pct.mp4" type="video/mp4">
+                </video>
+                <div class="story-slide__content-side video-overlay-box">
+                    <h3 class="story-slide__title">But First...</h3>
+                    <p class="story-slide__text">It all started where most bad decisions begin: a party at Lee's house. Having made a few beers using malt extract brewing kits, Chris and Lee decided they were very good at making beer. Their confidence in no way boosted by the large quantities of mediocre home brew consumed that evening, the decision was clear &mdash; they should start their own brewery!</p>
+                    <p class="story-slide__text">After several discussions about why it would be foolish not to, and how they would split the hoards of gold they would no doubt accrue, they put the idea forward to Dave. Needless to say Dave thought making beer was an excellent plan.</p>
+                    <p class="story-slide__text">After receiving a Braumeister brewing kit for a retirement gift, the doors to Dave's garage were opened for brewing on October 7th 2017. A rare weather system had blown sand up from the Sahara causing the sky to take on a yellow colour. And so the decision was taken to name the brewery Yellow Sky.</p>
+                </div>
+            </div>
+            
+            <!-- Slide 2 -->
+            <div class="story-slide story-slide--video-bg story-slide--scroll-driven" id="slide-2">
+                <div class="story-slide__content-side video-overlay-box">
+                    <h3 class="story-slide__title">Well, Now What?</h3>
+                    <p class="story-slide__text">Whilst enthusiasm was high, the fact remained that none of the heroes in this story knew how to brew all grain beer &mdash; perhaps they were Nitwits after all.</p>
+                    <p class="story-slide__text">Nevertheless they set forth, getting together every Sunday (as they continue to do) to learn through trial and error. Early efforts included a Porter that took nine hours to make (not to its benefit), a pale ale designed to be as bitter as possible (successful but undrinkable) and a single hop brew using the Admiral hop &mdash; the beer worked, but it was horrid.</p>
+                    <p class="story-slide__text">However, every now and then the Nitwits would create something just good enough to spur them on. Water chemistry was utilised, hop additions were refined, malt adjuncts applied in more measured quantities. At that time there was really just one problem&hellip;</p>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="story-slide story-slide--video-bg story-slide--scroll-driven" id="slide-3">
+                <div class="story-slide__content-side video-overlay-box">
+                    <h3 class="story-slide__title">There's No Room Here!</h3>
+                    <p class="story-slide__text">Alas, due to modest but steady growth, the Nitwits had quite literally reached the limits of Dave's garage. It was time for a re-think.</p>
+                    <p class="story-slide__text">Seeing this on the horizon, Lee had quietly been repurposing a couple of sheds at the end of Colin's garden. Logs, tools and spiders were cleared out. Water and electricity supplies were installed and new brewing gear purchased to create what remains YSB HQ.</p>
+                    <p class="story-slide__text">Freshly equipped with two Grainfather G30s, four stainless steel conical fermenters, a propylene glycol chiller and a steady supply of malt, hops and yeast. It was time to get serious.</p>
+                </div>
+            </div>
+
+            <!-- Slide 4 -->
+            <div class="story-slide story-slide--video-bg story-slide--scroll-driven" id="slide-4">
+                <div class="story-slide__content-side video-overlay-box">
+                    <h3 class="story-slide__title">Well, Serious-ish&hellip;</h3>
+                    <p class="story-slide__text">The thing is, being serious has never really been the way things are done at Yellow Sky. Yes, the Nitwits continued improving, refining and experimenting &mdash; always striving to make sure the beer was of the highest quality. But the most important part of Yellow Sky has always been having fun.</p>
+                    <p class="story-slide__text">So time passed and the Nitwits carried on doing their own thing, hosting events for friends and family, enjoying Sunday beers and attempting to play darts. But murmurs grew from enthusiastic followers: <em>'Hey, you guys actually make some really good beer! When are you going to take this commercial?'</em></p>
+                    <p class="story-slide__text">Turning a 50 litre per week shed-based home brewery into a commercial operation being no small task, the Nitwits stayed the idea. There were forays &mdash; supplying beer to the Godalming Staycation festival and hosting a charity event for Prostate Cancer. Now eight years in and confident in their brewing skills, perhaps there was another way to get involved.</p>
+                </div>
+            </div>
+
+            <!-- Slide 5 -->
+            <div class="story-slide story-slide--video-bg story-slide--scroll-driven" id="slide-5">
+                <div class="story-slide__content-side video-overlay-box">
+                    <h3 class="story-slide__title">Can We Join In?</h3>
+                    <p class="story-slide__text">So to a chance meeting at a local wood fair, of all things. The Nitwits, unimpressed by the not-at-all interesting sights, predictably made their way to the nearest beer concession &mdash; Tilford Brewery. Here they spent the next 45 minutes talking at owner and head brewer Mark about his beer, their beer, and the possibility of getting involved. For reasons they still haven't worked out, Mark was open to it.</p>
+                    <p class="story-slide__text">Shortly thereafter Chris went to Tilford, secretly hoping to be offered a job, for a brew day. Recognising the plot, Mark generously proposed a collaboration. <em>'Yes please!'</em> Chris replied. Nitwits Lee and Chris went to brew Owlrye with Mark &mdash; their first real venture into the wider market, met with a very positive response.</p>
+                    <p class="story-slide__text">Seeing their recipe on the bar alongside local legends of brewing was a proud moment indeed. The first of many they hope, and a justification for the hours of work they've put into their craft.</p>
+                    <button id="story-continue-btn" class="btn btn--primary story-overlay__continue">Continue &darr;</button>
+                </div>
+            </div>
+
+        </div>
+
+        <button id="story-prev" class="story-nav__arrow story-nav__arrow--prev" aria-label="Previous chapter">&#8592;</button>
+        <button id="story-next" class="story-nav__arrow story-nav__arrow--next" aria-label="Next chapter">&#8594;</button>
+
+    </div>
+
+    <!-- Blog Section -->
+    <section id="blog" class="blog-section">
+        <div class="container">
+            <h2 class="section-title fade-up">The YSB Bulletin</h2>
+            <p class="section-subtitle fade-up">Brew logs, taproom events, and general nitwit updates straight from the mash tun.</p>
+            <div id="blog-posts-feed" class="blog-grid">
+                <p style="color: var(--color-text-muted); text-align: center; grid-column: 1 / -1; padding: 40px 0;">Loading bulletin updates...</p>
+            </div>
+            <div class="blog-archive-cta fade-up">
+                <button id="blog-archive-open-btn" class="btn btn--secondary">Explore Full Archive &rarr;</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog Archive Overlay -->
+    <div id="blog-archive-overlay" class="blog-archive-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Full Blog Archive">
+        <div class="blog-archive-overlay__header">
+            <div class="blog-archive-overlay__title-row">
+                <h2 class="blog-archive-overlay__title">The YSB Bulletin</h2>
+                <button id="blog-archive-close-btn" class="blog-archive-overlay__close" aria-label="Close archive">&times; Close</button>
+            </div>
+            <div class="blog-archive-filters" role="group" aria-label="Filter posts by category">
+                <button class="blog-filter-btn is-active" data-filter="all">All Posts</button>
+                <button class="blog-filter-btn" data-filter="brew-log">Brew Logs 🍺</button>
+                <button class="blog-filter-btn" data-filter="event">Events 📅</button>
+                <button class="blog-filter-btn" data-filter="general">Updates 📝</button>
+            </div>
+        </div>
+        <div class="blog-archive-overlay__body">
+            <div id="blog-archive-grid" class="blog-grid"></div>
+        </div>
+    </div>
+
+    <!-- Contact & Invite Section -->
+    <section id="contact" class="contact-section">
+        <div class="container fade-up">
+            <h2 class="section-title">Join the Nitwits (For a Beer)</h2>
+            <div class="contact-card">
+                <div class="contact-card__info">
+                    <h3>The Secret is in the Sauce (and the Location)</h3>
+                    <p>We don't publish the address of the brewery. It's a closely guarded secret, mostly to keep The Mrs Nitwits on-side, and anyway, we're not a commercial brewery.</p>
+                    <p>However, we'd love it if you stopped by to see what we're up to on Sundays. If you're in the Cranleigh area, there's always a barrel of something on the go, and a game of darts to boot. Pop your email in here and we'll send you the details. Don't worry, we won't spam you — but we will send out invites to events as and when they happen a couple of times a year.</p>
+                    <div class="contact-card__general">
+                        <p>For general inquiries or to hurl abuse (it will be hurled back), email us:</p>
+                        <a href="mailto:nitwits@yellowskybrewery.com" class="contact-email">nitwits@yellowskybrewery.com</a>
+                    </div>
+                </div>
+                <div class="contact-card__form">
+                    <form id="subscribe-form" class="subscribe-form">
+                        <div class="form-group">
+                            <label for="sub-name">Your Name</label>
+                            <input type="text" id="sub-name" name="name" required placeholder="e.g. Colin">
+                        </div>
+                        <div class="form-group">
+                            <label for="sub-email">Your Email</label>
+                            <input type="email" id="sub-email" name="email" required placeholder="colin@example.com">
+                        </div>
+                        <button type="submit" class="btn btn--primary btn--full">Get My Invite &rarr;</button>
+                        <p id="subscribe-message" class="subscribe-message"></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <p class="site-footer__copy">&copy; 2026 Yellow Sky Brewery &mdash; Handcrafted by Three Nitwits</p>
+            <a href="/admin" class="site-footer__admin-link">&#128274; Staff Login</a>
+        </div>
+    </footer>
+
+
+    <!-- Three.js importmap for ES module tea towel -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three":          "/node_modules/three/build/three.webgpu.js",
+            "three/webgpu":   "/node_modules/three/build/three.webgpu.js",
+            "three/tsl":      "/node_modules/three/build/three.tsl.js",
+            "three/addons/":  "/node_modules/three/examples/jsm/"
+        }
+    }
     </script>
 
-    <!-- Classic scripts — main.js runs, sees the stub above -->
-    <script src="js/main.js?v=10"></script>
+    <!-- Classic scripts -->
+    <script src="js/main.js?v=11"></script>
     <script src="js/scroll-animation.js?v=2"></script>
     <script src="js/blog.js?v=2"></script>
 
-    <!-- STEP 2 (module, runs after all classic scripts):
-         Import the real WebGPU cloth, build the impl object, activate the stub. -->
+    <!-- Autonomous WebGPU Tea Towel -->
     <script type="module">
-        import { init, start, stop } from '/js/teatowel-webgpu.js';
+        import { init, start, stop } from '/js/teatowel-webgpu.js?v=16';
 
         const container  = document.getElementById('teatowel-container');
         const fallbackEl = document.getElementById('teatowel-fallback');
         const hintEl     = document.getElementById('cloth-hint');
+        const slide0     = document.getElementById('slide-0');
         const TEXTURE    = 'assets/YSB_TeaTowel_Modified_with_border.png';
 
-        let _ready   = false;
-        let _started = false;
+        let isRunning = false;
+        let startTimer = null;
 
-        const impl = {
-            init (_canvas, _path, _hint) {
-                if (!container) return;
-                init(container, TEXTURE).then(ok => {
-                    if (ok) {
-                        // Hide the static fallback — cloth is live
-                        if (fallbackEl) fallbackEl.style.display = 'none';
-                        // Mark ready FIRST so start() works immediately
-                        _ready = true;
-                        // If start() was already called (overlay opened before init resolved)
-                        // kick off the animation loop now
-                        if (_started) {
+        init(container, TEXTURE).then(ok => {
+            if (ok) {
+                if (fallbackEl) fallbackEl.style.display = 'none';
+                if (container)  container.style.display  = 'block';
+
+                // Automatically start/stop based on slide-0's is-active class
+                const observer = new MutationObserver(() => {
+                    const isActive = slide0.classList.contains('is-active');
+                    if (isActive && !isRunning) {
+                        isRunning = true;
+                        // WAIT 500ms for the .story-overlay opacity transition to finish!
+                        // Chrome WebGPU swapchains can silently fail if created on an animating container.
+                        clearTimeout(startTimer);
+                        startTimer = setTimeout(() => {
                             start();
-                            setTimeout(() => { if (hintEl) hintEl.style.opacity = '1'; }, 2000);
-                        }
-                    } else {
-                        console.warn('[TeaTowel] WebGPU unavailable — static fallback shown');
+                            setTimeout(() => { if (hintEl) hintEl.style.opacity = '1'; }, 1500);
+                        }, 500);
+                    } else if (!isActive && isRunning) {
+                        isRunning = false;
+                        clearTimeout(startTimer);
+                        stop();
+                        if (hintEl) hintEl.style.opacity = '0';
                     }
-                }).catch(err => console.error('[TeaTowel] init error:', err));
-            },
+                });
 
-            start () {
-                console.log('[TeaTowel] start() called, _ready=', _ready);
-                _started = true;
-                if (_ready) {
-                    start();
-                    // Show hint 2s after slide becomes visible
-                    setTimeout(() => { if (hintEl) hintEl.style.opacity = '1'; }, 2000);
+                observer.observe(slide0, { attributes: true, attributeFilter: ['class'] });
+
+                // Initial check in case it's already active
+                if (slide0.classList.contains('is-active')) {
+                    isRunning = true;
+                    clearTimeout(startTimer);
+                    startTimer = setTimeout(() => {
+                        start();
+                        setTimeout(() => { if (hintEl) hintEl.style.opacity = '1'; }, 1500);
+                    }, 500);
                 }
-            },
 
-            stop () {
-                console.log('[TeaTowel] stop() called');
-                _started = false;
-                stop();
-                // Immediately hide the hint when leaving slide-0
-                if (hintEl) hintEl.style.opacity = '0';
-            },
-
-            resize () { /* handled by resize listener inside module */ }
-        };
-
-        // Hand control to the stub → replays any queued calls from main.js
-        window.TeaTowelCloth._activate(impl);
+            } else {
+                console.warn('[TeaTowel] WebGPU unavailable — static fallback shown');
+                if (fallbackEl) fallbackEl.style.display = 'block';
+                if (container)  container.style.display  = 'none';
+            }
+        }).catch(err => {
+            console.error('[TeaTowel] init error:', err);
+            if (fallbackEl) fallbackEl.style.display = 'block';
+            if (container)  container.style.display  = 'none';
+        });
     </script>
 </body>
-
-
 </html>

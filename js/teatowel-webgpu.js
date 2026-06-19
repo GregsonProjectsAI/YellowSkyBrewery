@@ -80,22 +80,9 @@ export async function init(containerEl, texturePath) {
         return false;
     }
 
-    // Renderer — transparent canvas overlay
-    renderer = new THREE.WebGPURenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(containerEl.clientWidth || window.innerWidth,
-                     containerEl.clientHeight || window.innerHeight);
-    renderer.setClearColor(0x000000, 0);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
-
-    const canvas = renderer.domElement;
-    // Fixed positioning: sits above the overlay regardless of DOM nesting.
-    // pointer-events:none so UI buttons below (SKIP STORY etc) remain clickable.
-    // Mouse/touch interaction goes through window listeners in setupMouse().
-    canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;';
-    containerEl.appendChild(canvas);
-
+    // Renderer creation is DEFERRED to start() to prevent WebGPU swapchain
+    // silent failures when created on elements that are display:none or visibility:hidden.
+    
     // Scene + camera
     scene = new THREE.Scene();
 
@@ -116,8 +103,6 @@ export async function init(containerEl, texturePath) {
     camera.lookAt(0, clothCentreY, 0);
     console.log(`[TeaTowel] camera z=${camZ.toFixed(3)}, centreY=${clothCentreY.toFixed(3)}`);
 
-    renderer.setSize(w, h);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
 
@@ -138,23 +123,52 @@ export async function init(containerEl, texturePath) {
     initPhysics();
     buildMesh(texture);
     buildCornerDots();
-    setupMouse(canvas);
 
     window.addEventListener('resize', onResize);
-    console.log('[TeaTowel] init OK — CPU Verlet + Three.js WebGPU render');
+    console.log('[TeaTowel] init OK — CPU Verlet + Three.js setup complete');
     return true;
 }
 
 export function start() {
     if (animationId !== null) return;
-    timer.update();
+
+    if (!renderer) {
+        renderer = new THREE.WebGPURenderer({ antialias: true, alpha: true });
+        
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(w, h);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.1;
+
+        const canvas = renderer.domElement;
+        canvas.style.position = 'fixed';
+        canvas.style.inset    = '0';
+        canvas.style.zIndex   = '2147483646';
+        canvas.style.pointerEvents = 'none';
+
+        setupMouse();
+    }
+
+    if (!renderer.domElement.parentNode && container) {
+        container.appendChild(renderer.domElement);
+    }
+
+    timer.reset();
     renderer.setAnimationLoop(render);
     animationId = 1;
 }
 
 export function stop() {
+    if (animationId === null) return;
     renderer.setAnimationLoop(null);
     animationId = null;
+    
+    // Clean up DOM so it doesn't linger over other slides
+    if (renderer && renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+    }
 }
 
 export function dispose() {
