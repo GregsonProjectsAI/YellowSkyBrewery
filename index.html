@@ -331,17 +331,15 @@
                 <span id="story-loading-text">Loading story...</span>
             </div>
 
-            <!-- Slide 0: In The Beginning -->
-            <div class="story-slide story-slide--centred story-slide--fullscreen-video" id="slide-0">
-                <div class="story-slide__video-container">
-                    <video class="story-slide__video-bg" autoplay loop muted playsinline>
-                        <source src="assets/animated_teatowel_with_background.mp4" type="video/mp4">
-                    </video>
-                    <video class="story-slide__video" autoplay loop muted playsinline>
-                        <source src="assets/animated_teatowel_with_background.mp4" type="video/mp4">
-                    </video>
-                </div>
-                <div class="story-slide__content-side story-slide__content-side--full">
+            <!-- Slide 0: In The Beginning — Interactive cloth simulation -->
+            <div class="story-slide story-slide--centred story-slide--cloth-sim" id="slide-0">
+                <!-- Background: stacked grain bags -->
+                <div class="cloth-sim-bg"></div>
+                <!-- Interactive tea towel canvas -->
+                <canvas id="teatowel-canvas" aria-label="Interactive Yellow Sky Brewery tea towel — grab and play"></canvas>
+                <!-- "Grab me" hint — fades in after a delay, dismissed on first interaction -->
+                <div class="cloth-hint" id="cloth-hint" aria-hidden="true">
+                    <span class="cloth-hint__text">↕ grab me</span>
                 </div>
             </div>
 
@@ -493,7 +491,8 @@
 
 
     <!-- JavaScript -->
-    <script src="js/main.js?v=8"></script>
+    <script src="js/teatowel-cloth.js?v=5"></script>
+    <script src="js/main.js?v=10"></script>
     <script src="js/scroll-animation.js?v=2"></script>
     <script src="js/blog.js?v=2"></script>
 </body>

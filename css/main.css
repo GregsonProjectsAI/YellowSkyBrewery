@@ -1520,6 +1520,68 @@
             pointer-events: none;
         }
 
+        /* ── Slide 0 — Interactive cloth simulation ─────────────────────────── */
+        .story-slide--cloth-sim {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* Full-bleed background — position:absolute within #slide-0.
+           slide-0 has z-index:10 inside the overlay, so it paints over
+           the overlay's rgba(5,5,5,0.98) background naturally. */
+        .cloth-sim-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('../assets/stacked_grain_bags.jpeg');
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+
+        /* Physics canvas — always present, transparent when cloth isn't drawing.
+           No display toggling needed — stop() clears the canvas to transparent.
+           DIAGNOSTIC: background:rgba(255,0,0,0.35) confirms element is visible. */
+        #teatowel-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            background: rgba(255, 0, 0, 0.35);  /* TEMP diagnostic */
+        }
+
+        /* "Grab me" hint — bottom-centre, fades in after delay */
+        .cloth-hint {
+            position: absolute;
+            bottom: 52px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            opacity: 0;   /* JS drives opacity */
+            pointer-events: none;
+        }
+
+        .cloth-hint__text {
+            display: inline-block;
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: 0.82rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(255, 215, 100, 0.82);
+            background: rgba(0, 0, 0, 0.38);
+            border: 1px solid rgba(255, 215, 100, 0.28);
+            border-radius: 20px;
+            padding: 7px 20px;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            animation: cloth-hint-bob 2.2s ease-in-out infinite;
+        }
+
+        @keyframes cloth-hint-bob {
+            0%, 100% { transform: translateY(0);   }
+            50%       { transform: translateY(-5px); }
+        }
+
         /* Slide 1 — full-bleed video background, centred text overlay */
         .story-slide--fullscreen-bg {
             padding: 80px 100px;

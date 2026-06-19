@@ -205,6 +205,20 @@ document.addEventListener('DOMContentLoaded', () => {
         let framesLoaded   = 0;
         let framesReady    = false;
 
+        // ── Cloth simulation (slide-0 tea towel) ──────────────────────────────
+        const towelCanvas = document.getElementById('teatowel-canvas');
+        const hintEl      = document.getElementById('cloth-hint');
+        let clothReady    = false;
+
+        if (towelCanvas && window.TeaTowelCloth) {
+            TeaTowelCloth.init(
+                towelCanvas,
+                'assets/YSB_TeaTowel_Modified_with_border.png',
+                hintEl
+            );
+            clothReady = true;
+        }
+
         // Preload all story frames immediately so they're ready when user opens overlay
         for (let i = 1; i <= FRAME_COUNT; i++) {
             const img = new Image();
@@ -857,11 +871,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (prevBtn) prevBtn.disabled = true;
                 if (nextBtn) nextBtn.disabled = false;
                 hideSlide1();
+                // Show fixed-position cloth canvas and start simulation
+                if (towelCanvas) towelCanvas.style.display = 'block';
+                if (clothReady) TeaTowelCloth.start();
             } else if (phase === 1) {
                 slides[1].classList.add('is-active');
                 if (canvas) canvas.classList.remove('is-visible');
+                // Hide cloth canvas when leaving slide 0
+                if (towelCanvas) towelCanvas.style.display = 'none';
                 if (prevBtn) prevBtn.disabled = false;
                 if (nextBtn) nextBtn.disabled = false;
+                // Stop cloth sim to free resources while on other slides
+                if (clothReady) TeaTowelCloth.stop();
                 if (direction === 'backward') showSlide1Backward();
                 else                          showSlide1Forward();
             } else if (phase === 2) {
@@ -879,6 +900,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     t.classList.add('phase-active');
                     t.style.opacity = '0';
                 });
+                // Stop cloth sim — not needed during canvas scrub
+                if (clothReady) TeaTowelCloth.stop();
                 currentStep       = 0;
                 targetProgress    = 0;
                 currentProgress   = 0;
@@ -911,6 +934,8 @@ document.addEventListener('DOMContentLoaded', () => {
             stopSteamEffect();
             stopKettleEffect();
             stopPintEffect();
+            // Stop cloth simulation
+            if (clothReady) TeaTowelCloth.stop();
             currentPhase    = 0;
             targetProgress    = 0;
             currentProgress   = 0;
@@ -1128,4 +1153,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ── Cloth simulation resize ───────────────────────────────────────────────
+    // Debounced so it doesn't thrash during drag-resize
+    let clothResizeTimer = null;
+    window.addEventListener('resize', () => {
+        if (window.TeaTowelCloth) {
+            clearTimeout(clothResizeTimer);
+            clothResizeTimer = setTimeout(() => TeaTowelCloth.resize(), 250);
+        }
+    });
+
 });
