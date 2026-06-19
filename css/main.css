@@ -1526,9 +1526,7 @@
             overflow: hidden;
         }
 
-        /* Full-bleed background — position:absolute within #slide-0.
-           slide-0 has z-index:10 inside the overlay, so it paints over
-           the overlay's rgba(5,5,5,0.98) background naturally. */
+        /* Full-bleed background — grain bags image */
         .cloth-sim-bg {
             position: absolute;
             inset: 0;
@@ -1538,16 +1536,33 @@
             z-index: 1;
         }
 
-        /* Physics canvas — always present, transparent when cloth isn't drawing.
-           No display toggling needed — stop() clears the canvas to transparent.
-           DIAGNOSTIC: background:rgba(255,0,0,0.35) confirms element is visible. */
-        #teatowel-canvas {
-            position: absolute;
+        /* WebGPU container — fixed to viewport so overlay stacking context
+           can't clip or hide it. display:none until main.js activates slide-0.
+           pointer-events:none: cloth interaction uses window capture listeners;
+           overlay UI buttons remain fully clickable through the canvas. */
+        #teatowel-container {
+            position: fixed;
             inset: 0;
-            width: 100%;
-            height: 100%;
+            z-index: 1001;
+            display: none;
+            pointer-events: none;
+        }
+
+        /* Static fallback: visible until WebGPU cloth initialises,
+           then hidden by the module bootstrap via display:none */
+        .teatowel-fallback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-height: 82vh;
+            max-width: 54vw;
+            width: auto;
+            height: auto;
+            object-fit: contain;
             z-index: 2;
-            background: rgba(255, 0, 0, 0.35);  /* TEMP diagnostic */
+            pointer-events: none;
+            filter: drop-shadow(0 8px 32px rgba(0,0,0,0.55));
         }
 
         /* "Grab me" hint — bottom-centre, fades in after delay */
@@ -1559,6 +1574,7 @@
             z-index: 3;
             opacity: 0;   /* JS drives opacity */
             pointer-events: none;
+            transition: opacity 0.6s ease;
         }
 
         .cloth-hint__text {
@@ -1581,6 +1597,7 @@
             0%, 100% { transform: translateY(0);   }
             50%       { transform: translateY(-5px); }
         }
+
 
         /* Slide 1 — full-bleed video background, centred text overlay */
         .story-slide--fullscreen-bg {

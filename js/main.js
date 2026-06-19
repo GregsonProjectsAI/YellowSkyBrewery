@@ -206,7 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let framesReady    = false;
 
         // ── Cloth simulation (slide-0 tea towel) ──────────────────────────────
-        const towelCanvas = document.getElementById('teatowel-canvas');
+        // TeaTowelCloth is now a WebGPU ES module exposed via window.TeaTowelCloth
+        // by the inline <script type="module"> in index.html.
+        // We look for the container div (not the old canvas) as an existence check.
+        const towelCanvas = document.getElementById('teatowel-container');
         const hintEl      = document.getElementById('cloth-hint');
         let clothReady    = false;
 
