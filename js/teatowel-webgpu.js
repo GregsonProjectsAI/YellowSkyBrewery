@@ -131,6 +131,7 @@ export async function init(containerEl, texturePath) {
 
 export async function start() {
     if (animationId !== null) return;
+    console.log('[TeaTowel] start() called');
 
     if (!renderer) {
         renderer = new THREE.WebGPURenderer({ antialias: true, alpha: true });
@@ -145,14 +146,20 @@ export async function start() {
         const canvas = renderer.domElement;
         canvas.style.position = 'fixed';
         canvas.style.inset    = '0';
+        // Use max z-index in GLOBAL stacking context by appending to body.
+        // This avoids being trapped inside slide-0's stacking context (z:10)
+        // and bypasses the backdrop-filter compositing layer on .cloth-hint.
         canvas.style.zIndex   = '2147483646';
         canvas.style.pointerEvents = 'none';
 
         setupMouse();
     }
 
-    if (!renderer.domElement.parentNode && container) {
-        container.appendChild(renderer.domElement);
+    // Append canvas to document.body so it lives in the global stacking
+    // context at z-index 2147483646 — completely above all page elements.
+    if (!renderer.domElement.parentNode) {
+        document.body.appendChild(renderer.domElement);
+        console.log('[TeaTowel] canvas appended to body');
     }
 
     timer.reset();
@@ -241,6 +248,11 @@ function buildMesh(texture) {
     for (let xi = 0; xi <= COLS; xi++) {
         for (let yi = 0; yi <= ROWS; yi++) {
             const vi = pidx(xi, yi);
+            // Pre-populate positions from physics state so geometry is never degenerate.
+            // Three.js may cache a zero bounding sphere if posArr is all-zero on first upload.
+            posArr[vi * 3]     = px[vi];
+            posArr[vi * 3 + 1] = py[vi];
+            posArr[vi * 3 + 2] = pz[vi];
             uvArr[vi * 2]     = xi / COLS;
             // V=0 is bottom of image in Three.js/WebGL, V=1 is top.
             // Top of cloth (yi=0, pinned row) should show top of texture → V=1.
@@ -272,11 +284,12 @@ function buildMesh(texture) {
     clothGeo.setAttribute('uv',       new THREE.BufferAttribute(uvArr, 2));
     clothGeo.setIndex(idxArr);
 
-    clothMat = new THREE.MeshLambertMaterial({
-        map:         texture,
-        side:        THREE.DoubleSide,
-        transparent: true,
-        opacity:     0.97,
+    // MeshBasicMaterial: no lighting shader, no transparency pass — most reliable
+    // path through Three.js WebGPU. Visually identical to Lambert for a cloth
+    // with ambient-only lighting (texture shows clearly).
+    clothMat = new THREE.MeshBasicMaterial({
+        map:  texture,
+        side: THREE.DoubleSide,
     });
 
     clothMesh = new THREE.Mesh(clothGeo, clothMat);
@@ -470,6 +483,7 @@ function render() {
     frameCount++;
     renderer.render(scene, camera);
 }
+
 
 // ─── Mouse interaction ────────────────────────────────────────────────────────
 

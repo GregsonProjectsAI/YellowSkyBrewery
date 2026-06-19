@@ -33,8 +33,9 @@
                is visible as the canvas opacity fades during the scroll animation */
         }
 
-        /* The canvas where frames will be drawn */
-        canvas {
+        /* The canvas where frames will be drawn — scoped to #animation-canvas to avoid
+           clobbering other canvases (e.g. the WebGPU teatowel canvas) with opacity:0 */
+        #animation-canvas {
             display: block;
             max-width: 100%;
             max-height: 100%;

@@ -514,7 +514,7 @@
 
     <!-- Autonomous WebGPU Tea Towel -->
     <script type="module">
-        import { init, start, stop } from '/js/teatowel-webgpu.js?v=16';
+        import { init, start, stop } from '/js/teatowel-webgpu.js?v=23';
 
         const container  = document.getElementById('teatowel-container');
         const fallbackEl = document.getElementById('teatowel-fallback');
@@ -541,7 +541,7 @@
                         startTimer = setTimeout(() => {
                             start();
                             setTimeout(() => { if (hintEl) hintEl.style.opacity = '1'; }, 1500);
-                        }, 500);
+                        }, 750);
                     } else if (!isActive && isRunning) {
                         isRunning = false;
                         clearTimeout(startTimer);
@@ -559,7 +559,7 @@
                     startTimer = setTimeout(() => {
                         start();
                         setTimeout(() => { if (hintEl) hintEl.style.opacity = '1'; }, 1500);
-                    }, 500);
+                    }, 750);
                 }
 
             } else {
