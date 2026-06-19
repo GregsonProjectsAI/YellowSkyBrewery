@@ -144,13 +144,12 @@ export async function start() {
         renderer.toneMappingExposure = 1.1;
 
         const canvas = renderer.domElement;
-        canvas.style.position = 'fixed';
-        canvas.style.inset    = '0';
-        // Use max z-index in GLOBAL stacking context by appending to body.
-        // This avoids being trapped inside slide-0's stacking context (z:10)
-        // and bypasses the backdrop-filter compositing layer on .cloth-hint.
-        canvas.style.zIndex   = '2147483646';
+        canvas.style.position      = 'fixed';
+        canvas.style.inset         = '0';
+        canvas.style.zIndex        = '2147483646';
         canvas.style.pointerEvents = 'none';
+        canvas.style.opacity       = '0';
+        canvas.style.transition    = 'opacity 0.8s ease-in-out';
 
         setupMouse();
     }
@@ -165,6 +164,8 @@ export async function start() {
     timer.reset();
     await renderer.setAnimationLoop(render);
     animationId = 1;
+    // Fade the canvas in after the first frame has rendered
+    requestAnimationFrame(() => { renderer.domElement.style.opacity = '1'; });
 }
 
 export function stop() {

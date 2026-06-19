@@ -800,6 +800,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (framesRemaining <= 2) startPintEffect(PINT_STEP);
                 }
 
+                // Show continue button the moment the last frame arrives —
+                // same paint cycle as the animation visually stopping.
+                if (currentStep === STEP_COUNT - 1) {
+                    const framesRemaining = (targetProgress - currentProgress) * FRAME_COUNT;
+                    if (framesRemaining <= 1 && continueBtn && continueBtn.style.display !== 'flex') {
+                        updateNavState();
+                    }
+                }
+
                 if (reachedTarget || t >= 1) {
                     currentProgress = targetProgress; // snap exactly
                     animStartTime   = null;           // animation complete
@@ -897,6 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyTextOpacities(0);  // show first text box immediately at rest
                 if (prevBtn) prevBtn.disabled = false;
                 hideSlide1();
+                updateNavState();      // reset next/continue visibility for step 0
             }
 
             setTimeout(() => { isAnimating = false; }, 800);
@@ -966,6 +976,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (closeBtn)    closeBtn.addEventListener('click',    () => closeOverlay(false));
         if (continueBtn) continueBtn.addEventListener('click', () => closeOverlay(true));
 
+        function updateNavState() {
+            const isLast = (currentPhase === 2 && currentStep === STEP_COUNT - 1);
+            if (nextBtn)    { nextBtn.style.display    = isLast ? 'none'  : ''; }
+            if (continueBtn){ continueBtn.style.display = isLast ? 'flex'  : 'none'; }
+        }
         if (nextBtn) {
             nextBtn.addEventListener('click', () => {
                 if      (currentPhase === 0) goPhase(1, 'forward');
@@ -974,6 +989,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (currentStep < STEP_COUNT - 1) {
                         currentStep++;
                         startAnimation(STOP_POINTS[currentStep]);
+                        // hide continue button immediately when navigating forward
+                        if (continueBtn) continueBtn.style.display = 'none';
                     }
                 }
             });
@@ -981,15 +998,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
                 if (currentPhase === 1) {
-                    // Don't navigate immediately — play reversed timelapse first,
-                    // which calls goPhase(0) when it finishes via the 'ended' listener.
-                    isAnimating = true; // block other nav during transition
+                    isAnimating = true;
                     playReverseAndGoBack();
                 }
                 else if (currentPhase === 2) {
                     if (currentStep > 0) {
                         currentStep--;
                         startAnimation(STOP_POINTS[currentStep]);
+                        // navigating backward always hides continue, restores next
+                        if (continueBtn) continueBtn.style.display = 'none';
+                        if (nextBtn)     nextBtn.style.display     = '';
                     } else {
                         isAnimating = false; goPhase(1, 'backward');
                     }

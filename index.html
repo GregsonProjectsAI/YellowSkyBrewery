@@ -410,7 +410,6 @@
                     <p class="story-slide__text">So to a chance meeting at a local wood fair, of all things. The Nitwits, unimpressed by the not-at-all interesting sights, predictably made their way to the nearest beer concession &mdash; Tilford Brewery. Here they spent the next 45 minutes talking at owner and head brewer Mark about his beer, their beer, and the possibility of getting involved. For reasons they still haven't worked out, Mark was open to it.</p>
                     <p class="story-slide__text">Shortly thereafter Chris went to Tilford, secretly hoping to be offered a job, for a brew day. Recognising the plot, Mark generously proposed a collaboration. <em>'Yes please!'</em> Chris replied. Nitwits Lee and Chris went to brew Owlrye with Mark &mdash; their first real venture into the wider market, met with a very positive response.</p>
                     <p class="story-slide__text">Seeing their recipe on the bar alongside local legends of brewing was a proud moment indeed. The first of many they hope, and a justification for the hours of work they've put into their craft.</p>
-                    <button id="story-continue-btn" class="btn btn--primary story-overlay__continue">Continue &darr;</button>
                 </div>
             </div>
 
@@ -418,8 +417,11 @@
 
         <button id="story-prev" class="story-nav__arrow story-nav__arrow--prev" aria-label="Previous chapter">&#8592;</button>
         <button id="story-next" class="story-nav__arrow story-nav__arrow--next" aria-label="Next chapter">&#8594;</button>
+        <!-- Continue button: shown centred in place of the next arrow on the last slide -->
+        <button id="story-continue-btn" class="story-overlay__continue" aria-label="Continue to site">Continue &#8595;</button>
 
     </div>
+
 
     <!-- Blog Section -->
     <section id="blog" class="blog-section">
@@ -514,7 +516,7 @@
 
     <!-- Autonomous WebGPU Tea Towel -->
     <script type="module">
-        import { init, start, stop } from '/js/teatowel-webgpu.js?v=23';
+        import { init, start, stop } from '/js/teatowel-webgpu.js?v=24';
 
         const container  = document.getElementById('teatowel-container');
         const fallbackEl = document.getElementById('teatowel-fallback');
@@ -524,6 +526,7 @@
 
         let isRunning = false;
         let startTimer = null;
+
 
         init(container, TEXTURE).then(ok => {
             if (ok) {

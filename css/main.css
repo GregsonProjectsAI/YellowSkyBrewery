@@ -1788,15 +1788,47 @@
             letter-spacing: 0.3px;
         }
 
+        /* Continue button — bottom-centred, shown on last slide in place of the next arrow */
         .story-overlay__continue {
-            margin-top: var(--space-md);
+            position: absolute;
+            bottom: 48px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;           /* JS shows/hides based on last step */
+            white-space: nowrap;
             padding: 14px 36px;
             font-size: 1rem;
             letter-spacing: 2px;
-            align-self: flex-start;
+            width: auto;
+            height: auto;
+            border-radius: 40px;
+            background: rgba(212, 175, 55, 0.12);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            color: var(--color-brand-primary);
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.2s ease, transform 0.2s ease;
+            animation: story-arrow-pulse 2.4s ease-in-out infinite;
+        }
+        .story-overlay__continue:hover {
+            background: rgba(212, 175, 55, 0.28);
+            border-color: var(--color-brand-primary);
+            transform: translateX(-50%) scale(1.06);
+            animation-play-state: paused;
         }
 
         /* Arrow navigation */
+        @keyframes story-arrow-pulse {
+            0%, 100% {
+                box-shadow: 0 0 0px rgba(212, 175, 55, 0);
+                border-color: rgba(212, 175, 55, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 14px 3px rgba(212, 175, 55, 0.45);
+                border-color: rgba(212, 175, 55, 0.85);
+            }
+        }
+
         .story-nav__arrow {
             position: absolute;
             top: 50%;
@@ -1813,19 +1845,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+            transition: background 0.2s ease, transform 0.2s ease;
+            animation: story-arrow-pulse 2.4s ease-in-out infinite;
         }
 
         .story-nav__arrow:hover {
             background: rgba(212, 175, 55, 0.22);
             border-color: var(--color-brand-primary);
             transform: translateY(-50%) scale(1.1);
+            animation-play-state: paused;
         }
 
         .story-nav__arrow:disabled {
             opacity: 0.18;
             cursor: default;
             pointer-events: none;
+            animation: none;
         }
 
         .story-nav__arrow--prev { left: 24px; }
