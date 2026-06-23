@@ -4,33 +4,37 @@ const fs      = require('fs');
 const path    = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { Resend } = require('resend');
+const rateLimit = require('express-rate-limit');
 
 // Aggressively hunt for the Resend API key to catch Render dashboard typos
 let rawResendKey = process.env.RESEND_API_KEY;
 if (!rawResendKey) {
-  // Look for any key name containing "RESEND" (e.g. accidentally added spaces)
   const typoKey = Object.keys(process.env).find(k => k.toUpperCase().includes('RESEND'));
   if (typoKey) rawResendKey = process.env[typoKey];
-  
-  // Look for any value that starts with "re_" just in case the name was completely wrong
   if (!rawResendKey) {
     const valKey = Object.keys(process.env).find(k => typeof process.env[k] === 'string' && process.env[k].trim().startsWith('re_'));
     if (valKey) rawResendKey = process.env[valKey];
   }
 }
-if (rawResendKey) rawResendKey = rawResendKey.trim(); // strip accidental spaces from the key itself
+if (rawResendKey) rawResendKey = rawResendKey.trim();
 
 const resend = rawResendKey ? new Resend(rawResendKey) : null;
 const app  = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'yellowsky2025';
-const DATA_DIR  = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'posts.json');
+
+// Require ADMIN_PASSWORD — refuse to start if missing
+if (!process.env.ADMIN_PASSWORD) {
+  throw new Error('ADMIN_PASSWORD environment variable is required but not set. Add it to your .env file.');
+}
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+const DATA_DIR         = path.join(__dirname, 'data');
+const DATA_FILE        = path.join(DATA_DIR, 'posts.json');
 const SUBSCRIBERS_FILE = path.join(DATA_DIR, 'subscribers.json');
 
-// Ensure data directory and file exist on first run
-if (!fs.existsSync(DATA_DIR))  fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify({ posts: [] }, null, 2));
+// Ensure data directory and files exist on first run
+if (!fs.existsSync(DATA_DIR))         fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!fs.existsSync(DATA_FILE))        fs.writeFileSync(DATA_FILE, JSON.stringify({ posts: [] }, null, 2));
 if (!fs.existsSync(SUBSCRIBERS_FILE)) fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify({ subscribers: [] }, null, 2));
 
 // In-memory session tokens (cleared on server restart — fine for this use case)
@@ -39,8 +43,66 @@ const sessions = new Map();
 // ── Middleware ───────────────────────────────────────────────────────────────
 app.use(express.json());
 
+// ── Security headers ──────────────────────────────────────────────────────────
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
+    "img-src 'self' data: blob: https:; " +
+    "media-src 'self' blob:; " +
+    "connect-src 'self'; " +
+    "worker-src 'self' blob:; " +
+    "frame-ancestors 'self';"
+  );
+  next();
+});
+
+// ── CORS — API endpoints only ─────────────────────────────────────────────────
+const ALLOWED_ORIGINS = [
+  'https://yellowskybrewery.com',
+  'https://www.yellowskybrewery.com',
+  `http://localhost:${PORT}`
+];
+app.use('/api', (req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const subscribeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many subscription attempts. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Serve admin panel at /admin before the static middleware so it always hits
 app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
+
+// Block direct access to data files
+app.use('/data', (_req, res) => res.status(404).end());
 
 // Disable caching for JS and CSS so edits are always picked up on refresh
 app.use((req, res, next) => {
@@ -72,8 +134,18 @@ function writePosts(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
+// Escape HTML entities to prevent injection in email content
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Auth routes ──────────────────────────────────────────────────────────────
-app.post('/api/login', (req, res) => {
+app.post('/api/login', loginLimiter, (req, res) => {
   const { password } = req.body || {};
   if (!password || password !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: 'Incorrect password.' });
@@ -99,30 +171,32 @@ app.get('/api/posts', (_req, res) => {
   res.json(data);
 });
 
-// POST /api/posts — create new post
+// POST /api/posts — create new post (whitelisted fields only)
 app.post('/api/posts', requireAuth, (req, res) => {
   const data = readPosts();
+  const { title, content, excerpt, category, author, tags, image, published } = req.body || {};
   const post = {
     id:        uuidv4(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    ...req.body
+    title, content, excerpt, category, author, tags, image, published
   };
   data.posts.push(post);
   writePosts(data);
   res.status(201).json(post);
 });
 
-// PUT /api/posts/:id — edit existing post
+// PUT /api/posts/:id — edit existing post (whitelisted fields only)
 app.put('/api/posts/:id', requireAuth, (req, res) => {
   const data = readPosts();
   const idx  = data.posts.findIndex(p => p.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Post not found.' });
+  const { title, content, excerpt, category, author, tags, image, published } = req.body || {};
   data.posts[idx] = {
     ...data.posts[idx],
-    ...req.body,
-    id:        req.params.id,           // never allow ID to change
-    createdAt: data.posts[idx].createdAt, // preserve original date
+    title, content, excerpt, category, author, tags, image, published,
+    id:        req.params.id,
+    createdAt: data.posts[idx].createdAt,
     updatedAt: new Date().toISOString()
   };
   writePosts(data);
@@ -220,23 +294,13 @@ function getThemedEmailHtml(content) {
 }
 
 // POST /api/subscribe — public endpoint for mailing list signup
-
-// Public health check to remotely diagnose Render's environment injection
-app.get('/api/health', (req, res) => {
-  const keys = Object.keys(process.env);
-  const hasName = keys.some(k => k.includes('RESEND'));
-  const hasValue = keys.some(k => typeof process.env[k] === 'string' && process.env[k].includes('re_'));
-  res.json({ status: 'ok', hasName, hasValue, totalKeys: keys.length });
-});
-
-app.post('/api/subscribe', (req, res) => {
+app.post('/api/subscribe', subscribeLimiter, (req, res) => {
   const { name, email } = req.body || {};
-  
+
   if (!name || !email) {
     return res.status(400).json({ error: 'Name and email are required.' });
   }
 
-  // Basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ error: 'Please enter a valid email address.' });
@@ -249,7 +313,6 @@ app.post('/api/subscribe', (req, res) => {
     console.error('Error reading subscribers file:', err);
   }
 
-  // Check if email already exists
   if (data.subscribers.some(sub => sub.email.toLowerCase() === email.toLowerCase())) {
     return res.status(400).json({ error: 'This email is already on the invite list.' });
   }
@@ -262,18 +325,17 @@ app.post('/api/subscribe', (req, res) => {
   };
 
   data.subscribers.push(newSubscriber);
-  
+
   try {
     fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(data, null, 2), 'utf8');
-    
-    // Send automated welcome email via Resend
+
     if (resend) {
       resend.emails.send({
         from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
         to: newSubscriber.email,
         subject: 'Thanks for joining the Nitwits',
         html: getThemedEmailHtml(`
-          <h2>Cheers, ${newSubscriber.name}!</h2>
+          <h2>Cheers, ${escapeHtml(newSubscriber.name)}!</h2>
           <p>You're officially on the list.</p>
           <p>We brew every Sunday from 1pm at the secret YSB HQ (Colin's garden in Cranleigh).</p>
           <p>If you're ever in the mood for a pint, some darts, and a lot of nonsense, you know where to find us.</p>
@@ -282,7 +344,7 @@ app.post('/api/subscribe', (req, res) => {
         `)
       }).catch(err => console.error('Resend error:', err));
     }
-    
+
     res.status(201).json({ success: true, message: "You're on the list. Check your inbox soon." });
   } catch (err) {
     console.error('Error saving subscriber:', err);
@@ -290,10 +352,10 @@ app.post('/api/subscribe', (req, res) => {
   }
 });
 
-// POST /api/mailshot — authenticated endpoint to blast email to all subscribers
+// POST /api/mailshot — authenticated, blast to all subscribers
 app.post('/api/mailshot', requireAuth, async (req, res) => {
   const { subject, message } = req.body || {};
-  
+
   if (!subject || !message) {
     return res.status(400).json({ error: 'Subject and message are required.' });
   }
@@ -313,31 +375,25 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'No subscribers to email.' });
   }
 
-  // Send individually using Promise.all to bypass any Batch API restrictions
   const emails = data.subscribers.map(sub => ({
     from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
     to: sub.email,
     subject: subject,
     html: getThemedEmailHtml(`
-      <h2>Hi ${sub.name || 'there'},</h2>
-      <p>${message.replace(/\n/g, '<br>')}</p>
+      <h2>Hi ${escapeHtml(sub.name || 'there')},</h2>
+      <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
       <br>
       <p>— The Nitwits</p>
     `)
   }));
 
   try {
-    const results = await Promise.all(
-      emails.map(email => resend.emails.send(email))
-    );
-    
-    // Check if any returned an API error
+    const results = await Promise.all(emails.map(email => resend.emails.send(email)));
     const failed = results.find(res => res.error);
     if (failed) {
       console.error('Resend API rejected the email:', failed.error);
       return res.status(500).json({ error: `Resend Error: ${failed.error.message}` });
     }
-
     res.json({ success: true, count: emails.length });
   } catch (err) {
     console.error('Mailshot error:', err);
@@ -385,8 +441,8 @@ app.post('/api/mailshot/single', requireAuth, async (req, res) => {
       to: sub.email,
       subject: subject,
       html: getThemedEmailHtml(`
-        <h2>Hi ${sub.name || 'there'},</h2>
-        <p>${message.replace(/\n/g, '<br>')}</p>
+        <h2>Hi ${escapeHtml(sub.name || 'there')},</h2>
+        <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
         <br>
         <p>— The Nitwits</p>
       `)

@@ -322,22 +322,8 @@ function buildMesh(texture) {
 }
 
 function buildCornerDots() {
-    const cornerIndices = [
-        pidx(0,    0),
-        pidx(COLS, 0),
-        pidx(0,    ROWS),
-        pidx(COLS, ROWS),
-    ];
-    cornerIndices.forEach(ci => {
-        const dot = new THREE.Mesh(
-            new THREE.SphereGeometry(0.012, 8, 6),
-            new THREE.MeshBasicMaterial({ color: GOLD })
-        );
-        dot.userData.pIdx = ci;
-        dot.frustumCulled = false;
-        scene.add(dot);
-        cornerDots.push(dot);
-    });
+    // Corner pin indicators removed — return without adding any spheres to scene.
+    return;
 }
 
 // ─── Physics step ─────────────────────────────────────────────────────────────
@@ -599,6 +585,10 @@ function nearestParticle(wx, wy) {
 }
 
 function onDown(e) {
+    // Don't intercept taps on interactive UI elements — let them receive the event normally.
+    const touchTarget = e.touches ? e.touches[0].target : e.target;
+    if (touchTarget && touchTarget.closest('button, a, input, select, [role="button"]')) return;
+
     const src = e.touches ? e.touches[0] : e;
     const wp = getWorldPos(src);
     if (!wp) return;

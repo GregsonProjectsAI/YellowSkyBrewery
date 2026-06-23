@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     // Age Gate Logic
     const ageGate = document.getElementById('age-gate');
     const btnYes = document.getElementById('btn-yes');
@@ -94,6 +94,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     })();
 
+    // ── Dashboard Ticker — touch drag support (mobile only) ──────────────────
+    (function () {
+        const ticker = document.querySelector('.dashboard-ticker');
+        const track  = document.getElementById('dashboard-track');
+        if (!ticker || !track || navigator.maxTouchPoints === 0) return;
+
+        let startX    = 0;
+        let dragOffset = 0;
+        let frozenX   = 0;
+        let halfWidth = 0; // captured on touchstart (track.scrollWidth / 2)
+        let isDragging = false;
+
+        // Wrap position to (-halfWidth, 0] so the ticker loops infinitely
+        function normalise(x) {
+            if (!halfWidth) return x;
+            let n = x % halfWidth;
+            if (n > 0) n -= halfWidth;
+            return n;
+        }
+
+        function getComputedTranslateX(el) {
+            const matrix = new DOMMatrixReadOnly(window.getComputedStyle(el).transform);
+            return matrix.m41;
+        }
+
+        ticker.addEventListener('touchstart', (e) => {
+            startX     = e.touches[0].clientX;
+            dragOffset = 0;
+            halfWidth  = track.scrollWidth / 2;
+            frozenX    = getComputedTranslateX(track);
+            track.style.animation = 'none';
+            track.style.transform = `translateX(${frozenX}px)`;
+            isDragging = true;
+        }, { passive: true });
+
+        ticker.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            dragOffset = e.touches[0].clientX - startX;
+            track.style.transform = `translateX(${normalise(frozenX + dragOffset)}px)`;
+        }, { passive: true });
+
+        ticker.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            frozenX    = normalise(frozenX + dragOffset);
+            dragOffset = 0;
+            track.style.transform = `translateX(${frozenX}px)`;
+        }, { passive: true });
+    })();
+
     // Staggered Intersection Observer for Beer Grid
 
     const beerGridObserver = new IntersectionObserver((entries, obs) => {
@@ -178,6 +228,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Show first card in viewer on load (not locked — hover still works)
                 updateViewer(cards[0]);
+
+                // ── Mobile: tap to flip card inline (touch devices only) ──────
+                if (navigator.maxTouchPoints > 0) {
+                    cards.forEach(card => {
+                        card.addEventListener('click', () => {
+                            // Flip this card; unflip all others
+                            const wasFlipped = card.classList.contains('is-flipped');
+                            cards.forEach(c => c.classList.remove('is-flipped'));
+                            if (!wasFlipped) card.classList.add('is-flipped');
+                        });
+                    });
+                }
             }
         }
     });
@@ -499,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
             0,      // panel 0 — Well, Now What?       (visible immediately)
             0.155,  // panel 1 — There's No Room Here! (fully visible at frame 55 → 0.155 + 0.07 = 0.225)
             0.38,   // panel 2 — Well, Serious-ish     (fully visible at frame 109 → 0.38 + 0.07 = 0.45)
-            0.5758, // panel 3 — Can we join in (fully visible at frame 156 → 0.5758 + 0.07 = 0.6458)
+            0.70,   // panel 3 — Can we join in       (delay doubled from 0.1258 to 0.25 after step 2; fully visible at 0.77)
         ];
 
         function applyTextOpacities(progress) {
@@ -1274,5 +1336,109 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(clothResizeTimer);
         // Resize now handled autonomously by WebGPU component
     });
+
+    // ── M5b: Reset profile card state on back navigation (mobile bfcache) ────
+    window.addEventListener('pageshow', (e) => {
+        if (e.persisted && navigator.maxTouchPoints > 0) {
+            document.querySelectorAll('.team-card').forEach(c => {
+                c.classList.remove('is-active', 'is-hovered');
+            });
+        }
+    });
+
+    // ── Slide-0 overlay elements above the teatowel canvas ───────────────────
+    // The teatowel WebGPU canvas lives at z-index:2147483646 in the ROOT
+    // stacking context. The story overlay (z-index:9998) sits entirely below it.
+    // Nothing inside the overlay can beat the canvas visually.
+    //
+    // MOBILE  — create body-level floating buttons (Next + Reset) at INT_MAX.
+    // DESKTOP — re-parent existing buttons + cloth-hint to body at INT_MAX.
+
+    (function () {
+        var slide0El  = document.getElementById('slide-0');
+        var overlayEl = document.getElementById('story-overlay');
+        if (!slide0El || !overlayEl) return;
+
+        function isSlide0Active() {
+            return overlayEl.classList.contains('is-open') &&
+                   slide0El.classList.contains('is-active');
+        }
+
+        function watchClasses(fn) {
+            new MutationObserver(fn).observe(slide0El,  { attributes: true, attributeFilter: ['class'] });
+            new MutationObserver(fn).observe(overlayEl, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        if (navigator.maxTouchPoints > 0) {
+            // MOBILE: floating Next button
+            var storyNextEl = document.getElementById('story-next');
+            if (storyNextEl) {
+                var nextBtn = document.createElement('button');
+                nextBtn.setAttribute('aria-label', 'Next chapter');
+                nextBtn.innerHTML = '&#8594;';
+                Object.assign(nextBtn.style, {
+                    position: 'fixed', bottom: '28px', right: '16px',
+                    zIndex: '2147483647', display: 'none',
+                    width: '48px', height: '48px', borderRadius: '50%',
+                    border: '1px solid rgba(212,175,55,0.3)',
+                    background: 'rgba(212,175,55,0.08)', color: '#d4af37',
+                    fontSize: '1.2rem', cursor: 'pointer',
+                    alignItems: 'center', justifyContent: 'center',
+                    animation: 'story-arrow-pulse 2.4s ease-in-out infinite',
+                });
+                document.body.appendChild(nextBtn);
+                nextBtn.addEventListener('click', function () { storyNextEl.click(); });
+                watchClasses(function () { nextBtn.style.display = isSlide0Active() ? 'flex' : 'none'; });
+            }
+
+            // MOBILE: floating Reset button
+            var realResetEl = document.getElementById('teatowel-reset-btn');
+            if (realResetEl) {
+                var resetMobileBtn = document.createElement('button');
+                resetMobileBtn.setAttribute('aria-label', 'Reset tea towel');
+                resetMobileBtn.innerHTML = '&#8635; Reset';
+                Object.assign(resetMobileBtn.style, {
+                    position: 'fixed', bottom: '28px', left: '16px',
+                    zIndex: '2147483647', display: 'none',
+                    height: '48px', padding: '0 18px', borderRadius: '40px',
+                    border: '1px solid rgba(212,175,55,0.3)',
+                    background: 'rgba(212,175,55,0.08)', color: '#d4af37',
+                    fontSize: '0.85rem', letterSpacing: '1px',
+                    cursor: 'pointer', alignItems: 'center',
+                    justifyContent: 'center', whiteSpace: 'nowrap',
+                    animation: 'story-arrow-pulse 2.4s ease-in-out infinite',
+                });
+                document.body.appendChild(resetMobileBtn);
+                resetMobileBtn.addEventListener('click', function () { realResetEl.click(); });
+                watchClasses(function () { resetMobileBtn.style.display = isSlide0Active() ? 'flex' : 'none'; });
+            }
+
+        } else {
+            // DESKTOP: re-parent Reset button to body
+            var deskResetBtn = document.getElementById('teatowel-reset-btn');
+            if (deskResetBtn) {
+                document.body.appendChild(deskResetBtn);
+                Object.assign(deskResetBtn.style, {
+                    position: 'fixed', top: '50%', left: '24px',
+                    transform: 'translateY(-50%)',
+                    zIndex: '2147483647', display: 'none',
+                });
+                watchClasses(function () {
+                    deskResetBtn.style.display = isSlide0Active() ? 'block' : 'none';
+                });
+            }
+
+            // DESKTOP: re-parent cloth-hint to body
+            var clothHint = document.getElementById('cloth-hint');
+            if (clothHint) {
+                document.body.appendChild(clothHint);
+                Object.assign(clothHint.style, {
+                    position: 'fixed', bottom: '52px',
+                    left: '50%', transform: 'translateX(-50%)',
+                    zIndex: '2147483647',
+                });
+            }
+        }
+    })();
 
 });

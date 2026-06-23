@@ -2601,3 +2601,157 @@
         .subscribe-message.error {
             color: #f44336;
         }
+
+        /* ================================================================
+           PHASE 2 — MOBILE FIXES
+           All rules below are gated to touch / small-screen only.
+           Desktop behaviour is completely unchanged.
+           ================================================================ */
+
+        /* ── Beer card front/back wrapper base styles ────────────────────
+           display:contents makes the div transparent to layout on desktop
+           so existing .beer-card__img rules continue to work unchanged.   */
+        .beer-card__front  { display: contents; }
+        .beer-card__back   { display: none; }
+
+        /* ── M1: Story nav arrows — visible above tea towel on mobile ─── */
+        @media (max-width: 768px) {
+            .story-nav__arrow {
+                top: auto;
+                bottom: 28px;
+                transform: none;
+                width: 48px;
+                height: 48px;
+                font-size: 1.2rem;
+                z-index: 200;
+            }
+            .story-nav__arrow:hover,
+            .story-nav__arrow:active {
+                transform: scale(1.1);
+            }
+            .story-nav__arrow--prev { left: 16px; }
+            .story-nav__arrow--next { right: 16px; }
+
+            .story-overlay__continue {
+                top: auto;
+                bottom: 28px;
+                right: 16px;
+                transform: none;
+                padding: 12px 24px;
+                font-size: 0.85rem;
+                z-index: 200;
+            }
+            .story-overlay__continue:hover,
+            .story-overlay__continue:active {
+                transform: scale(1.06);
+            }
+
+            /* Dots sit above the arrows */
+            .story-dots { bottom: 88px; }
+
+            /* Close button above everything */
+            .story-overlay__close { z-index: 200; }
+
+            /* In-overlay reset button replaced by body-level element on mobile */
+            .teatowel-reset-btn { display: none; }
+        }
+
+        /* ── M2: Beer section — hide preview panel, enable inline flip ── */
+        @media (max-width: 991px) {
+            .beers-right-col { display: none; }
+
+            .beer-card {
+                flex: 0 0 110px;
+                overflow: visible; /* required: overflow:hidden disables transform-style:preserve-3d */
+                transform-style: preserve-3d;
+                transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                            border-color 0.3s ease,
+                            box-shadow 0.3s ease;
+            }
+            .beer-card.is-flipped { transform: rotateY(180deg); }
+
+            .beer-card__front {
+                display: flex;
+                position: absolute;
+                inset: 0;
+                backface-visibility: hidden;
+                -webkit-backface-visibility: hidden;
+                border-radius: inherit;
+                overflow: hidden;
+                align-items: center;
+                justify-content: center;
+            }
+            .beer-card__back {
+                display: flex;
+                position: absolute;
+                inset: 0;
+                backface-visibility: hidden;
+                -webkit-backface-visibility: hidden;
+                transform: rotateY(180deg);
+                border-radius: inherit;
+                overflow: hidden;
+                background-color: #1a1a1a;
+                align-items: center;
+                justify-content: center;
+            }
+            .beer-card__back-img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+
+            /* Suppress sibling blur/dim — no persistent hover on touch */
+            .beer-grid:not(:has(.beer-card.is-active)):has(.beer-card:hover) .beer-card:not(:hover),
+            .beer-grid:has(.beer-card.is-active) .beer-card:not(.is-active) {
+                filter: none;
+                opacity: 1;
+            }
+        }
+
+        /* ── M3: Story slides — layout & scrollability ───────────────── */
+        @media (max-width: 768px) {
+            .story-slide {
+                padding: 60px 16px 110px;
+            }
+            .story-slide__title  { font-size: 1.4rem; }
+            .story-slide__text   { font-size: 0.9rem; line-height: 1.6; }
+
+            /* Allow text content boxes to scroll internally if too tall */
+            .video-overlay-box {
+                max-height: 75vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* ── M4: Ticker — touch-draggable, suppress blur on touch ───── */
+        @media (hover: none) {
+            .dashboard-ticker {
+                touch-action: pan-x;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            .dashboard-ticker__track:has(.dashboard-widget:hover) .dashboard-widget:not(:hover) {
+                filter: none;
+                opacity: 1;
+            }
+        }
+
+        /* ── M5a: Profile cards — always-visible pulsing tap hint ────── */
+        @media (hover: none) {
+            .team-card__image-wrapper::after {
+                content: 'Tap for more';
+                opacity: 0.75;
+                animation: tap-hint-pulse 2.2s ease-in-out infinite;
+            }
+            /* Suppress sibling blur — no persistent hover on touch */
+            .team-grid:has(.team-card:hover) .team-card:not(:hover) {
+                filter: none !important;
+                opacity: 1 !important;
+            }
+        }
+
+        @keyframes tap-hint-pulse {
+            0%, 100% { opacity: 0.2; }
+            50%       { opacity: 0.85; }
+        }
