@@ -375,19 +375,18 @@
             <div class="story-slide story-slide--centred story-slide--cloth-sim" id="slide-0">
                 <!-- Background: stacked grain bags -->
                 <div class="cloth-sim-bg"></div>
-                <!-- WebGPU tea towel: module mounts its own canvas inside this div -->
-                <div id="teatowel-container" aria-label="Interactive Yellow Sky Brewery tea towel — grab and play"></div>
+
+                <!-- WebGPU beer towel: module mounts its own canvas inside this div -->
+                <div id="teatowel-container" aria-label="Interactive Yellow Sky Brewery beer towel — grab and play"></div>
                 <!-- Static fallback image shown until/unless WebGPU initialises -->
                 <img id="teatowel-fallback"
                      src="assets/YSB_TeaTowel_Modified_with_border.png"
-                     alt="Yellow Sky Brewery tea towel"
+                     alt="Yellow Sky Brewery beer towel"
                      class="teatowel-fallback">
-                <!-- "Grab me" hint — fades in after a delay, dismissed on first interaction -->
+                <!-- “Grab me” hint — fades in after a delay, transforms to Refresh on first grab -->
                 <div class="cloth-hint" id="cloth-hint" aria-hidden="true">
-                    <span class="cloth-hint__text">✦ grab & drag the towel</span>
+                    <span class="cloth-hint__text">✦ grab & drag the beer towel</span>
                 </div>
-                <!-- Refresh button: left-side position, same slot as the prev arrow on other slides -->
-                <button id="teatowel-reset-btn" class="teatowel-reset-btn" aria-label="Reset tea towel">&#8635; Refresh Tea Towel</button>
             </div>
 
             <!-- Slide 1: But First... -->
@@ -556,7 +555,7 @@
     <script src="js/scroll-animation.js?v=2"></script>
     <script src="js/blog.js?v=2"></script>
 
-    <!-- Autonomous WebGPU Tea Towel -->
+    <!-- Autonomous WebGPU Beer Towel -->
     <script type="module">
         import { init, start, stop, reset } from '/js/teatowel-webgpu.js?v=24';
 
@@ -568,24 +567,52 @@
 
         let isRunning = false;
         let startTimer = null;
+        let hasInteracted = false; // tracks first cloth grab
 
+        // After the user first grabs the cloth, transform the hint into a refresh button.
+        function transformHintToRefresh() {
+            if (!hintEl) return;
+            hintEl.removeAttribute('aria-hidden');
+            hintEl.setAttribute('role', 'button');
+            hintEl.setAttribute('aria-label', 'Refresh beer towel');
+            hintEl.style.cursor = 'pointer';
+            hintEl.style.pointerEvents = 'auto';
+            const span = hintEl.querySelector('.cloth-hint__text');
+            if (span) span.textContent = '\u21bb Refresh Beer Towel';
+            hintEl.addEventListener('click', () => { if (window.resetBeerTowel) window.resetBeerTowel(); });
+        }
+
+        // Detect first non-button interaction anywhere on the page while slide-0 is active
+        function onFirstGrab(e) {
+            if (hasInteracted) return;
+            const tgt = e.touches ? e.touches[0].target : e.target;
+            if (tgt && tgt.closest('button, a, [role="button"]')) return;
+            hasInteracted = true;
+            window.removeEventListener('mousedown',  onFirstGrab, true);
+            window.removeEventListener('touchstart', onFirstGrab, true);
+            // Small delay so the hint stays visible briefly after grab before changing
+            setTimeout(transformHintToRefresh, 600);
+        }
 
         init(container, TEXTURE).then(ok => {
             if (ok) {
                 if (fallbackEl) fallbackEl.style.display = 'none';
                 if (container)  container.style.display  = 'block';
 
-                // Automatically start/stop based on slide-0's is-active class
+                // Automatically start/stop based on slide-0’s is-active class
                 const observer = new MutationObserver(() => {
                     const isActive = slide0.classList.contains('is-active');
                     if (isActive && !isRunning) {
                         isRunning = true;
-                        // WAIT 500ms for the .story-overlay opacity transition to finish!
-                        // Chrome WebGPU swapchains can silently fail if created on an animating container.
                         clearTimeout(startTimer);
                         startTimer = setTimeout(() => {
                             start();
                             setTimeout(() => { if (hintEl) hintEl.style.opacity = '1'; }, 1500);
+                            // Register first-grab listeners each time slide-0 opens
+                            if (!hasInteracted) {
+                                window.addEventListener('mousedown',  onFirstGrab, true);
+                                window.addEventListener('touchstart', onFirstGrab, { capture: true, passive: true });
+                            }
                         }, 750);
                     } else if (!isActive && isRunning) {
                         isRunning = false;
@@ -597,26 +624,30 @@
 
                 observer.observe(slide0, { attributes: true, attributeFilter: ['class'] });
 
-                // Expose reset so the non-module click handler in main.js can reach it
-                window.resetTeaTowel = reset;
+                // Expose reset globally
+                window.resetBeerTowel = reset;
 
-                // Initial check in case it's already active
+                // Initial check in case it’s already active
                 if (slide0.classList.contains('is-active')) {
                     isRunning = true;
                     clearTimeout(startTimer);
                     startTimer = setTimeout(() => {
                         start();
                         setTimeout(() => { if (hintEl) hintEl.style.opacity = '1'; }, 1500);
+                        if (!hasInteracted) {
+                            window.addEventListener('mousedown',  onFirstGrab, true);
+                            window.addEventListener('touchstart', onFirstGrab, { capture: true, passive: true });
+                        }
                     }, 750);
                 }
 
             } else {
-                console.warn('[TeaTowel] WebGPU unavailable — static fallback shown');
+                console.warn('[BeerTowel] WebGPU unavailable — static fallback shown');
                 if (fallbackEl) fallbackEl.style.display = 'block';
                 if (container)  container.style.display  = 'none';
             }
         }).catch(err => {
-            console.error('[TeaTowel] init error:', err);
+            console.error('[BeerTowel] init error:', err);
             if (fallbackEl) fallbackEl.style.display = 'block';
             if (container)  container.style.display  = 'none';
         });

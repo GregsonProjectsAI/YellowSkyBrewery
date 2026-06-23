@@ -1795,7 +1795,7 @@
             letter-spacing: 0.3px;
         }
 
-        /* Refresh Tea Towel button — pill label, left-side position (same slot as prev arrow) */
+        /* Refresh Beer Towel button - pill label, centred at bottom (becomes refresh after first grab) */
         .teatowel-reset-btn {
             position: absolute;
             top: 50%;
@@ -2651,9 +2651,6 @@
 
             /* Close button above everything */
             .story-overlay__close { z-index: 200; }
-
-            /* In-overlay reset button replaced by body-level element on mobile */
-            .teatowel-reset-btn { display: none; }
         }
 
         /* ── M2: Beer section — hide preview panel, enable inline flip ── */

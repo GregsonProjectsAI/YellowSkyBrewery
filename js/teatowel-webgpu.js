@@ -21,21 +21,26 @@ const CLOTH_H = COLS / ROWS < 1 ? CLOTH_W * (ROWS / COLS) : CLOTH_W; // ~1.43
 // 3 pins along top edge at 18%, 50%, 82%
 const PIN_X_RATIOS = [0.18, 0.50, 0.82];
 
-// Physics tuned for cotton tea towel feel:
-// — flexible drape, no rigid snapping back, light fluttering
+// Physics — natural cotton tea towel in a light breeze.
+// Key design decisions:
+//   • No settle spring — it was the "magnetic attractor". Real cloth doesn't
+//     spring back to flat; it hangs forward under its own weight.
+//   • Multi-frequency turbulent wind replaces two-sine periodic forcing.
+//     Sine wind + spring = forced harmonic oscillator = pendulum. Broadband
+//     turbulent wind breaks that resonance.
+//   • DC forward bias: cloth hangs toward viewer (washing-line drape).
+//   • Fewer constraint iterations → softer, more compliant cotton feel.
 const GRAVITY        = 0.00042;
-const DAMPING        = 0.980;    // balanced — let oscillations decay gracefully
-const MAX_VEL        = 0.012;
-const CONSTRAINT_ITER = 18;      // per substep × 4 substeps = 72 total (3.6× v14)
-const SUBSTEPS       = 4;
-const BENDING        = 0.20;     // loose cotton bending
-// Wind amplitudes
-const WIND_AMP_X     = GRAVITY * 0.02;   // barely any sideways
-const WIND_AMP_Z     = GRAVITY * 0.14;   // gentle depth flutter
-const SETTLE_DELAY    = 200;
-const SETTLE_STRENGTH = 0.001;  // very gentle — gravity handles Y, this just slowly clears X/Z drift
-const Z_MAX                = CLOTH_W * 0.22; // hard Z clamp — prevents deep Z folds
-const XY_CLAMP             = CLOTH_W * 0.90; // hard XY clamp — only blocks truly extreme positions
+const DAMPING        = 0.978;    // slightly more loss → settles gently, doesn't ring
+const MAX_VEL        = 0.015;    // slightly higher cap → freer movement
+const CONSTRAINT_ITER = 8;       // was 18 — softer, more compliant cloth
+const SUBSTEPS       = 3;        // was 4
+const BENDING        = 0.12;     // looser — light cotton, not canvas
+// Wind
+const WIND_AMP_X     = GRAVITY * 0.05;   // gentle side drift
+const WIND_AMP_Z     = GRAVITY * 0.22;   // depth flutter
+const Z_MAX          = CLOTH_W * 0.40;   // more Z freedom — allows natural forward drape
+const XY_CLAMP       = CLOTH_W * 0.90;
 
 // Interaction
 const GRAB_RADIUS        = 0.12;  // world-space
@@ -367,30 +372,50 @@ function selfCollision() {
 
 function _physicsSubStep() {
     const n = N_VERTS;
-    // t in seconds at 60fps (same for all substeps within one frame)
+    // t in seconds at 60fps
     const t = frameCount / 60;
 
-    // Smooth, slow breeze — no fast components, no jerk.
-    // Cycle lengths: ~4s, ~7s main drift + ~1.6s, ~2.5s gentle secondary.
-    // Incommensurate frequencies so pattern never exactly repeats.
-    const drift  = Math.sin(t * 1.57) * 0.55   // 4s cycle
-                 + Math.sin(t * 0.89) * 0.45;  // 7s cycle
-    const swell  = Math.sin(t * 3.93) * 0.28   // 1.6s cycle
-                 + Math.sin(t * 2.51) * 0.22;  // 2.5s cycle
+    // ── Turbulent multi-frequency wind ───────────────────────────────────────
+    // 1/f amplitude distribution: many incommensurate frequencies, higher
+    // frequencies have lower amplitudes. No dominant period → no pendulum.
+    //
+    // Gust envelope: product of two very slow sines gives irregular quiet
+    // spells and stronger gusts without a fixed repeat cycle.
+    const gustEnv = 0.35 + 0.65 * Math.abs(
+        Math.sin(t * 0.113) * Math.sin(t * 0.071 + 1.37)
+    );
 
-    const baseZ = (drift * 0.72 + swell * 0.28) * WIND_AMP_Z;
-    const baseX = Math.sin(t * 1.26) * WIND_AMP_X;  // 5s gentle side drift
+    // DC forward bias removed — cloth hangs straight down under gravity.
+    // Wind turbulence provides gentle irregular movement without a constant push.
+    const windZ_base = gustEnv * WIND_AMP_Z * (
+        Math.sin(t * 0.83)  * 0.38 +   // ~7.6s
+        Math.sin(t * 1.31)  * 0.24 +   // ~4.8s
+        Math.sin(t * 2.17)  * 0.16 +   // ~2.9s
+        Math.sin(t * 3.71)  * 0.11 +   // ~1.7s
+        Math.sin(t * 6.07)  * 0.07 +   // ~1.0s — fine ripple
+        Math.sin(t * 10.13) * 0.04     // ~0.6s — micro-flutter
+    );
+    const windX_base = gustEnv * WIND_AMP_X * (
+        Math.sin(t * 0.61)  * 0.65 +
+        Math.sin(t * 1.73)  * 0.35
+    );
 
     for (let i = 0; i < n; i++) {
         if (fixed[i]) continue;
 
-        // Subtle spatial ripple — low frequency phase offset per column
-        // creates a gentle travelling wave, not a sharp vibration
         const xi = i % (COLS + 1);
-        const colPhase = (xi / COLS) * Math.PI;           // 0..π across width
-        const travelWave = Math.sin(t * 2.83 + colPhase) * 0.20;  // 2.2s cycle
-        const windZ = baseZ * (0.80 + travelWave);
-        const windX = baseX;
+        const yi = Math.floor(i / (COLS + 1));
+
+        // Row factor: bottom hem moves more freely than top (hung from pins)
+        const rowFactor = 0.25 + 0.75 * (yi / ROWS);
+
+        // Travelling ripple across width + a secondary cross-wave
+        const colPhase = (xi / COLS) * Math.PI * 1.7;
+        const ripple = Math.sin(t * 2.83 + colPhase) * 0.18
+                     + Math.sin(t * 4.51 + colPhase * 0.6) * 0.09;
+
+        const windZ = windZ_base * rowFactor * (0.88 + ripple);
+        const windX = windX_base * rowFactor;
 
         let vx = (px[i] - ox[i]) * DAMPING;
         let vy = (py[i] - oy[i]) * DAMPING;
@@ -409,7 +434,7 @@ function _physicsSubStep() {
 
         ox[i] = px[i]; oy[i] = py[i]; oz[i] = pz[i];
         px[i] += vx + windX;
-        py[i] += vy - GRAVITY / SUBSTEPS;  // split gravity across substeps
+        py[i] += vy - GRAVITY / SUBSTEPS;
         pz[i] += vz + windZ;
     }
 
@@ -437,54 +462,13 @@ function _physicsSubStep() {
         }
     }
 
-    // Settle — runs only when not grabbing so interaction is completely free.
-    //
-    //  X: Only corrects drift > 0.12 units (normal wind sway is well below
-    //     this). Quadratic bonus kicks in for large deformations only, giving
-    //     tangled cloth meaningful restoring force without touching normal motion.
-    //
-    //  Y: NOT settled for downward displacement — gravity handles that and
-    //     adding Y settle caused the unnatural snap. HOWEVER, particles that
-    //     are ABOVE their rest Y (topologically inverted by a fold) are
-    //     explicitly pulled back — gravity alone cannot correct an inverted
-    //     section held in place by the constraint network.
-    //
-    //  Z: Always gently pulled back to flat — cloth is inherently 2D and
-    //     the wind alone won't clear accumulated Z depth.
-    if (frameCount > SETTLE_DELAY && !isGrabbing) {
-        for (let xi = 0; xi <= COLS; xi++) {
-            for (let yi = 0; yi <= ROWS; yi++) {
-                const i = pidx(xi, yi);
-                if (fixed[i]) continue;
-                const restX = (xi / COLS - 0.5) * CLOTH_W;
-                const restY = -(yi / ROWS) * CLOTH_H;
-                const dx = px[i] - restX;
-                const dy = py[i] - restY;
-                const dz = pz[i];
-
-                // X: threshold + quadratic bonus for large deformations
-                if (Math.abs(dx) > 0.12) {
-                    const excess = Math.abs(dx) - 0.12;
-                    const s = SETTLE_STRENGTH * (1 + excess * excess * 6);
-                    px[i] -= dx * s;
-                }
-
-                // Y: only correct upward inversions — particles above their rest
-                // position are trapped by a fold; gravity can't reach them alone
-                if (dy > 0.10) {
-                    const excess = dy - 0.10;
-                    const s = SETTLE_STRENGTH * (1 + excess * excess * 6);
-                    py[i] -= dy * s;
-                }
-
-                // Z: always gently pull back to flat
-                if (Math.abs(dz) > 0.02) pz[i] -= dz * SETTLE_STRENGTH * 2;
-
-                // Hard Z clamp
-                if (pz[i] >  Z_MAX) pz[i] =  Z_MAX;
-                if (pz[i] < -Z_MAX) pz[i] = -Z_MAX;
-            }
-        }
+    // Settle spring removed — it was the harmonic-oscillator "magnet".
+    // The DC wind bias keeps the cloth forward naturally; gravity handles Y.
+    // Only apply the hard Z clamp to prevent extreme folds.
+    for (let i = 0; i < N_VERTS; i++) {
+        if (fixed[i]) continue;
+        if (pz[i] >  Z_MAX) pz[i] =  Z_MAX;
+        if (pz[i] < -Z_MAX) pz[i] = -Z_MAX;
     }
 }
 

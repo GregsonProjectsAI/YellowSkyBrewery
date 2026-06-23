@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     // Age Gate Logic
     const ageGate = document.getElementById('age-gate');
     const btnYes = document.getElementById('btn-yes');
@@ -240,9 +240,21 @@
                         });
                     });
                 }
+
+                // Click anywhere outside the grid AND the viewer panel releases the lock.
+                // Bubble phase ensures card handlers fire first — same-card toggle still works.
+                document.addEventListener('click', (e) => {
+                    if (!lockedCard) return;
+                    if (beerGrid.contains(e.target))     return; // card's own handler manages this
+                    if (previewPanel.contains(e.target)) return; // viewer click keeps the lock
+                    // Clicked outside both — release
+                    lockedCard = null;
+                    cards.forEach(c => c.classList.remove('is-active', 'is-flipped'));
+                });
             }
         }
     });
+
 
     // Story Overlay Controller (Canvas Frame Scrubber — smooth as the intro animation)
     (function () {
@@ -1347,12 +1359,13 @@
     });
 
     // ── Slide-0 overlay elements above the teatowel canvas ───────────────────
-    // The teatowel WebGPU canvas lives at z-index:2147483646 in the ROOT
-    // stacking context. The story overlay (z-index:9998) sits entirely below it.
-    // Nothing inside the overlay can beat the canvas visually.
+    // ── Slide-0 overlay elements above the beer towel canvas ─────────────────
+    // The WebGPU canvas is at z-index:2147483646 in the ROOT stacking context.
+    // The story overlay (z-index:9998) sits entirely below it — nothing inside
+    // can beat the canvas. Fix: re-parent elements to document.body at INT_MAX.
     //
-    // MOBILE  — create body-level floating buttons (Next + Reset) at INT_MAX.
-    // DESKTOP — re-parent existing buttons + cloth-hint to body at INT_MAX.
+    // The cloth-hint doubles as the refresh button after first use — no separate
+    // reset button needed. Only the mobile Next arrow needs a floating proxy.
 
     (function () {
         var slide0El  = document.getElementById('slide-0');
@@ -1369,8 +1382,23 @@
             new MutationObserver(fn).observe(overlayEl, { attributes: true, attributeFilter: ['class'] });
         }
 
+        // Re-parent cloth-hint to body on ALL devices so it beats the canvas.
+        // On desktop it shows the grab hint then becomes the refresh button.
+        // On mobile the same transform happens; no separate reset button needed.
+        var clothHint = document.getElementById('cloth-hint');
+        if (clothHint) {
+            document.body.appendChild(clothHint);
+            Object.assign(clothHint.style, {
+                position:  'fixed',
+                bottom:    '52px',
+                left:      '50%',
+                transform: 'translateX(-50%)',
+                zIndex:    '2147483647',
+            });
+        }
+
         if (navigator.maxTouchPoints > 0) {
-            // MOBILE: floating Next button
+            // MOBILE: floating Next button (the only proxy still needed)
             var storyNextEl = document.getElementById('story-next');
             if (storyNextEl) {
                 var nextBtn = document.createElement('button');
@@ -1390,55 +1418,10 @@
                 nextBtn.addEventListener('click', function () { storyNextEl.click(); });
                 watchClasses(function () { nextBtn.style.display = isSlide0Active() ? 'flex' : 'none'; });
             }
-
-            // MOBILE: floating Reset button
-            var realResetEl = document.getElementById('teatowel-reset-btn');
-            if (realResetEl) {
-                var resetMobileBtn = document.createElement('button');
-                resetMobileBtn.setAttribute('aria-label', 'Reset tea towel');
-                resetMobileBtn.innerHTML = '&#8635; Reset';
-                Object.assign(resetMobileBtn.style, {
-                    position: 'fixed', bottom: '28px', left: '16px',
-                    zIndex: '2147483647', display: 'none',
-                    height: '48px', padding: '0 18px', borderRadius: '40px',
-                    border: '1px solid rgba(212,175,55,0.3)',
-                    background: 'rgba(212,175,55,0.08)', color: '#d4af37',
-                    fontSize: '0.85rem', letterSpacing: '1px',
-                    cursor: 'pointer', alignItems: 'center',
-                    justifyContent: 'center', whiteSpace: 'nowrap',
-                    animation: 'story-arrow-pulse 2.4s ease-in-out infinite',
-                });
-                document.body.appendChild(resetMobileBtn);
-                resetMobileBtn.addEventListener('click', function () { realResetEl.click(); });
-                watchClasses(function () { resetMobileBtn.style.display = isSlide0Active() ? 'flex' : 'none'; });
-            }
-
-        } else {
-            // DESKTOP: re-parent Reset button to body
-            var deskResetBtn = document.getElementById('teatowel-reset-btn');
-            if (deskResetBtn) {
-                document.body.appendChild(deskResetBtn);
-                Object.assign(deskResetBtn.style, {
-                    position: 'fixed', top: '50%', left: '24px',
-                    transform: 'translateY(-50%)',
-                    zIndex: '2147483647', display: 'none',
-                });
-                watchClasses(function () {
-                    deskResetBtn.style.display = isSlide0Active() ? 'block' : 'none';
-                });
-            }
-
-            // DESKTOP: re-parent cloth-hint to body
-            var clothHint = document.getElementById('cloth-hint');
-            if (clothHint) {
-                document.body.appendChild(clothHint);
-                Object.assign(clothHint.style, {
-                    position: 'fixed', bottom: '52px',
-                    left: '50%', transform: 'translateX(-50%)',
-                    zIndex: '2147483647',
-                });
-            }
         }
+        // Desktop: no additional elements needed — the hint/refresh and nav arrows
+        // are already handled (hint re-parented above; arrows are inside overlay
+        // but onDown() now skips button targets so clicks pass through).
     })();
 
 });
