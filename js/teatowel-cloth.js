@@ -583,9 +583,18 @@ const TeaTowelCloth = (() => {
         console.log('[TeaTowelCloth] stop()');
     }
 
+    function reset() {
+        if (!running) return;
+        gustAmp = 0;
+        grabIdx = null;
+        grabGroup = [];
+        isDown = false;
+        buildCloth();
+    }
+
     function resize() { if (running) doResize(); }
 
-    return { init, start, stop, resize };
+    return { init, start, stop, resize, reset };
 
 })();
 

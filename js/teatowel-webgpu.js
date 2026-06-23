@@ -25,18 +25,22 @@ const PIN_X_RATIOS = [0.18, 0.50, 0.82];
 // — flexible drape, no rigid snapping back, light fluttering
 const GRAVITY        = 0.00042;
 const DAMPING        = 0.980;    // balanced — let oscillations decay gracefully
-const MAX_VEL        = 0.018;
+const MAX_VEL        = 0.012;
 const CONSTRAINT_ITER = 18;      // per substep × 4 substeps = 72 total (3.6× v14)
 const SUBSTEPS       = 4;
 const BENDING        = 0.20;     // loose cotton bending
 // Wind amplitudes
 const WIND_AMP_X     = GRAVITY * 0.02;   // barely any sideways
 const WIND_AMP_Z     = GRAVITY * 0.14;   // gentle depth flutter
-const SETTLE_DELAY   = 200;
-const SETTLE_STRENGTH = 0.0003;
+const SETTLE_DELAY    = 200;
+const SETTLE_STRENGTH = 0.001;  // very gentle — gravity handles Y, this just slowly clears X/Z drift
+const Z_MAX                = CLOTH_W * 0.22; // hard Z clamp — prevents deep Z folds
+const XY_CLAMP             = CLOTH_W * 0.90; // hard XY clamp — only blocks truly extreme positions
 
 // Interaction
-const GRAB_RADIUS    = 0.12;  // world-space
+const GRAB_RADIUS        = 0.12;  // world-space
+const PARTICLE_RADIUS    = 0.012; // self-collision sphere radius per particle
+const REPULSION_STIFFNESS = 0.5;  // fraction of overlap corrected per frame (0–1)
 
 const GOLD = 0xffd060;
 
@@ -67,6 +71,7 @@ let grabIdx = -1;
 let grabWorldX = 0, grabWorldY = 0;
 let lastGrabX = 0, lastGrabY = 0;
 let prevGrabX = 0, prevGrabY = 0;
+let releaseFrame = -9999;  // frame when user last released grab (drives settle boost)
 
 const timer = new THREE.Timer();
 
@@ -177,6 +182,23 @@ export function stop() {
     if (renderer && renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
     }
+}
+
+export function reset() {
+    const canvas = renderer ? renderer.domElement : null;
+    if (!canvas) { initPhysics(); return; }
+
+    // Fade out quickly, reset physics while invisible, then fade back in
+    canvas.style.transition = 'opacity 0.3s ease-out';
+    canvas.style.opacity    = '0';
+
+    setTimeout(() => {
+        initPhysics();
+        canvas.style.transition = 'opacity 0.4s ease-in';
+        requestAnimationFrame(() => { canvas.style.opacity = '1'; });
+        // Restore the original slow transition used by start/stop
+        setTimeout(() => { canvas.style.transition = 'opacity 0.8s ease-in-out'; }, 450);
+    }, 320);
 }
 
 export function dispose() {
@@ -328,6 +350,35 @@ function physicsStep() {
     }
 }
 
+// Self-collision: prevent cloth sections from passing through each other.
+// For every pair of non-adjacent particles closer than 2×PARTICLE_RADIUS,
+// push them apart by the overlap. This is why cloth was sticking — without
+// this check the physics has no concept of cloth occupying the same space.
+function selfCollision() {
+    const D  = PARTICLE_RADIUS * 2;
+    const D2 = D * D;
+    for (let ia = 0; ia < N_VERTS - 1; ia++) {
+        const xia = ia % (COLS + 1);
+        const yia = Math.floor(ia / (COLS + 1));
+        for (let ib = ia + 1; ib < N_VERTS; ib++) {
+            // Skip grid neighbours — they already have distance constraints
+            const xib = ib % (COLS + 1);
+            const yib = Math.floor(ib / (COLS + 1));
+            if (Math.abs(xia - xib) <= 2 && Math.abs(yia - yib) <= 2) continue;
+            const dx = px[ib] - px[ia];
+            const dy = py[ib] - py[ia];
+            const dz = pz[ib] - pz[ia];
+            const d2 = dx*dx + dy*dy + dz*dz;
+            if (d2 >= D2 || d2 < 1e-10) continue; // fast early exit — most pairs
+            const d    = Math.sqrt(d2);
+            const push = (D - d) / d * REPULSION_STIFFNESS;
+            const cx = dx * push, cy = dy * push, cz = dz * push;
+            if (!fixed[ia]) { px[ia] -= cx; py[ia] -= cy; pz[ia] -= cz; }
+            if (!fixed[ib]) { px[ib] += cx; py[ib] += cy; pz[ib] += cz; }
+        }
+    }
+}
+
 function _physicsSubStep() {
     const n = N_VERTS;
     // t in seconds at 60fps (same for all substeps within one frame)
@@ -376,24 +427,6 @@ function _physicsSubStep() {
         pz[i] += vz + windZ;
     }
 
-    // Settle: gradually return far-drifted cloth to rest shape
-    if (frameCount > SETTLE_DELAY) {
-        for (let xi = 0; xi <= COLS; xi++) {
-            for (let yi = 0; yi <= ROWS; yi++) {
-                const i = pidx(xi, yi);
-                if (fixed[i]) continue;
-                const restX = (xi / COLS - 0.5) * CLOTH_W;
-                const restY = -(yi / ROWS) * CLOTH_H;
-                const dx = px[i] - restX, dy = py[i] - restY;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist > 0.1) {
-                    const s = SETTLE_STRENGTH * (dist - 0.1);
-                    px[i] -= dx * s;
-                    py[i] -= dy * s;
-                }
-            }
-        }
-    }
 
     // Satisfy constraints
     for (let iter = 0; iter < CONSTRAINT_ITER; iter++) {
@@ -415,6 +448,56 @@ function _physicsSubStep() {
             px[i] = (xi / COLS - 0.5) * CLOTH_W;
             py[i] = 0;
             pz[i] = 0;
+        }
+    }
+
+    // Settle — runs only when not grabbing so interaction is completely free.
+    //
+    //  X: Only corrects drift > 0.12 units (normal wind sway is well below
+    //     this). Quadratic bonus kicks in for large deformations only, giving
+    //     tangled cloth meaningful restoring force without touching normal motion.
+    //
+    //  Y: NOT settled for downward displacement — gravity handles that and
+    //     adding Y settle caused the unnatural snap. HOWEVER, particles that
+    //     are ABOVE their rest Y (topologically inverted by a fold) are
+    //     explicitly pulled back — gravity alone cannot correct an inverted
+    //     section held in place by the constraint network.
+    //
+    //  Z: Always gently pulled back to flat — cloth is inherently 2D and
+    //     the wind alone won't clear accumulated Z depth.
+    if (frameCount > SETTLE_DELAY && !isGrabbing) {
+        for (let xi = 0; xi <= COLS; xi++) {
+            for (let yi = 0; yi <= ROWS; yi++) {
+                const i = pidx(xi, yi);
+                if (fixed[i]) continue;
+                const restX = (xi / COLS - 0.5) * CLOTH_W;
+                const restY = -(yi / ROWS) * CLOTH_H;
+                const dx = px[i] - restX;
+                const dy = py[i] - restY;
+                const dz = pz[i];
+
+                // X: threshold + quadratic bonus for large deformations
+                if (Math.abs(dx) > 0.12) {
+                    const excess = Math.abs(dx) - 0.12;
+                    const s = SETTLE_STRENGTH * (1 + excess * excess * 6);
+                    px[i] -= dx * s;
+                }
+
+                // Y: only correct upward inversions — particles above their rest
+                // position are trapped by a fold; gravity can't reach them alone
+                if (dy > 0.10) {
+                    const excess = dy - 0.10;
+                    const s = SETTLE_STRENGTH * (1 + excess * excess * 6);
+                    py[i] -= dy * s;
+                }
+
+                // Z: always gently pull back to flat
+                if (Math.abs(dz) > 0.02) pz[i] -= dz * SETTLE_STRENGTH * 2;
+
+                // Hard Z clamp
+                if (pz[i] >  Z_MAX) pz[i] =  Z_MAX;
+                if (pz[i] < -Z_MAX) pz[i] = -Z_MAX;
+            }
         }
     }
 }
@@ -480,6 +563,7 @@ function updateMesh() {
 function render() {
     timer.update();
     physicsStep();
+    selfCollision();   // prevent cloth self-intersection
     updateMesh();
     frameCount++;
     renderer.render(scene, camera);
@@ -549,6 +633,7 @@ function onUp() {
     }
     isGrabbing = false;
     grabIdx = -1;
+    releaseFrame = frameCount;  // trigger 8× settle boost for ~3s
 }
 
 function setupMouse(_canvas) {

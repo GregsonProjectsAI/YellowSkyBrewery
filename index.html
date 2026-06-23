@@ -346,6 +346,8 @@
                 <div class="cloth-hint" id="cloth-hint" aria-hidden="true">
                     <span class="cloth-hint__text">✦ grab & drag the towel</span>
                 </div>
+                <!-- Refresh button: left-side position, same slot as the prev arrow on other slides -->
+                <button id="teatowel-reset-btn" class="teatowel-reset-btn" aria-label="Reset tea towel">&#8635; Refresh Tea Towel</button>
             </div>
 
             <!-- Slide 1: But First... -->
@@ -516,7 +518,7 @@
 
     <!-- Autonomous WebGPU Tea Towel -->
     <script type="module">
-        import { init, start, stop } from '/js/teatowel-webgpu.js?v=24';
+        import { init, start, stop, reset } from '/js/teatowel-webgpu.js?v=24';
 
         const container  = document.getElementById('teatowel-container');
         const fallbackEl = document.getElementById('teatowel-fallback');
@@ -554,6 +556,9 @@
                 });
 
                 observer.observe(slide0, { attributes: true, attributeFilter: ['class'] });
+
+                // Expose reset so the non-module click handler in main.js can reach it
+                window.resetTeaTowel = reset;
 
                 // Initial check in case it's already active
                 if (slide0.classList.contains('is-active')) {

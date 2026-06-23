@@ -190,6 +190,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const prevBtn    = document.getElementById('story-prev');
         const nextBtn    = document.getElementById('story-next');
         const continueBtn = document.getElementById('story-continue-btn');
+        const resetTeaTowelBtn = document.getElementById('teatowel-reset-btn');
+
+        // Refresh tea towel: rebuilds the cloth particle grid from rest positions
+        if (resetTeaTowelBtn) {
+            resetTeaTowelBtn.addEventListener('click', () => {
+                // WebGPU path (primary)
+                if (typeof window.resetTeaTowel === 'function') {
+                    window.resetTeaTowel();
+                // Canvas fallback path
+                } else if (window.TeaTowelCloth && typeof window.TeaTowelCloth.reset === 'function') {
+                    window.TeaTowelCloth.reset();
+                }
+            });
+        }
 
         if (!overlay || !openBtn) return;
 
@@ -260,9 +274,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (hopTimelapse) hopTimelapse.style.opacity = '0';
 
-        let hasSeenTimelapse = false;   // true after first forward play completes
-        let hopLoopActive    = false;   // true while ambient loop is running
+        let hasSeenTimelapse  = false;   // true after first forward play completes
+        let hopLoopActive     = false;   // true while ambient loop is running
         let hopReversePlaying = false;  // true while reverse transition is running
+        let trackedTimelapseTime = 0;   // mediaTime of the last frame presented to compositor
+
+        // Start frame-accurate tracking of the timelapse's displayed position.
+        // requestVideoFrameCallback fires with the exact mediaTime of each presented
+        // frame — far more accurate than reading currentTime in a rAF or click handler.
+        // Falls back to rAF polling on browsers that don't support rVFC.
+        function startTrackingTimelapse() {
+            if (!hopTimelapse) return;
+            trackedTimelapseTime = 0;
+            if ('requestVideoFrameCallback' in hopTimelapse) {
+                function onVideoFrame(now, metadata) {
+                    trackedTimelapseTime = metadata.mediaTime;
+                    if (!hopTimelapse.paused && !hopTimelapse.ended) {
+                        hopTimelapse.requestVideoFrameCallback(onVideoFrame);
+                    }
+                }
+                hopTimelapse.requestVideoFrameCallback(onVideoFrame);
+            } else {
+                // rAF fallback
+                function rAFTrack() {
+                    if (hopTimelapse && !hopTimelapse.paused && !hopTimelapse.ended) {
+                        trackedTimelapseTime = hopTimelapse.currentTime;
+                        requestAnimationFrame(rAFTrack);
+                    }
+                }
+                requestAnimationFrame(rAFTrack);
+            }
+        }
 
         // HOP LOOP CROSSFADE — mirrors the steam/drip dual-video pattern
         const HOP_LOOP_DURATION = 30; // seconds — length of ambient loop file
@@ -278,7 +320,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!v) return;
                 v.pause();
                 v.currentTime = 0;
-                v.style.opacity = '0';
+                // Snap to hidden instantly — no CSS fade-out that could expose the dark bg
+                v.style.transition = 'none';
+                v.style.opacity    = '0';
             });
             hopLoopPrimary   = null;
             hopLoopSecondary = null;
@@ -335,6 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hopReversed) {
             hopReversed.addEventListener('ended', () => {
                 hopReversePlaying = false;
+                // Restore transition before hiding so future crossfades work
+                hopReversed.style.transition = '';
                 hopReversed.style.opacity = '0';
                 hopReversed.pause();
                 hopReversed.currentTime = 0;
@@ -353,8 +399,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hopReversed) { hopReversed.style.opacity = '0'; hopReversed.pause(); }
             if (hopTimelapse) {
                 hopTimelapse.currentTime = 0;
+                trackedTimelapseTime     = 0;
                 hopTimelapse.style.opacity = '1';
                 hopTimelapse.play().catch(() => {});
+                startTrackingTimelapse(); // begin frame-accurate position tracking
             }
         }
 
@@ -379,21 +427,36 @@ document.addEventListener('DOMContentLoaded', () => {
         function playReverseAndGoBack() {
             if (hopReversePlaying) return;
             hopReversePlaying = true;
-            // Freeze whatever is showing
             stopHopLoop();
-            if (hopTimelapse) { hopTimelapse.pause(); hopTimelapse.style.opacity = '0'; }
-            // Show and play reversed timelapse
+
             if (hopReversed) {
-                hopReversed.currentTime = 0;
                 hopReversed.playbackRate = 2;
-                hopReversed.style.opacity = '1';
+
+                // Use the last DISPLAYED frame's mediaTime (via requestVideoFrameCallback)
+                // to mirror exactly what the user was seeing — not currentTime at click time.
+                // Normalise via proportional progress so duration mismatches don't drift.
+                const tCurrent  = trackedTimelapseTime;
+                const tDuration = hopTimelapse ? hopTimelapse.duration : 0;
+                const rDuration = hopReversed.duration;
+                if (tCurrent > 0 && tDuration > 0 && rDuration) {
+                    const progress = Math.min(1, tCurrent / tDuration);      // 0→1
+                    hopReversed.currentTime = (1 - progress) * rDuration;    // 1→0
+                } else {
+                    hopReversed.currentTime = 0;
+                }
+
+                // Snap to fully visible immediately — bypass the 0.5s CSS fade-in
+                hopReversed.style.transition = 'none';
+                hopReversed.style.opacity    = '1';
+                // Leave hopTimelapse paused-and-visible as a static backdrop.
+                if (hopTimelapse) hopTimelapse.pause();
                 hopReversed.play().catch(() => {
-                    // Fallback: if play fails just navigate
                     hopReversePlaying = false;
                     isAnimating = false;
                     goPhase(0);
                 });
             } else {
+                if (hopTimelapse) { hopTimelapse.pause(); hopTimelapse.style.opacity = '0'; }
                 isAnimating = false;
                 goPhase(0);
             }
@@ -918,6 +981,9 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.classList.add('is-open');
             overlay.setAttribute('aria-hidden', 'false');
             document.body.classList.add('no-scroll');
+            // Lock logo to header position for consistent placement on every slide
+            const demoEl = document.getElementById('demo-content');
+            if (demoEl) { demoEl.classList.add('is-header'); demoEl.style.opacity = '1'; }
             goPhase(0);
             if (!isLooping) { isLooping = true; requestAnimationFrame(renderLoop); }
         }
@@ -942,6 +1008,9 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.classList.remove('is-open');
             overlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('no-scroll');
+            // Hand logo opacity back to the scroll animation handler
+            const demoElClose = document.getElementById('demo-content');
+            if (demoElClose) demoElClose.style.opacity = '';
 
             // Clean up all slide active states and inline styles
             slides.forEach(s => {
@@ -958,7 +1027,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (canvas) canvas.classList.remove('is-visible');
-            if (prevBtn) prevBtn.disabled = true;
+            if (prevBtn)     prevBtn.disabled      = true;
+            // Reset nav button states so re-entry starts clean
+            if (nextBtn) {
+                nextBtn.style.display    = '';
+                nextBtn.style.opacity    = '';
+                nextBtn.style.transition = '';
+            }
+            if (continueBtn) continueBtn.style.display = 'none';
 
             if (continueStory) {
                 const sec = document.getElementById('story');
@@ -976,6 +1052,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (closeBtn)    closeBtn.addEventListener('click',    () => closeOverlay(false));
         if (continueBtn) continueBtn.addEventListener('click', () => closeOverlay(true));
 
+        // Nav links close the overlay first, then navigate to their target
+        const navDropdown = document.getElementById('nav-dropdown');
+        if (navDropdown) {
+            navDropdown.addEventListener('click', (e) => {
+                const link = e.target.closest('a[href], button');
+                if (!link || !isOpen) return;
+                e.preventDefault();
+                const href = link.getAttribute('href');
+                closeOverlay(false);
+                // Wait for overlay fade-out (450 ms) then navigate
+                setTimeout(() => {
+                    if (!href || href === '#') {
+                        // Re-show the scroll-container in case Skip Animation hid it
+                        const sc = document.querySelector('.scroll-container');
+                        if (sc) sc.style.display = '';
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else if (href.startsWith('#')) {
+                        const target = document.getElementById(href.slice(1));
+                        if (target) target.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        window.location.href = href;
+                    }
+                }, 460);
+            });
+        }
+
         function updateNavState() {
             const isLast = (currentPhase === 2 && currentStep === STEP_COUNT - 1);
             if (nextBtn)    { nextBtn.style.display    = isLast ? 'none'  : ''; }
@@ -989,8 +1091,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (currentStep < STEP_COUNT - 1) {
                         currentStep++;
                         startAnimation(STOP_POINTS[currentStep]);
-                        // hide continue button immediately when navigating forward
                         if (continueBtn) continueBtn.style.display = 'none';
+                        // Fade next button out over the opening frames of the final animation
+                        if (currentStep === STEP_COUNT - 1) {
+                            nextBtn.style.transition = 'opacity 0.5s ease-out';
+                            nextBtn.style.opacity    = '0';
+                        }
                     }
                 }
             });
@@ -1007,7 +1113,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         startAnimation(STOP_POINTS[currentStep]);
                         // navigating backward always hides continue, restores next
                         if (continueBtn) continueBtn.style.display = 'none';
-                        if (nextBtn)     nextBtn.style.display     = '';
+                        if (nextBtn) {
+                            nextBtn.style.transition = '';
+                            nextBtn.style.opacity    = '';
+                            nextBtn.style.display    = '';
+                        }
                     } else {
                         isAnimating = false; goPhase(1, 'backward');
                     }
@@ -1103,10 +1213,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (topBtn) {
         topBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const intro = document.getElementById('intro');
-            if (intro) {
-                intro.scrollIntoView({ behavior: 'smooth' });
-            }
+            // Re-show the scroll-container in case Skip Animation hid it
+            const sc = document.querySelector('.scroll-container');
+            if (sc) sc.style.display = '';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
 
