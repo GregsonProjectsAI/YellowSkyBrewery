@@ -2752,3 +2752,139 @@
             0%, 100% { opacity: 0.2; }
             50%       { opacity: 0.85; }
         }
+
+        /* ══════════════════════════════════════════════════════════════════
+           Mobile Dashboard Carousel — replaces the ticker at ≤767px
+           Desktop ticker is hidden on mobile; carousel is hidden on desktop.
+        ══════════════════════════════════════════════════════════════════ */
+
+        /* Hide desktop ticker on mobile */
+        @media (max-width: 767px) {
+            .dashboard-strip { display: none; }
+        }
+
+        /* Hide carousel on desktop */
+        .dash-carousel { display: none; }
+
+        @media (max-width: 767px) {
+            .dash-carousel {
+                display: flex;
+                align-items: center;
+                position: relative;
+                background: rgba(10, 10, 10, 0.92);
+                border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+                min-height: 72px;
+                padding: 0 48px;
+                overflow: hidden;
+            }
+
+            .dash-carousel__panels {
+                display: flex;
+                width: 100%;
+                overflow: hidden;
+            }
+
+            .dash-carousel__panel {
+                flex: 0 0 100%;
+                display: none;
+                flex-direction: column;
+                justify-content: center;
+                gap: 4px;
+                padding: 12px 8px;
+                transition: opacity 0.25s ease;
+                opacity: 0;
+            }
+
+            .dash-carousel__panel.is-active {
+                display: flex;
+                opacity: 1;
+            }
+
+            /* Inherit ticker label & content styles */
+            .dash-carousel .dashboard-label {
+                font-size: 0.65rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: rgba(212, 175, 55, 0.7);
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .dash-carousel .dashboard-label-icon {
+                width: 11px;
+                height: 11px;
+            }
+
+            .dash-carousel .dashboard-post,
+            .dash-carousel .dashboard-brew,
+            .dash-carousel .dashboard-event {
+                font-size: 0.82rem;
+                color: rgba(255, 255, 255, 0.85);
+                line-height: 1.4;
+            }
+
+            .dash-carousel .dashboard-socials {
+                display: flex;
+                gap: 20px;
+                padding-top: 4px;
+            }
+
+            .dash-carousel .dashboard-social-link {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: rgba(255,255,255,0.75);
+                text-decoration: none;
+                font-size: 0.82rem;
+            }
+
+            .dash-carousel .dashboard-social-icon {
+                width: 16px;
+                height: 16px;
+                stroke: rgba(212,175,55,0.8);
+            }
+
+            /* Arrow buttons */
+            .dash-carousel__arrow {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
+                border: none;
+                color: rgba(212, 175, 55, 0.7);
+                font-size: 2rem;
+                line-height: 1;
+                padding: 0 10px;
+                cursor: pointer;
+                touch-action: manipulation;
+                z-index: 2;
+                transition: color 0.2s;
+                -webkit-tap-highlight-color: transparent;
+            }
+            .dash-carousel__arrow:active { color: rgba(212, 175, 55, 1); }
+            .dash-carousel__arrow--prev  { left: 0; }
+            .dash-carousel__arrow--next  { right: 0; }
+
+            /* Dot indicators */
+            .dash-carousel__dots {
+                position: absolute;
+                bottom: 5px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                gap: 5px;
+            }
+
+            .dash-carousel__dot {
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: rgba(212, 175, 55, 0.3);
+                transition: background 0.2s;
+            }
+
+            .dash-carousel__dot.is-active {
+                background: rgba(212, 175, 55, 0.9);
+            }
+        }

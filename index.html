@@ -139,6 +139,71 @@
         </div><!-- /.dashboard-ticker -->
     </div>
 
+    <!-- Mobile dashboard carousel (hidden on desktop) -->
+    <div class="dash-carousel" id="dash-carousel" aria-label="Latest updates">
+        <button class="dash-carousel__arrow dash-carousel__arrow--prev" id="dash-prev" aria-label="Previous">&#8249;</button>
+        <div class="dash-carousel__panels">
+
+            <!-- Panel 1: Latest Bulletin -->
+            <div class="dash-carousel__panel is-active" data-panel="0">
+                <span class="dashboard-label">Latest Bulletin</span>
+                <div id="dash-latest-post" class="dashboard-post">
+                    <span class="dashboard-post__loading">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Panel 2: This Week's Brew -->
+            <div class="dash-carousel__panel" data-panel="1">
+                <span class="dashboard-label">This Week's Brew</span>
+                <div id="dash-this-weeks-brew" class="dashboard-brew">
+                    <span class="dashboard-post__loading">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Panel 3: Upcoming Events -->
+            <div class="dash-carousel__panel" data-panel="2">
+                <span class="dashboard-label">
+                    <svg class="dashboard-label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    Upcoming Events
+                </span>
+                <div id="dash-latest-event" class="dashboard-event">
+                    <span class="dashboard-post__loading">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Panel 4: Socials -->
+            <div class="dash-carousel__panel" data-panel="3">
+                <span class="dashboard-label">Social Media</span>
+                <div class="dashboard-socials">
+                    <a href="#" class="dashboard-social-link" aria-label="Yellow Sky Brewery on Instagram" title="Coming soon">
+                        <svg class="dashboard-social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                        </svg>
+                        <span class="dashboard-social-label">Instagram</span>
+                    </a>
+                    <a href="https://www.facebook.com/YellowSkyBrewery/" target="_blank" rel="noopener noreferrer" class="dashboard-social-link" aria-label="Yellow Sky Brewery on Facebook">
+                        <svg class="dashboard-social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                        </svg>
+                        <span class="dashboard-social-label">Facebook</span>
+                    </a>
+                </div>
+            </div>
+
+        </div><!-- /.dash-carousel__panels -->
+        <button class="dash-carousel__arrow dash-carousel__arrow--next" id="dash-next" aria-label="Next">&#8250;</button>
+
+        <!-- Dot indicators -->
+        <div class="dash-carousel__dots">
+            <span class="dash-carousel__dot is-active" data-dot="0"></span>
+            <span class="dash-carousel__dot" data-dot="1"></span>
+            <span class="dash-carousel__dot" data-dot="2"></span>
+            <span class="dash-carousel__dot" data-dot="3"></span>
+        </div>
+    </div><!-- /.dash-carousel -->
+
 
     <!-- Meet The Nitwits Section -->
 

@@ -41,6 +41,9 @@
             canvas.style.opacity = '1';
             setTimeout(() => { canvas.style.transition = 'none'; }, 1100);
             renderFrame(0);
+            // Mobile: guarantee the canvas is at the top of the viewport when
+            // playback begins — the age-gate click doesn't always reset position.
+            if (isMobile) window.scrollTo({ top: 0, behavior: 'instant' });
         }
 
         function skipAnimation() {
@@ -115,8 +118,9 @@
         const BACKDROP_END    = 680 / 700;  // backdrop fully opaque well before scroll end
         // Glint fires just before the logo departs — the glint IS the trigger for movement
         const GLINT_TRIGGER = 650 / 700;
-        let glintFired     = false;
+        let glintFired      = false;
         let logoMovePending = null;
+        let snapDone        = false; // mobile: fire the snap-to-intro once only
 
         window.addEventListener('scroll', () => {
             const scrollTop = window.scrollY;
@@ -198,6 +202,30 @@
             // Fast-scroll safety: if user rockets past both thresholds in one frame
             if (scrollFraction > LOGO_MOVE_START && !demoContent.classList.contains('is-header')) {
                 demoContent.classList.add('is-header');
+            }
+
+            // Mobile momentum fix: once the canvas is fully gone and the logo has
+            // moved to the header, break inertia by snapping exactly to #intro.
+            // Without this, a fast swipe carries the user 30–50% down the page.
+            if (isMobile && !snapDone && scrollFraction >= FADE_END &&
+                demoContent.classList.contains('is-header')) {
+                snapDone = true;
+                const intro = document.getElementById('intro');
+                if (intro) {
+                    // Lock scroll momentarily to kill momentum, then snap and release
+                    document.body.style.overflow = 'hidden';
+                    requestAnimationFrame(() => {
+                        intro.scrollIntoView({ behavior: 'instant' });
+                        requestAnimationFrame(() => {
+                            document.body.style.overflow = '';
+                        });
+                    });
+                }
+            }
+
+            // Mobile snap reset: if user scrolls back above FADE_END, allow re-snap
+            if (isMobile && snapDone && scrollFraction < FADE_END - 0.05) {
+                snapDone = false;
             }
 
             // Scroll-back: cancel pending move and reset both states

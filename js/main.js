@@ -144,6 +144,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: true });
     })();
 
+    // ── Mobile Dashboard Carousel — prev/next navigation ─────────────────────
+    (function () {
+        const carousel = document.getElementById('dash-carousel');
+        if (!carousel) return; // no-op on desktop
+
+        const panels   = Array.from(carousel.querySelectorAll('.dash-carousel__panel'));
+        const dots     = Array.from(carousel.querySelectorAll('.dash-carousel__dot'));
+        const prevBtn  = document.getElementById('dash-prev');
+        const nextBtn  = document.getElementById('dash-next');
+        let current    = 0;
+
+        function goTo(index) {
+            panels[current].classList.remove('is-active');
+            dots[current].classList.remove('is-active');
+            current = (index + panels.length) % panels.length;
+            panels[current].classList.add('is-active');
+            dots[current].classList.add('is-active');
+        }
+
+        if (prevBtn) prevBtn.addEventListener('click', () => goTo(current - 1));
+        if (nextBtn) nextBtn.addEventListener('click', () => goTo(current + 1));
+
+        // Mirror dynamic content from blog.js into carousel panels via MutationObserver.
+        // blog.js writes into the desktop ticker IDs; we copy that into the carousel IDs.
+        const mirrorMap = [
+            { from: 'dashboard-latest-post',    to: 'dash-latest-post'    },
+            { from: 'dashboard-this-weeks-brew', to: 'dash-this-weeks-brew' },
+            { from: 'dashboard-latest-event',    to: 'dash-latest-event'   },
+        ];
+
+        mirrorMap.forEach(({ from, to }) => {
+            const src  = document.getElementById(from);
+            const dest = document.getElementById(to);
+            if (!src || !dest) return;
+            // Copy any content already present
+            dest.innerHTML = src.innerHTML;
+            // Keep in sync as blog.js writes asynchronously
+            new MutationObserver(() => { dest.innerHTML = src.innerHTML; })
+                .observe(src, { childList: true, subtree: true });
+        });
+    })();
+
     // Staggered Intersection Observer for Beer Grid
 
     const beerGridObserver = new IntersectionObserver((entries, obs) => {
