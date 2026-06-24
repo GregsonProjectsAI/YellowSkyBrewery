@@ -46,6 +46,32 @@
             if (isMobile) window.scrollTo({ top: 0, behavior: 'instant' });
         }
 
+        // ── Mobile: snap to #intro on touchend when animation is in final zone ──
+        // Fires at the exact moment the finger lifts — before browser momentum starts.
+        // This is the only reliable cross-device way to prevent overshoot.
+        if (isMobile) {
+            window.addEventListener('touchend', () => {
+                const total = scrollContainer.offsetHeight - window.innerHeight;
+                if (total <= 0) return; // animation was skipped
+                const frac = Math.max(0, Math.min(1, window.scrollY / total));
+                // Snap once the animation is past hold-end and nearly done
+                if (frac < HOLD_END) return;
+                const intro = document.getElementById('intro');
+                if (!intro) return;
+                // Force all end-state visuals immediately
+                canvas.style.opacity = '0';
+                demoContent.classList.add('is-header');
+                demoContent.style.opacity = '1';
+                if (backdropEl) backdropEl.style.opacity = '1';
+                glintFired = true; // prevent glint re-trigger
+                if (logoMovePending) { clearTimeout(logoMovePending); logoMovePending = null; }
+                snapDone = true;
+                // Snap to intro — finger is already up so no momentum to fight yet
+                const targetY = intro.getBoundingClientRect().top + window.scrollY;
+                window.scrollTo({ top: targetY, behavior: 'instant' });
+            }, { passive: true });
+        }
+
         function skipAnimation() {
             clearTimeout(loadingTimeout);
             clearTimeout(slowTimeout);
@@ -204,34 +230,12 @@
                 demoContent.classList.add('is-header');
             }
 
-            // Mobile momentum fix: once the canvas is fully gone and the logo has
-            // moved to the header, snap hard to #intro and hold the position for
-            // 350ms with a rAF correction loop — the only reliable way to kill
-            // iOS/Android inertia without native scroll-snap disrupting the animation.
-            if (isMobile && !snapDone && scrollFraction >= FADE_END &&
-                demoContent.classList.contains('is-header')) {
-                snapDone = true;
-                const intro = document.getElementById('intro');
-                if (intro) {
-                    const targetY = intro.getBoundingClientRect().top + window.scrollY;
-                    window.scrollTo({ top: targetY, behavior: 'instant' });
-                    // Hold the position against momentum for 350ms
-                    const holdUntil = performance.now() + 350;
-                    (function holdPosition() {
-                        if (performance.now() < holdUntil) {
-                            if (Math.abs(window.scrollY - targetY) > 2) {
-                                window.scrollTo({ top: targetY, behavior: 'instant' });
-                            }
-                            requestAnimationFrame(holdPosition);
-                        }
-                    })();
-                }
-            }
-
-
-            // Mobile snap reset: if user scrolls back above FADE_END, allow re-snap
-            if (isMobile && snapDone && scrollFraction < FADE_END - 0.05) {
+            // Mobile snap reset: if user scrolls back above HOLD_END, allow re-snap
+            if (isMobile && snapDone && scrollFraction < HOLD_END - 0.05) {
                 snapDone = false;
+                glintFired = false;
+                demoContent.classList.remove('is-header');
+                demoContent.classList.remove('is-glinting');
             }
 
             // Scroll-back: cancel pending move and reset both states
