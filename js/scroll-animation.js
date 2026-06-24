@@ -9,12 +9,15 @@
         const images = [];
         let loadedImages = 0;
 
-        const imagePrefix = 'assets/flow_frames/frame_';
+        // Mobile devices get a compressed frame set (960×540) to cut load from
+        // 47 MB down to ~11 MB. Desktop is completely unchanged.
+        const isMobile    = window.innerWidth < 768 || navigator.maxTouchPoints > 1;
+        const imagePrefix = isMobile ? 'assets/flow_frames_mobile/frame_' : 'assets/flow_frames/frame_';
         const imageExtension = '.jpg';
 
-        // Set canvas resolution to match source video (1920x1080)
-        canvas.width = 1920;
-        canvas.height = 1080;
+        // Canvas resolution matches source: 960×540 on mobile, 1920×1080 on desktop
+        canvas.width  = isMobile ? 960  : 1920;
+        canvas.height = isMobile ? 540  : 1080;
 
         // Preload all frames for buttery smooth playback
         const loadingTextEl = document.getElementById('loading-text');

@@ -288,7 +288,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const loadingText = document.getElementById('story-loading-text');
 
         const FRAME_COUNT  = 240;
-        const FRAME_PREFIX = 'assets/story_frames/frame_';
+        // Mobile devices get compressed 960×540 story frames. Desktop unchanged.
+        const isMobile     = window.innerWidth < 768 || navigator.maxTouchPoints > 1;
+        const FRAME_PREFIX = isMobile ? 'assets/story_frames_mobile/frame_' : 'assets/story_frames/frame_';
         const storyFrames  = [];
         let framesLoaded   = 0;
         let framesReady    = false;

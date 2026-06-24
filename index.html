@@ -149,7 +149,10 @@
                 <!-- Card 1 -->
                 <a href="lee.html" class="team-card fade-up">
                     <div class="team-card__image-wrapper">
-                        <img src="assets/AI images of the crew/Lee final cropped 4k.jpeg" alt="Lee" class="team-card__image">
+                        <picture>
+                            <source media="(max-width: 767px)" srcset="assets/AI images of the crew/web/lee_web.jpeg">
+                            <img src="assets/AI images of the crew/Lee final cropped 4k.jpeg" alt="Lee" class="team-card__image">
+                        </picture>
                     </div>
                     <div class="team-card__content">
                         <h3 class="team-card__name">Woodwork</h3>
@@ -160,7 +163,10 @@
                 <!-- Card 2 -->
                 <a href="chris.html" class="team-card fade-up" style="transition-delay: 0.1s;">
                     <div class="team-card__image-wrapper">
-                        <img src="assets/AI images of the crew/Chris final.jpeg" alt="Chris" class="team-card__image">
+                        <picture>
+                            <source media="(max-width: 767px)" srcset="assets/AI images of the crew/web/chris_web.jpeg">
+                            <img src="assets/AI images of the crew/Chris final.jpeg" alt="Chris" class="team-card__image">
+                        </picture>
                     </div>
                     <div class="team-card__content">
                         <h3 class="team-card__name">Paperwork</h3>
@@ -172,7 +178,10 @@
                 <!-- Card 3 -->
                 <a href="dave.html" class="team-card fade-up" style="transition-delay: 0.2s;">
                     <div class="team-card__image-wrapper">
-                        <img src="assets/AI images of the crew/dad.jpeg" alt="Dave" class="team-card__image">
+                        <picture>
+                            <source media="(max-width: 767px)" srcset="assets/AI images of the crew/web/dad_web.jpeg">
+                            <img src="assets/AI images of the crew/dad.jpeg" alt="Dave" class="team-card__image">
+                        </picture>
                     </div>
                     <div class="team-card__content">
                         <h3 class="team-card__name">Labwork</h3>
@@ -183,7 +192,10 @@
                 <!-- Card 4 (Colin) -->
                 <a href="colin.html" class="team-card fade-up" style="transition-delay: 0.3s;">
                     <div class="team-card__image-wrapper">
-                        <img src="assets/AI images of the crew/Colin 4k.jpeg" alt="Colin" class="team-card__image">
+                        <picture>
+                            <source media="(max-width: 767px)" srcset="assets/AI images of the crew/web/colin_web.jpeg">
+                            <img src="assets/AI images of the crew/Colin 4k.jpeg" alt="Colin" class="team-card__image">
+                        </picture>
                     </div>
                     <div class="team-card__content">
                         <h3 class="team-card__name">Hard Work</h3>
@@ -550,8 +562,22 @@
     }
     </script>
 
+    <!-- Mobile video source swap — runs before main.js so all video logic uses the correct source -->
+    <!-- On mobile, H.265 compressed versions (assets/videos_mobile/) replace the originals.      -->
+    <!-- Desktop receives no change whatsoever.                                                    -->
+    <script>
+    (function () {
+        if (window.innerWidth >= 768 && navigator.maxTouchPoints <= 1) return; // desktop: do nothing
+        document.querySelectorAll('video source[src^="assets/"]').forEach(function (s) {
+            var filename = s.getAttribute('src').split('/').pop();
+            s.setAttribute('src', 'assets/videos_mobile/' + filename);
+        });
+    }());
+    </script>
+
     <!-- Classic scripts -->
     <script src="js/main.js?v=11"></script>
+
     <script src="js/scroll-animation.js?v=2"></script>
     <script src="js/blog.js?v=2"></script>
 
