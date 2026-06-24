@@ -205,23 +205,29 @@
             }
 
             // Mobile momentum fix: once the canvas is fully gone and the logo has
-            // moved to the header, break inertia by snapping exactly to #intro.
-            // Without this, a fast swipe carries the user 30–50% down the page.
+            // moved to the header, snap hard to #intro and hold the position for
+            // 350ms with a rAF correction loop — the only reliable way to kill
+            // iOS/Android inertia without native scroll-snap disrupting the animation.
             if (isMobile && !snapDone && scrollFraction >= FADE_END &&
                 demoContent.classList.contains('is-header')) {
                 snapDone = true;
                 const intro = document.getElementById('intro');
                 if (intro) {
-                    // Lock scroll momentarily to kill momentum, then snap and release
-                    document.body.style.overflow = 'hidden';
-                    requestAnimationFrame(() => {
-                        intro.scrollIntoView({ behavior: 'instant' });
-                        requestAnimationFrame(() => {
-                            document.body.style.overflow = '';
-                        });
-                    });
+                    const targetY = intro.getBoundingClientRect().top + window.scrollY;
+                    window.scrollTo({ top: targetY, behavior: 'instant' });
+                    // Hold the position against momentum for 350ms
+                    const holdUntil = performance.now() + 350;
+                    (function holdPosition() {
+                        if (performance.now() < holdUntil) {
+                            if (Math.abs(window.scrollY - targetY) > 2) {
+                                window.scrollTo({ top: targetY, behavior: 'instant' });
+                            }
+                            requestAnimationFrame(holdPosition);
+                        }
+                    })();
                 }
             }
+
 
             // Mobile snap reset: if user scrolls back above FADE_END, allow re-snap
             if (isMobile && snapDone && scrollFraction < FADE_END - 0.05) {

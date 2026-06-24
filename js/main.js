@@ -13,15 +13,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnYes.addEventListener('click', () => {
-        // User is 18+
+        // Give immediate visual feedback — button responds before assets are ready
+        btnYes.disabled = true;
+        btnYes.textContent = 'Loading...';
+        btnYes.style.opacity = '0.7';
+        const content = document.querySelector('.age-gate__content');
+        if (content) content.classList.add('age-gate__content--loading');
+
         sessionStorage.setItem('ageVerified', 'true');
         ageGate.classList.add('fade-out');
 
-        // Wait for animation to finish before hiding and enabling scroll
         setTimeout(() => {
             ageGate.style.display = 'none';
             body.classList.remove('no-scroll');
-        }, 500); // Matches the CSS transition duration
+        }, 500);
     });
 
     btnNo.addEventListener('click', () => {
@@ -144,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: true });
     })();
 
-    // ── Mobile Dashboard Carousel — prev/next navigation ─────────────────────
+    // ── Mobile Dashboard Carousel — prev/next navigation + swipe ────────────
     (function () {
         const carousel = document.getElementById('dash-carousel');
         if (!carousel) return; // no-op on desktop
@@ -166,8 +171,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prevBtn) prevBtn.addEventListener('click', () => goTo(current - 1));
         if (nextBtn) nextBtn.addEventListener('click', () => goTo(current + 1));
 
+        // Swipe support — horizontal swipe navigates panels,
+        // vertical swipe is passed through for normal page scroll.
+        let touchStartX = 0;
+        let touchStartY = 0;
+        carousel.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        carousel.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return; // too small or vertical
+            goTo(current + (dx < 0 ? 1 : -1));
+        }, { passive: true });
+
         // Mirror dynamic content from blog.js into carousel panels via MutationObserver.
-        // blog.js writes into the desktop ticker IDs; we copy that into the carousel IDs.
         const mirrorMap = [
             { from: 'dashboard-latest-post',    to: 'dash-latest-post'    },
             { from: 'dashboard-this-weeks-brew', to: 'dash-this-weeks-brew' },
@@ -178,9 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const src  = document.getElementById(from);
             const dest = document.getElementById(to);
             if (!src || !dest) return;
-            // Copy any content already present
             dest.innerHTML = src.innerHTML;
-            // Keep in sync as blog.js writes asynchronously
             new MutationObserver(() => { dest.innerHTML = src.innerHTML; })
                 .observe(src, { childList: true, subtree: true });
         });
