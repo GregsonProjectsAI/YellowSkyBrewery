@@ -293,25 +293,34 @@ document.addEventListener('DOMContentLoaded', () => {
         let framesLoaded   = 0;
         let framesReady    = false;
 
+        // ── Story frame preloading — deferred until overlay opens ─────────────
+        // Frames are NOT loaded on page load — only when the user clicks
+        // "Explore Our Story". This saves ~27 MB of network requests for visitors
+        // who never open the story section (especially impactful on mobile).
+        let framesLoadStarted = false;
+
+        function loadStoryFrames() {
+            if (framesLoadStarted) return; // idempotent — only load once
+            framesLoadStarted = true;
+            for (let i = 1; i <= FRAME_COUNT; i++) {
+                const img = new Image();
+                const pad = i.toString().padStart(4, '0');
+                img.src = `${FRAME_PREFIX}${pad}.jpg`;
+                img.onload = img.onerror = () => {
+                    framesLoaded++;
+                    if (loadingText && loadingEl && !loadingEl.classList.contains('is-hidden')) {
+                        loadingText.textContent = `Loading story... ${Math.round((framesLoaded / FRAME_COUNT) * 100)}%`;
+                    }
+                    if (framesLoaded === FRAME_COUNT) framesReady = true;
+                };
+                storyFrames.push(img);
+            }
+        }
+
         // ── Cloth simulation (slide-0 tea towel) ──────────────────────────────
         // TeaTowelCloth is now handled autonomously in index.html module
         const towelCanvas = document.getElementById('teatowel-container');
         const hintEl      = document.getElementById('cloth-hint');
-
-        // Preload all story frames immediately so they're ready when user opens overlay
-        for (let i = 1; i <= FRAME_COUNT; i++) {
-            const img = new Image();
-            const pad = i.toString().padStart(4, '0');
-            img.src = `${FRAME_PREFIX}${pad}.jpg`;
-            img.onload = img.onerror = () => {
-                framesLoaded++;
-                if (loadingText && loadingEl && !loadingEl.classList.contains('is-hidden')) {
-                    loadingText.textContent = `Loading story... ${Math.round((framesLoaded / FRAME_COUNT) * 100)}%`;
-                }
-                if (framesLoaded === FRAME_COUNT) framesReady = true;
-            };
-            storyFrames.push(img);
-        }
 
         function renderStoryFrame(progress) {
             if (!ctx || !framesReady) return;
@@ -1051,6 +1060,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ── Overlay open / close ──────────────────────────────────────────────
         function openOverlay() {
+            // Trigger story frame loading on first open (deferred from page load)
+            loadStoryFrames();
             isOpen = true;
             overlay.classList.add('is-open');
             overlay.setAttribute('aria-hidden', 'false');
