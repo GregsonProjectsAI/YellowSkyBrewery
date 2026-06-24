@@ -1,19 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Age Gate Logic
+    // Age gate is handled by the inline script in index.html for instant response.
+    // Only run this fallback if the inline script somehow didn't execute.
+    if (!window._ageGateReady) {
     const ageGate = document.getElementById('age-gate');
     const btnYes = document.getElementById('btn-yes');
     const btnNo = document.getElementById('btn-no');
     const ageError = document.getElementById('age-error');
     const body = document.body;
 
-    // Check if user has already verified age in this session
     if (sessionStorage.getItem('ageVerified') === 'true') {
         ageGate.style.display = 'none';
         body.classList.remove('no-scroll');
     }
 
     btnYes.addEventListener('click', () => {
-        // Give immediate visual feedback — button responds before assets are ready
         btnYes.disabled = true;
         btnYes.textContent = 'Loading...';
         btnYes.style.opacity = '0.7';
@@ -30,14 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnNo.addEventListener('click', () => {
-        // User is under 18
         ageError.style.display = 'block';
-
-        // Optional: Redirect them away after a few seconds
         setTimeout(() => {
             window.location.href = 'https://www.google.com';
         }, 2000);
     });
+    } // end !_ageGateReady
 
     // Intersection Observer for scroll animations
     const observerOptions = {

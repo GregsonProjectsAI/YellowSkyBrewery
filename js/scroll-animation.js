@@ -41,35 +41,7 @@
             canvas.style.opacity = '1';
             setTimeout(() => { canvas.style.transition = 'none'; }, 1100);
             renderFrame(0);
-            // Mobile: guarantee the canvas is at the top of the viewport when
-            // playback begins — the age-gate click doesn't always reset position.
             if (isMobile) window.scrollTo({ top: 0, behavior: 'instant' });
-        }
-
-        // ── Mobile: snap to #intro on touchend when animation is in final zone ──
-        // Fires at the exact moment the finger lifts — before browser momentum starts.
-        // This is the only reliable cross-device way to prevent overshoot.
-        if (isMobile) {
-            window.addEventListener('touchend', () => {
-                const total = scrollContainer.offsetHeight - window.innerHeight;
-                if (total <= 0) return; // animation was skipped
-                const frac = Math.max(0, Math.min(1, window.scrollY / total));
-                // Snap once the animation is past hold-end and nearly done
-                if (frac < HOLD_END) return;
-                const intro = document.getElementById('intro');
-                if (!intro) return;
-                // Force all end-state visuals immediately
-                canvas.style.opacity = '0';
-                demoContent.classList.add('is-header');
-                demoContent.style.opacity = '1';
-                if (backdropEl) backdropEl.style.opacity = '1';
-                glintFired = true; // prevent glint re-trigger
-                if (logoMovePending) { clearTimeout(logoMovePending); logoMovePending = null; }
-                snapDone = true;
-                // Snap to intro — finger is already up so no momentum to fight yet
-                const targetY = intro.getBoundingClientRect().top + window.scrollY;
-                window.scrollTo({ top: targetY, behavior: 'instant' });
-            }, { passive: true });
         }
 
         function skipAnimation() {
@@ -230,7 +202,35 @@
                 demoContent.classList.add('is-header');
             }
 
-            // Mobile snap reset: if user scrolls back above HOLD_END, allow re-snap
+            // Mobile momentum fix — fires from scroll event so it catches both
+            // finger-drag AND momentum. Uses position:fixed (the modal trick) to
+            // kill inertia dead, then snaps to #intro in the next frame.
+            if (isMobile && !snapDone && scrollFraction >= HOLD_END) {
+                snapDone = true;
+                const intro = document.getElementById('intro');
+                if (intro) {
+                    // Force all end-state visuals
+                    canvas.style.opacity = '0';
+                    demoContent.classList.add('is-header');
+                    demoContent.style.opacity = '1';
+                    if (backdropEl) backdropEl.style.opacity = '1';
+                    glintFired = true;
+                    if (logoMovePending) { clearTimeout(logoMovePending); logoMovePending = null; }
+                    // Lock body (kills momentum) then snap and release
+                    const targetY = intro.getBoundingClientRect().top + window.scrollY;
+                    document.body.style.position = 'fixed';
+                    document.body.style.top      = '0';
+                    document.body.style.width    = '100%';
+                    requestAnimationFrame(() => {
+                        document.body.style.position = '';
+                        document.body.style.top      = '';
+                        document.body.style.width    = '';
+                        window.scrollTo({ top: targetY, behavior: 'instant' });
+                    });
+                }
+            }
+
+            // Allow re-snap if user scrolls back into animation zone
             if (isMobile && snapDone && scrollFraction < HOLD_END - 0.05) {
                 snapDone = false;
                 glintFired = false;

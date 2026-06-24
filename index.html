@@ -7,7 +7,7 @@
     <title>Yellow Sky Brewery</title>
     <!-- CSS -->
     <link rel="stylesheet" href="css/variables.css?v=2">
-    <link rel="stylesheet" href="css/main.css?v=18">
+    <link rel="stylesheet" href="css/main.css?v=19">
 </head>
 
 <body class="no-scroll">
@@ -26,6 +26,46 @@
             <p id="age-error" class="age-gate__error" style="display: none;">You must be 18+ to enter.</p>
         </div>
     </div>
+
+    <!-- Inline age gate handler: runs immediately on parse, no waiting for main.js -->
+    <script>
+    (function () {
+        var gate   = document.getElementById('age-gate');
+        var btnYes = document.getElementById('btn-yes');
+        var btnNo  = document.getElementById('btn-no');
+        window._ageGateReady = true; // flag so main.js skips duplicate setup
+
+        if (sessionStorage.getItem('ageVerified') === 'true') {
+            if (gate) gate.style.display = 'none';
+            document.body.classList.remove('no-scroll');
+            return;
+        }
+
+        if (btnYes) {
+            btnYes.addEventListener('click', function () {
+                btnYes.disabled = true;
+                btnYes.textContent = 'Loading...';
+                btnYes.style.opacity = '0.7';
+                var content = document.querySelector('.age-gate__content');
+                if (content) content.classList.add('age-gate__content--loading');
+                sessionStorage.setItem('ageVerified', 'true');
+                gate.classList.add('fade-out');
+                setTimeout(function () {
+                    gate.style.display = 'none';
+                    document.body.classList.remove('no-scroll');
+                }, 500);
+            });
+        }
+
+        if (btnNo) {
+            btnNo.addEventListener('click', function () {
+                var err = document.getElementById('age-error');
+                if (err) err.style.display = 'block';
+                setTimeout(function () { window.location.href = 'https://www.google.com'; }, 2000);
+            });
+        }
+    }());
+    </script>
 
     <div id="loading">
         <span id="loading-text">Loading Assets... 0%</span>
@@ -641,9 +681,9 @@
     </script>
 
     <!-- Classic scripts -->
-    <script src="js/main.js?v=12"></script>
+    <script src="js/main.js?v=13"></script>
 
-    <script src="js/scroll-animation.js?v=3"></script>
+    <script src="js/scroll-animation.js?v=4"></script>
     <script src="js/blog.js?v=3"></script>
 
     <!-- Autonomous WebGPU Beer Towel -->
