@@ -2322,6 +2322,11 @@
                 padding: 16px 12px;
             }
 
+            .blog-card:not(.is-expanded) {
+                text-align: center;
+                align-items: center;
+            }
+
             .blog-card__title {
                 font-size: 1.1rem;
                 margin-bottom: 0;
