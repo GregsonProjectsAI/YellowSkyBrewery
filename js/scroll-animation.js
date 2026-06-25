@@ -193,10 +193,13 @@
         }, 90000);
 
         // Draw a specific frame to the canvas
+        let lastRenderedFrame = -1;
         function renderFrame(index) {
+            if (index === lastRenderedFrame) return; // Skip redraw if frame hasn't changed
             if (images[index] && images[index].complete) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(images[index], 0, 0, canvas.width, canvas.height);
+                lastRenderedFrame = index;
             }
         }
 
@@ -251,7 +254,7 @@
 
             // Frame index clamps at the last frame during hold + fade
             const frameIndex = Math.min(frameCount - 1, Math.floor(videoProgress * frameCount));
-            requestAnimationFrame(() => renderFrame(frameIndex));
+            renderFrame(frameIndex);
 
             // Scroll hint disappears once scrolling starts
             if (scrollTop > 50) {
