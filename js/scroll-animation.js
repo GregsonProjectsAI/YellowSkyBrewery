@@ -220,7 +220,18 @@
         let logoMovePending = null;
         let continueShown   = false; // mobile: show Continue button once only
 
+        let scrollTicking = false;
         scrollSource.addEventListener('scroll', () => {
+            if (!scrollTicking) {
+                window.requestAnimationFrame(() => {
+                    processScrollFrame();
+                    scrollTicking = false;
+                });
+                scrollTicking = true;
+            }
+        });
+
+        function processScrollFrame() {
             const scrollTop           = getScrollTop();
             const totalScrollDistance = getScrollRange();
 
@@ -334,7 +345,7 @@
                     continueBtn.style.pointerEvents = 'none';
                 }
             }
-        }); // end scroll listener
+        } // end processScrollFrame
 
         // Skip animation when arriving from a profile page back button.
         // A sessionStorage flag is set by the back button on profile pages
