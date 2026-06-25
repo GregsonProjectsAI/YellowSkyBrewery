@@ -19,6 +19,100 @@
         canvas.width  = isMobile ? 960  : 1920;
         canvas.height = isMobile ? 540  : 1080;
 
+        // ── Mobile: contained-scroll wrapper ───────────────────────────────────
+        // On mobile we move the scroll-container into a fixed 100vh div that has
+        // its own internal scroll. The scroll physically stops at the bottom —
+        // no momentum overshoot is possible because the browser has nowhere left
+        // to scroll to. Desktop layout is completely untouched.
+        const scrollContainer = document.querySelector('.scroll-container');
+        let   scrollSource    = window;      // what we listen to for 'scroll'
+        let   getScrollTop    = () => window.scrollY;
+        let   getScrollRange  = () => scrollContainer.offsetHeight - window.innerHeight;
+
+        let continueBtn = null; // mobile-only "Continue →" button
+
+        if (isMobile && scrollContainer) {
+            // Create the fixed wrapper
+            const wrapper = document.createElement('div');
+            wrapper.id = 'anim-wrapper';
+            // Styles applied inline so they work without waiting for CSS parse
+            Object.assign(wrapper.style, {
+                position:           'fixed',
+                top:                '0',
+                left:               '0',
+                width:              '100vw',
+                height:             '100vh',
+                overflowY:          'scroll',
+                overscrollBehavior: 'none',
+                zIndex:             '50',
+                background:         '#0d0d0d', // opaque — page content must not bleed through
+            });
+
+            // Move the backdrop INTO the wrapper so it sits at z-index 0 within
+            // the wrapper's stacking context (below canvas at z-index 1).
+            // As the canvas fades, the brewery image reveals — not the page below.
+            if (backdropEl) wrapper.appendChild(backdropEl);
+
+            // Move scroll-container into wrapper, insert wrapper where it was
+            scrollContainer.parentNode.insertBefore(wrapper, scrollContainer);
+            wrapper.appendChild(scrollContainer);
+
+            // Keep #loading accessible above the wrapper for the skip button
+            if (loadingEl) loadingEl.style.zIndex = '110';
+
+            // Redirect scroll source to the wrapper
+            scrollSource   = wrapper;
+            getScrollTop   = () => wrapper.scrollTop;
+            getScrollRange = () => scrollContainer.offsetHeight - wrapper.clientHeight;
+
+            // "Continue →" button — appears when animation completes
+            continueBtn = document.createElement('button');
+            continueBtn.id        = 'anim-continue-btn';
+            continueBtn.textContent = 'Continue →';
+            Object.assign(continueBtn.style, {
+                position:      'fixed',
+                top:           '50%',
+                left:          '50%',
+                transform:     'translate(-50%, -50%)',
+                zIndex:        '200',
+                opacity:       '0',
+                pointerEvents: 'none',
+                transition:    'opacity 0.6s ease',
+                background:    'transparent',
+                border:        '1px solid rgba(212,175,55,0.7)',
+                color:         'rgba(212,175,55,0.9)',
+                fontFamily:    "'Helvetica Neue', Arial, sans-serif",
+                fontSize:      '0.85rem',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                padding:       '12px 32px',
+                borderRadius:  '4px',
+                cursor:        'pointer',
+            });
+            document.body.appendChild(continueBtn);
+
+            continueBtn.addEventListener('click', () => {
+                // Hide button immediately on tap
+                continueBtn.style.opacity      = '0';
+                continueBtn.style.pointerEvents = 'none';
+                // Restore backdrop to body BEFORE hiding wrapper so main site
+                // still has its background after the animation completes
+                if (backdropEl) {
+                    backdropEl.style.opacity = '1';
+                    document.body.appendChild(backdropEl);
+                }
+                wrapper.style.transition = 'opacity 0.4s ease';
+                wrapper.style.opacity    = '0';
+                setTimeout(() => {
+                    wrapper.style.display = 'none';
+                    // Remove button from DOM so it doesn't float over the main site
+                    if (continueBtn.parentNode) continueBtn.parentNode.removeChild(continueBtn);
+                    const intro = document.getElementById('intro');
+                    if (intro) intro.scrollIntoView({ behavior: 'instant' });
+                }, 400);
+            });
+        }
+
         // Preload all frames for buttery smooth playback
         const loadingTextEl = document.getElementById('loading-text');
         const skipBtn       = document.getElementById('skip-animation-btn');
@@ -41,25 +135,35 @@
             canvas.style.opacity = '1';
             setTimeout(() => { canvas.style.transition = 'none'; }, 1100);
             renderFrame(0);
-            if (isMobile) window.scrollTo({ top: 0, behavior: 'instant' });
         }
 
         function skipAnimation() {
             clearTimeout(loadingTimeout);
             clearTimeout(slowTimeout);
             loadingEl.style.display = 'none';
-            // Collapse the scroll section so the page layout is normal without it
-            const scrollContainer = document.querySelector('.scroll-container');
-            if (scrollContainer) scrollContainer.style.display = 'none';
-            // Show the logo in header position immediately with full opacity
+            // On mobile, dismiss the wrapper entirely.
+            // The backdrop was moved inside the wrapper during setup — restore it
+            // to the body BEFORE hiding the wrapper so the page doesn't go dark.
+            if (isMobile) {
+                if (backdropEl) {
+                    backdropEl.style.opacity = '1';
+                    document.body.appendChild(backdropEl);
+                }
+                const wrapper = document.getElementById('anim-wrapper');
+                if (wrapper) wrapper.style.display = 'none';
+                if (continueBtn && continueBtn.parentNode) continueBtn.parentNode.removeChild(continueBtn);
+            } else {
+                // Desktop: collapse the scroll section so layout is normal
+                if (scrollContainer) scrollContainer.style.display = 'none';
+            }
             demoContent.classList.add('is-header');
             demoContent.style.opacity = '1';
-            // Ensure backdrop is fully visible when animation is skipped
             if (backdropEl) backdropEl.style.opacity = '1';
             document.body.classList.remove('no-scroll');
             const intro = document.getElementById('intro');
             if (intro) intro.scrollIntoView({ behavior: 'auto' });
         }
+
 
         if (skipBtn) skipBtn.addEventListener('click', skipAnimation);
 
@@ -96,8 +200,6 @@
             }
         }
 
-        const scrollContainer = document.querySelector('.scroll-container');
-
         // --- Scroll zones (fractions of scroll travel) ---
         //   0              → ANIM_END      : animation plays frame by frame (all 192 frames)
         //   ANIM_END       → HOLD_END      : frozen on last frame, fully opaque ("pint stands proud")
@@ -110,19 +212,17 @@
         const LOGO_MOVE_START = 655 / 700;  // 0.936 — logo moves to corner (now glint-triggered)
         // Backdrop begins emerging once the canvas is mostly gone, then rises
         // steadily so it materialises from the dark behind the content sections.
-        // The scroll-container's #0d0d0d background masks the transition while
-        // it's still on-screen, so there's no "reveal from below" artefact.
-        const BACKDROP_START  = 592 / 700;  // = HOLD_END + 40% of canvas fade — glass is 40% black
-        const BACKDROP_END    = 680 / 700;  // backdrop fully opaque well before scroll end
+        const BACKDROP_START  = 592 / 700;
+        const BACKDROP_END    = 680 / 700;
         // Glint fires just before the logo departs — the glint IS the trigger for movement
         const GLINT_TRIGGER = 650 / 700;
         let glintFired      = false;
         let logoMovePending = null;
-        let snapDone        = false; // mobile: fire the snap-to-intro once only
+        let continueShown   = false; // mobile: show Continue button once only
 
-        window.addEventListener('scroll', () => {
-            const scrollTop = window.scrollY;
-            const totalScrollDistance = scrollContainer.offsetHeight - window.innerHeight;
+        scrollSource.addEventListener('scroll', () => {
+            const scrollTop           = getScrollTop();
+            const totalScrollDistance = getScrollRange();
 
             // Scroll container is hidden (animation was skipped) — nothing to drive
             if (totalScrollDistance <= 0) {
@@ -168,8 +268,6 @@
             }
 
             // Backdrop emerges slowly from near-black once the canvas is almost gone.
-            // The scroll-container's dark background keeps this hidden while we're still
-            // in the animation section — no visible "reveal from below".
             if (backdropEl) {
                 if (scrollFraction < BACKDROP_START) {
                     backdropEl.style.opacity = '0';
@@ -183,59 +281,42 @@
 
             if (scrollFraction >= GLINT_TRIGGER && !glintFired) {
                 glintFired = true;
-                // Bloom the logo colours
                 demoContent.classList.remove('is-glinting');
-                void demoContent.offsetWidth;          // restart animation if re-triggered
+                void demoContent.offsetWidth;
                 demoContent.classList.add('is-glinting');
-                // Logo launches at the glint's peak (30% of 1300ms = 390ms)
-                // then glint fades as the logo travels, both finishing together
                 logoMovePending = setTimeout(() => {
                     demoContent.classList.add('is-header');
-                    // Ensure backdrop is fully visible by the time the logo arrives
                     if (backdropEl) backdropEl.style.opacity = '1';
                     logoMovePending = null;
+                    // Fade in Continue button as logo travels to corner.
+                    // 500ms delay lets the logo get clear of center first.
+                    if (isMobile && continueBtn && !continueShown) {
+                        setTimeout(() => {
+                            continueShown = true;
+                            continueBtn.style.opacity      = '1';
+                            continueBtn.style.pointerEvents = 'auto';
+                        }, 500);
+                    }
                 }, 390);
             }
 
             // Fast-scroll safety: if user rockets past both thresholds in one frame
             if (scrollFraction > LOGO_MOVE_START && !demoContent.classList.contains('is-header')) {
                 demoContent.classList.add('is-header');
-            }
-
-            // Mobile momentum fix — fires from scroll event so it catches both
-            // finger-drag AND momentum. Uses position:fixed (the modal trick) to
-            // kill inertia dead, then snaps to #intro in the next frame.
-            if (isMobile && !snapDone && scrollFraction >= HOLD_END) {
-                snapDone = true;
-                const intro = document.getElementById('intro');
-                if (intro) {
-                    // Force all end-state visuals
-                    canvas.style.opacity = '0';
-                    demoContent.classList.add('is-header');
-                    demoContent.style.opacity = '1';
-                    if (backdropEl) backdropEl.style.opacity = '1';
-                    glintFired = true;
-                    if (logoMovePending) { clearTimeout(logoMovePending); logoMovePending = null; }
-                    // Lock body (kills momentum) then snap and release
-                    const targetY = intro.getBoundingClientRect().top + window.scrollY;
-                    document.body.style.position = 'fixed';
-                    document.body.style.top      = '0';
-                    document.body.style.width    = '100%';
-                    requestAnimationFrame(() => {
-                        document.body.style.position = '';
-                        document.body.style.top      = '';
-                        document.body.style.width    = '';
-                        window.scrollTo({ top: targetY, behavior: 'instant' });
-                    });
+                if (isMobile && continueBtn && !continueShown) {
+                    setTimeout(() => {
+                        continueShown = true;
+                        continueBtn.style.opacity      = '1';
+                        continueBtn.style.pointerEvents = 'auto';
+                    }, 500);
                 }
             }
 
-            // Allow re-snap if user scrolls back into animation zone
-            if (isMobile && snapDone && scrollFraction < HOLD_END - 0.05) {
-                snapDone = false;
-                glintFired = false;
-                demoContent.classList.remove('is-header');
-                demoContent.classList.remove('is-glinting');
+            // Mobile: hide Continue if user scrolls back before logo departs
+            if (isMobile && continueShown && continueBtn && scrollFraction < GLINT_TRIGGER - 0.03) {
+                continueShown = false;
+                continueBtn.style.opacity      = '0';
+                continueBtn.style.pointerEvents = 'none';
             }
 
             // Scroll-back: cancel pending move and reset both states
@@ -246,5 +327,22 @@
                     demoContent.classList.remove('is-glinting');
                     demoContent.classList.remove('is-header');
                 }
+                // Hide Continue button if user scrolls back
+                if (isMobile && continueShown && continueBtn) {
+                    continueShown = false;
+                    continueBtn.style.opacity      = '0';
+                    continueBtn.style.pointerEvents = 'none';
+                }
             }
         }); // end scroll listener
+
+        // Skip animation when arriving from a profile page back button.
+        // A sessionStorage flag is set by the back button on profile pages
+        // and cleared immediately here so refreshes don't re-trigger the skip.
+        const skipToSection = sessionStorage.getItem('ysb_skipTo');
+        if (skipToSection) {
+            sessionStorage.removeItem('ysb_skipTo');
+            skipAnimation();
+            const target = document.querySelector(skipToSection);
+            if (target) target.scrollIntoView({ behavior: 'instant' });
+        }

@@ -134,6 +134,7 @@
         .scroll-container,
         .intro-section,
         .dashboard-strip,
+        .dash-carousel,
         .team-section,
         .beers-section,
         .story-entry-section,
@@ -1678,9 +1679,8 @@
         .story-slide--video-bg .video-overlay-box {
             background: rgba(0, 0, 0, 0.57);
         }
-            justify-content: center;
-            overflow: hidden;
-        }
+
+
 
         .story-slide__content-side--full {
             flex: none;
@@ -2311,6 +2311,121 @@
             color: var(--color-error);
         }
 
+        /* Mobile compact grid for blog cards (like profile cards) */
+        @media (max-width: 767px) {
+            .blog-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .blog-card {
+                padding: 16px 12px;
+            }
+
+            .blog-card__title {
+                font-size: 1.1rem;
+                margin-bottom: 0;
+            }
+
+            /* Compact mode - hide body and extras unless expanded */
+            .blog-card:not(.is-expanded) .blog-card__body,
+            .blog-card:not(.is-expanded) .blog-card__details,
+            .blog-card:not(.is-expanded) .blog-card__snippet-box,
+            .blog-card:not(.is-expanded) .blog-card__tags,
+            .blog-card:not(.is-expanded) .blog-card__meta-grid {
+                display: none !important;
+            }
+
+            .blog-card:not(.is-expanded) .blog-card__expand-hint {
+                margin-top: 12px;
+                padding-top: 12px;
+            }
+
+            /* Center odd item on bottom row */
+            .blog-grid .blog-card:not(.is-expanded):last-child:nth-child(odd) {
+                grid-column: 1 / -1;
+                justify-self: center;
+                width: calc(50% - 6px);
+            }
+        }
+
+        /* ── Mobile Modal Styles for Blog Cards ── */
+        .blog-mobile-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .blog-mobile-modal.is-open {
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        .blog-mobile-modal__backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+        }
+
+        .blog-mobile-modal__container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            background: #111;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .blog-mobile-modal.is-open .blog-mobile-modal__container {
+            transform: translateY(0);
+        }
+
+        .blog-mobile-modal__close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .blog-mobile-modal__content {
+            overflow-y: auto;
+            padding: 0; /* Reset since the inner blog-card supplies padding */
+            flex-grow: 1;
+            border-radius: inherit;
+        }
+        
+        .blog-mobile-modal__content .blog-card {
+            border: none;
+            box-shadow: none;
+            margin: 0;
+        }
+
         /* ---------------------------------------------------
            SITE FOOTER
            --------------------------------------------------- */
@@ -2712,6 +2827,72 @@
                 filter: none;
                 opacity: 1;
             }
+
+            /* Mobile description overlay */
+            .beer-grid {
+                position: relative;
+            }
+            
+            .beer-mobile-desc {
+                position: absolute;
+                left: 10px;
+                right: 10px;
+                background: rgba(10, 10, 10, 0.96);
+                border: 1px solid rgba(212, 175, 55, 0.3);
+                border-radius: var(--border-radius-lg);
+                padding: var(--space-md) var(--space-lg);
+                box-shadow: 0 15px 40px rgba(0,0,0,0.9);
+                z-index: 100;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease, transform 0.3s ease;
+                transform: translateY(10px);
+                text-align: center;
+            }
+            
+            .beer-mobile-desc.is-visible {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+            
+            .beer-mobile-desc__title {
+                font-family: var(--font-primary);
+                color: var(--color-brand-primary);
+                font-size: 1.3rem;
+                margin-bottom: 8px;
+            }
+            
+            .beer-mobile-desc__text {
+                font-family: var(--font-secondary);
+                color: var(--color-text-light);
+                font-size: 0.95rem;
+                line-height: 1.4;
+                margin: 0;
+            }
+
+            /* Overlay positioning based on row clicked */
+            .beer-mobile-desc.pos-top {
+                top: 25%;
+                bottom: auto;
+                transform: translateY(-40%);
+            }
+            .beer-mobile-desc.pos-center {
+                top: 50%;
+                bottom: auto;
+                transform: translateY(-40%);
+            }
+            .beer-mobile-desc.pos-bottom {
+                top: 75%;
+                bottom: auto;
+                transform: translateY(-40%);
+            }
+            
+            .beer-mobile-desc.is-visible.pos-top,
+            .beer-mobile-desc.is-visible.pos-center,
+            .beer-mobile-desc.is-visible.pos-bottom {
+                transform: translateY(-50%);
+            }
         }
 
         /* ── M3: Story slides — layout & scrollability ───────────────── */
@@ -2798,6 +2979,8 @@
                 display: none;
                 flex-direction: column;
                 justify-content: center;
+                align-items: center;
+                text-align: center;
                 gap: 4px;
                 padding: 12px 8px;
                 transition: opacity 0.25s ease;
@@ -2805,8 +2988,8 @@
             }
 
             .dash-carousel__panel.is-active {
-                display: flex;
-                opacity: 1;
+                display: flex !important;
+                opacity: 1 !important;
             }
 
             /* Inherit ticker label & content styles */
@@ -2814,7 +2997,7 @@
                 font-size: 0.65rem;
                 letter-spacing: 0.12em;
                 text-transform: uppercase;
-                color: rgba(212, 175, 55, 0.7);
+                color: rgba(212, 175, 55, 0.7) !important;
                 display: flex;
                 align-items: center;
                 gap: 5px;
@@ -2829,12 +3012,13 @@
             .dash-carousel .dashboard-brew,
             .dash-carousel .dashboard-event {
                 font-size: 0.82rem;
-                color: rgba(255, 255, 255, 0.85);
+                color: rgba(255, 255, 255, 0.85) !important;
                 line-height: 1.4;
             }
 
             .dash-carousel .dashboard-socials {
                 display: flex;
+                justify-content: center;
                 gap: 20px;
                 padding-top: 4px;
             }
@@ -2896,4 +3080,169 @@
             .dash-carousel__dot.is-active {
                 background: rgba(212, 175, 55, 0.9);
             }
-        }
+        }
+
+        /* ══════════════════════════════════════════════════════════════════
+           Mobile Team Grid — 2-column compact layout
+           Desktop grid is completely unchanged.
+        ══════════════════════════════════════════════════════════════════ */
+        @media (max-width: 767px) {
+            .team-section {
+                min-height: auto;
+                padding: var(--space-lg) var(--space-sm);
+            }
+
+            .team-section .section-title {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+                margin-bottom: var(--space-md);
+            }
+
+            .team-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            /* Square crop keeps cards balanced at half-screen width */
+            .team-card__image-wrapper {
+                aspect-ratio: 1 / 1;
+            }
+
+            .team-card__content {
+                padding: 8px 10px 10px;
+            }
+
+            .team-card__name {
+                font-size: 0.9rem;
+                letter-spacing: 0.5px;
+                margin: 0;
+            }
+
+            /* Blurb hidden in the grid — shown in the modal instead */
+            .team-card__blurb {
+                display: none;
+            }
+        }
+
+        /* ── Team Modal (mobile — created by JS on touch devices) ───────── */
+
+        .team-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 800;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .team-modal.is-open {
+            display: flex;
+        }
+
+        .team-modal__card {
+            background: #111;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 16px 16px 0 0;
+            width: 100%;
+            max-height: 88vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .team-modal.is-open .team-modal__card {
+            transform: translateY(0);
+        }
+
+        /* Drag handle hint */
+        .team-modal__card::before {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 12px auto 0;
+            flex-shrink: 0;
+        }
+
+        .team-modal__image {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            object-position: top;
+            margin-top: 12px;
+        }
+
+        .team-modal__body {
+            padding: 20px 20px 12px;
+        }
+
+        .team-modal__name {
+            color: rgba(255, 255, 255, 0.95);
+            font-family: var(--font-primary);
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 14px 0;
+        }
+
+        .team-modal__blurb {
+            color: rgba(255, 255, 255, 0.7);
+            font-family: var(--font-primary);
+            font-size: 0.92rem;
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        .team-modal__actions {
+            display: flex;
+            gap: 10px;
+            padding: 16px 20px 36px;
+            border-top: 1px solid rgba(212, 175, 55, 0.12);
+            margin-top: 8px;
+        }
+
+        .team-modal__back,
+        .team-modal__more {
+            flex: 1;
+            padding: 13px 0;
+            text-align: center;
+            font-family: var(--font-primary);
+            font-size: 0.78rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.2s, border-color 0.2s;
+            display: block;
+        }
+
+        .team-modal__back {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .team-modal__back:active {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .team-modal__more {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            color: rgba(212, 175, 55, 0.9);
+        }
+
+        .team-modal__more:active {
+            background: rgba(212, 175, 55, 0.22);
+        }
+

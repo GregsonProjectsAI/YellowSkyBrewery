@@ -286,14 +286,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show first card in viewer on load (not locked — hover still works)
                 updateViewer(cards[0]);
 
-                // ── Mobile: tap to flip card inline (touch devices only) ──────
+                // ── Mobile: tap to flip card inline & show overlay (touch devices only) ──────
+                let mobileDescBox = null;
+                
                 if (navigator.maxTouchPoints > 0) {
-                    cards.forEach(card => {
+                    mobileDescBox = document.createElement('div');
+                    mobileDescBox.className = 'beer-mobile-desc';
+                    mobileDescBox.innerHTML = '<h3 class="beer-mobile-desc__title"></h3><p class="beer-mobile-desc__text"></p>';
+                    beerGrid.appendChild(mobileDescBox);
+
+                    const titleEl = mobileDescBox.querySelector('.beer-mobile-desc__title');
+                    const textEl = mobileDescBox.querySelector('.beer-mobile-desc__text');
+
+                    cards.forEach((card, index) => {
                         card.addEventListener('click', () => {
-                            // Flip this card; unflip all others
                             const wasFlipped = card.classList.contains('is-flipped');
                             cards.forEach(c => c.classList.remove('is-flipped'));
-                            if (!wasFlipped) card.classList.add('is-flipped');
+                            
+                            if (wasFlipped) {
+                                mobileDescBox.classList.remove('is-visible');
+                            } else {
+                                card.classList.add('is-flipped');
+                                
+                                titleEl.textContent = card.getAttribute('data-title');
+                                textEl.textContent = card.getAttribute('data-desc');
+                                
+                                const row = Math.floor(index / 2);
+                                mobileDescBox.classList.remove('pos-top', 'pos-center', 'pos-bottom');
+                                
+                                if (row === 0 || row === 3) {
+                                    mobileDescBox.classList.add('pos-center');
+                                } else if (row === 1) {
+                                    mobileDescBox.classList.add('pos-bottom');
+                                } else if (row === 2) {
+                                    mobileDescBox.classList.add('pos-top');
+                                }
+                                
+                                mobileDescBox.classList.add('is-visible');
+                            }
                         });
                     });
                 }
@@ -301,12 +331,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Click anywhere outside the grid AND the viewer panel releases the lock.
                 // Bubble phase ensures card handlers fire first — same-card toggle still works.
                 document.addEventListener('click', (e) => {
-                    if (!lockedCard) return;
+                    if (!lockedCard && (!mobileDescBox || !mobileDescBox.classList.contains('is-visible'))) return;
                     if (beerGrid.contains(e.target))     return; // card's own handler manages this
-                    if (previewPanel.contains(e.target)) return; // viewer click keeps the lock
+                    if (previewPanel && previewPanel.contains(e.target)) return; // viewer click keeps the lock
+                    
                     // Clicked outside both — release
                     lockedCard = null;
                     cards.forEach(c => c.classList.remove('is-active', 'is-flipped'));
+                    if (mobileDescBox) mobileDescBox.classList.remove('is-visible');
                 });
             }
         }
@@ -1492,6 +1524,79 @@ document.addEventListener('DOMContentLoaded', () => {
         // Desktop: no additional elements needed — the hint/refresh and nav arrows
         // are already handled (hint re-parented above; arrows are inside overlay
         // but onDown() now skips button targets so clicks pass through).
+    })();
+
+    // ── Mobile Team Card Modal ─────────────────────────────────────────────
+    // On touch devices, intercept team-card taps and show a slide-up bottom
+    // sheet with the portrait image, full blurb, and navigation options.
+    // Desktop is completely unaffected (navigator.maxTouchPoints guard).
+    (function () {
+        if (!navigator.maxTouchPoints) return;
+
+        const teamCards = Array.from(document.querySelectorAll('.team-card'));
+        if (!teamCards.length) return;
+
+        // Build modal DOM once
+        const modal = document.createElement('div');
+        modal.id        = 'team-modal';
+        modal.className = 'team-modal';
+        modal.innerHTML = `
+            <div class="team-modal__card">
+                <img class="team-modal__image" src="" alt="">
+                <div class="team-modal__body">
+                    <h3 class="team-modal__name"></h3>
+                    <p class="team-modal__blurb"></p>
+                </div>
+                <div class="team-modal__actions">
+                    <button class="team-modal__back">\u2190 Back</button>
+                    <a class="team-modal__more" href="#">Find out more \u2192</a>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+
+        const modalImg   = modal.querySelector('.team-modal__image');
+        const modalName  = modal.querySelector('.team-modal__name');
+        const modalBlurb = modal.querySelector('.team-modal__blurb');
+        const modalMore  = modal.querySelector('.team-modal__more');
+        const modalBack  = modal.querySelector('.team-modal__back');
+
+        function openModal(card) {
+            // Get the mobile srcset image if available, fall back to img src
+            const source = card.querySelector('picture source');
+            const img    = card.querySelector('img');
+            const src    = (source && source.srcset) ? source.srcset : (img ? img.src : '');
+            const name   = (card.querySelector('.team-card__name')  || {}).textContent || '';
+            const blurb  = (card.querySelector('.team-card__blurb') || {}).textContent || '';
+
+            modalImg.src            = src;
+            modalImg.alt            = name;
+            modalName.textContent   = name;
+            modalBlurb.textContent  = blurb;
+            modalMore.href          = card.href;
+
+            modal.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+
+        // Intercept team card taps — open modal instead of navigating
+        teamCards.forEach(card => {
+            card.addEventListener('click', e => {
+                e.preventDefault();
+                openModal(card);
+            });
+        });
+
+        modalBack.addEventListener('click', closeModal);
+
+        // Tap dark backdrop to dismiss
+        modal.addEventListener('click', e => {
+            if (e.target === modal) closeModal();
+        });
     })();
 
 });

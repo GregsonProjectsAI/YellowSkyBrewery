@@ -93,20 +93,55 @@ document.addEventListener('DOMContentLoaded', () => {
         return buildGeneralCard(post);
     }
 
-    // ── Shared expand / collapse handler ──────────────────────────────────────
-    // Toggles .is-expanded on the card element; CSS handles all clamping/unclamping.
-    // We never re-render innerHTML, so the card's fade-up visibility class and
-    // all interior links/buttons remain intact across toggles.
+    //  Mobile Modal Setup 
+    const blogMobileModal = document.createElement('div');
+    blogMobileModal.className = 'blog-mobile-modal';
+    blogMobileModal.innerHTML = `
+        <div class="blog-mobile-modal__backdrop"></div>
+        <div class="blog-mobile-modal__container">
+            <button class="blog-mobile-modal__close" aria-label="Close">&times;</button>
+            <div class="blog-mobile-modal__content"></div>
+        </div>
+    `;
+    document.body.appendChild(blogMobileModal);
+
+    const bmmBackdrop = blogMobileModal.querySelector('.blog-mobile-modal__backdrop');
+    const bmmClose    = blogMobileModal.querySelector('.blog-mobile-modal__close');
+    const bmmContent  = blogMobileModal.querySelector('.blog-mobile-modal__content');
+
+    function closeBlogModal() {
+        blogMobileModal.classList.remove('is-open');
+        document.body.style.overflow = '';
+    }
+
+    bmmBackdrop.addEventListener('click', closeBlogModal);
+    bmmClose.addEventListener('click', closeBlogModal);
+
+    //  Shared expand / collapse handler 
     function attachExpandHandler(card, post) {
         card.addEventListener('click', function (e) {
-            // Don't toggle if the user clicked a link or button inside the card
             if (e.target.closest('.blog-card__no-expand, a, button')) return;
 
+            if (window.innerWidth <= 767) {
+                // Mobile: Stack on top using modal
+                bmmContent.innerHTML = card.innerHTML;
+                bmmContent.className = card.className; 
+                bmmContent.classList.add('is-expanded'); // Ensure fully expanded
+                
+                // Hide the expand hint in the modal since it's already expanded
+                const hint = bmmContent.querySelector('.blog-card__expand-hint');
+                if (hint) hint.style.display = 'none';
+
+                blogMobileModal.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+                return;
+            }
+
+            // Desktop: Expand in place
             const expanded = card.classList.toggle('is-expanded');
             const hint = card.querySelector('.blog-card__expand-label');
             if (hint) hint.textContent = expanded ? 'Show less' : 'Read more';
 
-            // Rotate the chevron icon
             const icon = card.querySelector('.blog-card__expand-icon');
             if (icon) icon.style.transform = expanded ? 'rotate(180deg)' : '';
         });
