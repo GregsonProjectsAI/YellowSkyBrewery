@@ -1,5 +1,5 @@
         const canvas      = document.getElementById('animation-canvas');
-        const ctx         = canvas.getContext('2d');
+        const ctx         = canvas.getContext('2d', { alpha: false }); // Opaque canvas is vastly faster
         const loadingEl   = document.getElementById('loading');
         const scrollHint  = document.getElementById('scroll-hint');
         const demoContent = document.getElementById('demo-content');
@@ -27,7 +27,19 @@
         const scrollContainer = document.querySelector('.scroll-container');
         let   scrollSource    = window;      // what we listen to for 'scroll'
         let   getScrollTop    = () => window.scrollY;
-        let   getScrollRange  = () => scrollContainer.offsetHeight - window.innerHeight;
+        
+        // Cache scroll range to eliminate Layout Thrashing!
+        let cachedScrollRange = 0;
+        function updateScrollRange() {
+            if (!scrollContainer) return;
+            const wrapper = document.getElementById('anim-wrapper');
+            cachedScrollRange = scrollContainer.offsetHeight - (wrapper ? wrapper.clientHeight : window.innerHeight);
+        }
+        window.addEventListener('resize', updateScrollRange);
+        updateScrollRange(); // Initial measurement
+        
+        let   getScrollRange  = () => cachedScrollRange;
+
 
         let continueBtn = null; // mobile-only "Continue →" button
 
@@ -63,7 +75,7 @@
             // Redirect scroll source to the wrapper
             scrollSource   = wrapper;
             getScrollTop   = () => wrapper.scrollTop;
-            getScrollRange = () => scrollContainer.offsetHeight - wrapper.clientHeight;
+            // Range is handled by the cached updateScrollRange logic now
 
             // "Continue →" button — appears when animation completes
             continueBtn = document.createElement('button');
@@ -125,6 +137,7 @@
             if (loadedImages === frameCount) {
                 clearTimeout(loadingTimeout);
                 clearTimeout(slowTimeout);
+                updateScrollRange(); // Re-measure after DOM settles
                 startPlayback();
             }
         }
