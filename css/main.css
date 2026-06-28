@@ -35,7 +35,8 @@
 
         /* The canvas where frames will be drawn — scoped to #animation-canvas to avoid
            clobbering other canvases (e.g. the WebGPU teatowel canvas) with opacity:0 */
-        #animation-canvas {
+        #animation-canvas,
+        #animation-video {
             display: block;
             max-width: 100%;
             max-height: 100%;

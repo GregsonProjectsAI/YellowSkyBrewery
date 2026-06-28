@@ -46,6 +46,21 @@
                 btnYes.disabled = true;
                 btnYes.textContent = 'Loading...';
                 btnYes.style.opacity = '0.7';
+
+                // Unlock iOS video playback immediately on user interaction
+                var animVideo = document.getElementById('animation-video');
+                if (animVideo) {
+                    animVideo.load();
+                    var playPromise = animVideo.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(function() {
+                            animVideo.pause();
+                        }).catch(function(e) {
+                            console.log("Autoplay block:", e);
+                        });
+                    }
+                }
+
                 var content = document.querySelector('.age-gate__content');
                 if (content) content.classList.add('age-gate__content--loading');
                 sessionStorage.setItem('ageVerified', 'true');
@@ -99,6 +114,7 @@
     <div class="scroll-container">
         <div class="sticky-wrapper">
             <canvas id="animation-canvas"></canvas>
+            <video id="animation-video" muted playsinline preload="auto" style="display: none;"></video>
             <div class="scroll-hint" id="scroll-hint">Scroll to explore ⬇</div>
         </div>
     </div>

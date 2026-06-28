@@ -180,13 +180,31 @@
 
         if (skipBtn) skipBtn.addEventListener('click', skipAnimation);
 
-        for (let i = 1; i <= frameCount; i++) {
-            const img = new Image();
-            const paddedIndex = i.toString().padStart(4, '0');
-            img.src = `${imagePrefix}${paddedIndex}${imageExtension}`;
-            img.onload  = onFrameSettled;
-            img.onerror = onFrameSettled; // count failures too
-            images.push(img);
+        if (isMobile) {
+            canvas.style.display = 'none';
+            const video = document.getElementById('animation-video');
+            video.src = 'assets/flow_frames_mobile.mp4';
+            video.style.display = 'block';
+            
+            video.addEventListener('loadeddata', () => {
+                clearTimeout(loadingTimeout);
+                clearTimeout(slowTimeout);
+                updateScrollRange();
+                startPlayback();
+                video.style.opacity = '1';
+                setTimeout(() => { video.style.transition = 'none'; }, 1100);
+            });
+            
+            // Age gate unlock fallback is handled in index.html
+        } else {
+            for (let i = 1; i <= frameCount; i++) {
+                const img = new Image();
+                const paddedIndex = i.toString().padStart(4, '0');
+                img.src = `${imagePrefix}${paddedIndex}${imageExtension}`;
+                img.onload  = onFrameSettled;
+                img.onerror = onFrameSettled; // count failures too
+                images.push(img);
+            }
         }
 
         // After 6 seconds at 0%, show a helpful message and the skip button
@@ -208,6 +226,7 @@
         // Draw a specific frame to the canvas
         let lastRenderedFrame = -1;
         function renderFrame(index) {
+            if (isMobile) return; // Video scrubbing handles mobile
             if (index === lastRenderedFrame) return; // Skip redraw if frame hasn't changed
             if (images[index] && images[index].complete) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -267,7 +286,14 @@
 
             // Frame index clamps at the last frame during hold + fade
             const frameIndex = Math.min(frameCount - 1, Math.floor(videoProgress * frameCount));
-            renderFrame(frameIndex);
+            if (isMobile) {
+                const video = document.getElementById('animation-video');
+                if (video && !isNaN(video.duration)) {
+                    video.currentTime = videoProgress * video.duration;
+                }
+            } else {
+                renderFrame(frameIndex);
+            }
 
             // Scroll hint disappears once scrolling starts
             if (scrollTop > 50) {
@@ -284,14 +310,19 @@
                 demoContent.style.opacity = '0';
             }
 
-            // Canvas opacity — hold fully visible, then dissolve into brewery backdrop
+            // Canvas/Video opacity — hold fully visible, then dissolve into brewery backdrop
+            let mediaOpacity = '0';
             if (scrollFraction < HOLD_END) {
-                canvas.style.opacity = '1';
+                mediaOpacity = '1';
             } else if (scrollFraction < FADE_END) {
                 const fadeProgress = (scrollFraction - HOLD_END) / (FADE_END - HOLD_END);
-                canvas.style.opacity = Math.max(0, 1 - fadeProgress).toString();
+                mediaOpacity = Math.max(0, 1 - fadeProgress).toString();
+            }
+            if (isMobile) {
+                const video = document.getElementById('animation-video');
+                if (video) video.style.opacity = mediaOpacity;
             } else {
-                canvas.style.opacity = '0';
+                canvas.style.opacity = mediaOpacity;
             }
 
             // Backdrop emerges slowly from near-black once the canvas is almost gone.
