@@ -1499,31 +1499,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (navigator.maxTouchPoints > 0) {
-            // MOBILE: floating Next button (the only proxy still needed)
-            var storyNextEl = document.getElementById('story-next');
-            if (storyNextEl) {
-                var nextBtn = document.createElement('button');
-                nextBtn.setAttribute('aria-label', 'Next chapter');
-                nextBtn.innerHTML = '&#8594;';
-                Object.assign(nextBtn.style, {
-                    position: 'fixed', bottom: '28px', right: '16px',
-                    zIndex: '2147483647', display: 'none',
-                    width: '48px', height: '48px', borderRadius: '50%',
-                    border: '1px solid rgba(212,175,55,0.3)',
-                    background: 'rgba(212,175,55,0.08)', color: '#d4af37',
-                    fontSize: '1.2rem', cursor: 'pointer',
-                    alignItems: 'center', justifyContent: 'center',
-                    animation: 'story-arrow-pulse 2.4s ease-in-out infinite',
-                });
-                document.body.appendChild(nextBtn);
-                nextBtn.addEventListener('click', function () { storyNextEl.click(); });
-                watchClasses(function () { nextBtn.style.display = isSlide0Active() ? 'flex' : 'none'; });
-            }
-        }
-        // Desktop: no additional elements needed — the hint/refresh and nav arrows
-        // are already handled (hint re-parented above; arrows are inside overlay
-        // but onDown() now skips button targets so clicks pass through).
+        // Mobile proxy button removed - .story-nav__arrow now has z-index 1002, 
+        // placing it cleanly above the canvas on all devices.
     })();
 
     // ── Mobile Team Card Modal ─────────────────────────────────────────────
