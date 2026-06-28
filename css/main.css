@@ -3261,6 +3261,10 @@
                 display: none !important; /* completely hide scroll engine on mobile */
             }
 
+            #demo-content {
+                z-index: 1001; /* Must sit above mobile-video-intro to be visible during playback */
+            }
+
             #mobile-video-intro {
                 display: flex;
                 position: fixed;

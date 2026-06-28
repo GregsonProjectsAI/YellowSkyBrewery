@@ -109,11 +109,35 @@
                     });
                 };
                 
+                video.addEventListener('timeupdate', () => {
+                    if (!video.duration) return;
+                    const videoProgress = video.currentTime / video.duration;
+                    
+                    // Logo/overlay fades in during the animation — stays centred and large
+                    if (videoProgress > 0.4) {
+                        demoContent.style.opacity = Math.min(1, (videoProgress - 0.4) * 3);
+                    } else {
+                        demoContent.style.opacity = '0';
+                    }
+                });
+                
                 video.addEventListener('ended', () => {
-                    introOverlay.style.opacity = '0';
+                    // Trigger the logo glint and move to corner
+                    demoContent.classList.remove('is-glinting');
+                    void demoContent.offsetWidth; // trigger reflow
+                    demoContent.classList.add('is-glinting');
+                    
                     setTimeout(() => {
-                        skipAnimation();
-                    }, 1000);
+                        demoContent.classList.add('is-header');
+                    }, 390);
+
+                    // Fade out the video overlay right as the logo starts moving
+                    setTimeout(() => {
+                        introOverlay.style.opacity = '0';
+                        setTimeout(() => {
+                            skipAnimation();
+                        }, 1000);
+                    }, 400);
                 });
 
                 // Autoplay if age gate was already bypassed previously
@@ -211,12 +235,7 @@
 
             // Frame index clamps at the last frame during hold + fade
             const frameIndex = Math.min(frameCount - 1, Math.floor(videoProgress * frameCount));
-            if (isMobile) {
-                const video = document.getElementById('animation-video');
-                if (video && !isNaN(video.duration)) {
-                    video.currentTime = videoProgress * video.duration;
-                }
-            } else {
+            if (!isMobile) {
                 renderFrame(frameIndex);
             }
 
@@ -235,7 +254,7 @@
                 demoContent.style.opacity = '0';
             }
 
-            // Canvas/Video opacity — hold fully visible, then dissolve into brewery backdrop
+            // Canvas opacity — hold fully visible, then dissolve into brewery backdrop
             let mediaOpacity = '0';
             if (scrollFraction < HOLD_END) {
                 mediaOpacity = '1';
@@ -243,10 +262,7 @@
                 const fadeProgress = (scrollFraction - HOLD_END) / (FADE_END - HOLD_END);
                 mediaOpacity = Math.max(0, 1 - fadeProgress).toString();
             }
-            if (isMobile) {
-                const video = document.getElementById('animation-video');
-                if (video) video.style.opacity = mediaOpacity;
-            } else {
+            if (!isMobile) {
                 canvas.style.opacity = mediaOpacity;
             }
 
