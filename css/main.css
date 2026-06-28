@@ -1845,17 +1845,16 @@
             width: auto;
             height: auto;
             border-radius: 40px;
-            background: rgba(212, 175, 55, 0.12);
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            color: var(--color-brand-primary);
+            background: var(--color-brand-primary);
+            border: 1px solid var(--color-brand-primary);
+            color: #0d0d0d;
             cursor: pointer;
-            z-index: 10;
-            transition: background 0.2s ease, transform 0.2s ease;
+            z-index: 1002;
+            transition: filter 0.2s ease, transform 0.2s ease;
             animation: story-arrow-pulse 2.4s ease-in-out infinite;
         }
         .story-overlay__continue:hover {
-            background: rgba(212, 175, 55, 0.28);
-            border-color: var(--color-brand-primary);
+            filter: brightness(1.15);
             transform: translateY(-50%) scale(1.06);
             animation-play-state: paused;
         }
@@ -1899,7 +1898,8 @@
         }
 
         .story-nav__arrow:disabled {
-            opacity: 0.18;
+            opacity: 0;
+            visibility: hidden;
             cursor: default;
             pointer-events: none;
             animation: none;
