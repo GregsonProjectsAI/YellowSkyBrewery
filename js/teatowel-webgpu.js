@@ -164,11 +164,16 @@ export async function start() {
         setupMouse();
     }
 
-    // Append canvas to document.body so it lives in the global stacking
-    // context at z-index 2147483646 — completely above all page elements.
+    // Append canvas to its designated container inside the overlay so it 
+    // participates in the local stacking context, allowing buttons to sit above it.
     if (!renderer.domElement.parentNode) {
-        document.body.appendChild(renderer.domElement);
-        console.log('[TeaTowel] canvas appended to body');
+        const container = document.getElementById('teatowel-container');
+        if (container) {
+            container.appendChild(renderer.domElement);
+            console.log('[TeaTowel] canvas appended to container');
+        } else {
+            document.body.appendChild(renderer.domElement);
+        }
     }
 
     timer.reset();

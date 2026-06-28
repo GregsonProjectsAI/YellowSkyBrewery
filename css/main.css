@@ -1311,6 +1311,7 @@
             float: right;
             margin: 20px 24px 0 auto;
             display: block;
+            z-index: 1003;
             background: rgba(0,0,0,0.5);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: rgba(255, 255, 255, 0.55);
