@@ -93,26 +93,21 @@
             // Setup Tap-to-Play Video Intro
             const introOverlay = document.getElementById('mobile-video-intro');
             const video = document.getElementById('mobile-animation-video');
-            const playBtn = document.getElementById('mobile-play-btn');
             
             if (loadingEl) loadingEl.style.display = 'none'; // hide normal preloader
             document.body.classList.add('no-scroll');
             
-            if (video && playBtn && introOverlay) {
+            if (video && introOverlay) {
                 video.src = 'assets/flow_frames_mobile.mp4';
                 
-                playBtn.addEventListener('click', () => {
-                    playBtn.textContent = 'Entering...';
-                    playBtn.disabled = true;
-                    
+                window.playMobileIntro = () => {
                     video.play().then(() => {
-                        playBtn.style.opacity = '0';
                         video.style.opacity = '1';
                     }).catch(e => {
                         console.error('Video play failed', e);
                         skipAnimation(); // Fallback if video fails
                     });
-                });
+                };
                 
                 video.addEventListener('ended', () => {
                     introOverlay.style.opacity = '0';
@@ -120,6 +115,11 @@
                         skipAnimation();
                     }, 1000);
                 });
+
+                // Autoplay if age gate was already bypassed previously
+                if (sessionStorage.getItem('ageVerified') === 'true') {
+                    window.playMobileIntro();
+                }
             }
         } else {
             for (let i = 1; i <= frameCount; i++) {
