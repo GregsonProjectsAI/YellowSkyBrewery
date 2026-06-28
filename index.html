@@ -48,7 +48,7 @@
                 btnYes.style.opacity = '0.7';
 
                 // Unlock iOS video playback immediately on user interaction
-                var animVideo = document.getElementById('animation-video');
+                var animVideo = document.getElementById('mobile-animation-video');
                 if (animVideo) {
                     animVideo.load();
                     var playPromise = animVideo.play();
@@ -111,10 +111,17 @@
         </div>
     </nav>
 
+    <!-- Mobile Tap-to-Play Video Overlay -->
+    <div id="mobile-video-intro">
+        <video id="mobile-animation-video" playsinline preload="auto"></video>
+        <div class="mobile-intro__controls">
+            <button id="mobile-play-btn" class="btn btn--primary">Enter Brewery</button>
+        </div>
+    </div>
+
     <div class="scroll-container">
         <div class="sticky-wrapper">
             <canvas id="animation-canvas"></canvas>
-            <video id="animation-video" muted playsinline preload="auto" style="display: none;"></video>
             <div class="scroll-hint" id="scroll-hint">Scroll to explore ⬇</div>
         </div>
     </div>

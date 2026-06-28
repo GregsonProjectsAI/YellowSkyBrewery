@@ -41,90 +41,7 @@
         let   getScrollRange  = () => cachedScrollRange;
 
 
-        let continueBtn = null; // mobile-only "Continue →" button
-
-        if (isMobile && scrollContainer) {
-            // Create the fixed wrapper
-            const wrapper = document.createElement('div');
-            wrapper.id = 'anim-wrapper';
-            // Styles applied inline so they work without waiting for CSS parse
-            Object.assign(wrapper.style, {
-                position:           'fixed',
-                top:                '0',
-                left:               '0',
-                width:              '100vw',
-                height:             '100vh',
-                overflowY:          'scroll',
-                overscrollBehavior: 'none',
-                zIndex:             '50',
-                background:         '#0d0d0d', // opaque — page content must not bleed through
-            });
-
-            // Move the backdrop INTO the wrapper so it sits at z-index 0 within
-            // the wrapper's stacking context (below canvas at z-index 1).
-            // As the canvas fades, the brewery image reveals — not the page below.
-            if (backdropEl) wrapper.appendChild(backdropEl);
-
-            // Move scroll-container into wrapper, insert wrapper where it was
-            scrollContainer.parentNode.insertBefore(wrapper, scrollContainer);
-            wrapper.appendChild(scrollContainer);
-
-            // Keep #loading accessible above the wrapper for the skip button
-            if (loadingEl) loadingEl.style.zIndex = '110';
-
-            // Redirect scroll source to the wrapper
-            scrollSource   = wrapper;
-            getScrollTop   = () => wrapper.scrollTop;
-            // Range is handled by the cached updateScrollRange logic now
-
-            // "Continue →" button — appears when animation completes
-            continueBtn = document.createElement('button');
-            continueBtn.id        = 'anim-continue-btn';
-            continueBtn.textContent = 'Continue →';
-            Object.assign(continueBtn.style, {
-                position:      'fixed',
-                top:           '50%',
-                left:          '50%',
-                transform:     'translate(-50%, -50%)',
-                zIndex:        '200',
-                opacity:       '0',
-                pointerEvents: 'none',
-                transition:    'opacity 0.6s ease',
-                background:    'transparent',
-                border:        '1px solid rgba(212,175,55,0.7)',
-                color:         'rgba(212,175,55,0.9)',
-                fontFamily:    "'Helvetica Neue', Arial, sans-serif",
-                fontSize:      '0.85rem',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                padding:       '12px 32px',
-                borderRadius:  '4px',
-                cursor:        'pointer',
-            });
-            document.body.appendChild(continueBtn);
-
-            continueBtn.addEventListener('click', () => {
-                // Hide button immediately on tap
-                continueBtn.style.opacity      = '0';
-                continueBtn.style.pointerEvents = 'none';
-                // Restore backdrop to body BEFORE hiding wrapper so main site
-                // still has its background after the animation completes
-                if (backdropEl) {
-                    backdropEl.style.opacity = '1';
-                    document.body.appendChild(backdropEl);
-                }
-                wrapper.style.transition = 'opacity 0.4s ease';
-                wrapper.style.opacity    = '0';
-                setTimeout(() => {
-                    wrapper.style.display = 'none';
-                    // Remove button from DOM so it doesn't float over the main site
-                    if (continueBtn.parentNode) continueBtn.parentNode.removeChild(continueBtn);
-                    const intro = document.getElementById('intro');
-                    if (intro) intro.scrollIntoView({ behavior: 'instant' });
-                }, 400);
-            });
-        }
-
+        let continueBtn = null; // desktop skip fallback
         // Preload all frames for buttery smooth playback
         const loadingTextEl = document.getElementById('loading-text');
         const skipBtn       = document.getElementById('skip-animation-btn');
@@ -154,17 +71,9 @@
             clearTimeout(loadingTimeout);
             clearTimeout(slowTimeout);
             loadingEl.style.display = 'none';
-            // On mobile, dismiss the wrapper entirely.
-            // The backdrop was moved inside the wrapper during setup — restore it
-            // to the body BEFORE hiding the wrapper so the page doesn't go dark.
             if (isMobile) {
-                if (backdropEl) {
-                    backdropEl.style.opacity = '1';
-                    document.body.appendChild(backdropEl);
-                }
-                const wrapper = document.getElementById('anim-wrapper');
-                if (wrapper) wrapper.style.display = 'none';
-                if (continueBtn && continueBtn.parentNode) continueBtn.parentNode.removeChild(continueBtn);
+                const introOverlay = document.getElementById('mobile-video-intro');
+                if (introOverlay) introOverlay.style.display = 'none';
             } else {
                 // Desktop: collapse the scroll section so layout is normal
                 if (scrollContainer) scrollContainer.style.display = 'none';
@@ -181,21 +90,37 @@
         if (skipBtn) skipBtn.addEventListener('click', skipAnimation);
 
         if (isMobile) {
-            canvas.style.display = 'none';
-            const video = document.getElementById('animation-video');
-            video.src = 'assets/flow_frames_mobile.mp4';
-            video.style.display = 'block';
+            // Setup Tap-to-Play Video Intro
+            const introOverlay = document.getElementById('mobile-video-intro');
+            const video = document.getElementById('mobile-animation-video');
+            const playBtn = document.getElementById('mobile-play-btn');
             
-            video.addEventListener('loadeddata', () => {
-                clearTimeout(loadingTimeout);
-                clearTimeout(slowTimeout);
-                updateScrollRange();
-                startPlayback();
-                video.style.opacity = '1';
-                setTimeout(() => { video.style.transition = 'none'; }, 1100);
-            });
+            if (loadingEl) loadingEl.style.display = 'none'; // hide normal preloader
+            document.body.classList.add('no-scroll');
             
-            // Age gate unlock fallback is handled in index.html
+            if (video && playBtn && introOverlay) {
+                video.src = 'assets/flow_frames_mobile.mp4';
+                
+                playBtn.addEventListener('click', () => {
+                    playBtn.textContent = 'Entering...';
+                    playBtn.disabled = true;
+                    
+                    video.play().then(() => {
+                        playBtn.style.opacity = '0';
+                        video.style.opacity = '1';
+                    }).catch(e => {
+                        console.error('Video play failed', e);
+                        skipAnimation(); // Fallback if video fails
+                    });
+                });
+                
+                video.addEventListener('ended', () => {
+                    introOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        skipAnimation();
+                    }, 1000);
+                });
+            }
         } else {
             for (let i = 1; i <= frameCount; i++) {
                 const img = new Image();
