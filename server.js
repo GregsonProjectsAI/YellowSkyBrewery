@@ -28,14 +28,7 @@ if (!process.env.ADMIN_PASSWORD) {
 }
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-const DATA_DIR         = path.join(__dirname, 'data');
-const DATA_FILE        = path.join(DATA_DIR, 'posts.json');
-const SUBSCRIBERS_FILE = path.join(DATA_DIR, 'subscribers.json');
-
-// Ensure data directory and files exist on first run
-if (!fs.existsSync(DATA_DIR))         fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(DATA_FILE))        fs.writeFileSync(DATA_FILE, JSON.stringify({ posts: [] }, null, 2));
-if (!fs.existsSync(SUBSCRIBERS_FILE)) fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify({ subscribers: [] }, null, 2));
+const db = require('./db');
 
 // In-memory session tokens (cleared on server restart — fine for this use case)
 const sessions = new Map();
@@ -125,14 +118,6 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function readPosts() {
-  return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-}
-
-function writePosts(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-}
 
 // Escape HTML entities to prevent injection in email content
 function escapeHtml(str) {
@@ -166,14 +151,17 @@ app.post('/api/logout', (req, res) => {
 
 // GET /api/posts — public, no auth required
 app.get('/api/posts', (_req, res) => {
-  const data = readPosts();
-  data.posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  res.json(data);
+  try {
+    const rows = db.prepare('SELECT data FROM posts ORDER BY createdAt DESC').all();
+    const posts = rows.map(r => JSON.parse(r.data));
+    res.json({ posts });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch posts.' });
+  }
 });
 
 // POST /api/posts — create new post (whitelisted fields only)
 app.post('/api/posts', requireAuth, (req, res) => {
-  const data = readPosts();
   const { title, content, excerpt, category, author, tags, image, published } = req.body || {};
   const post = {
     id:        uuidv4(),
@@ -181,36 +169,48 @@ app.post('/api/posts', requireAuth, (req, res) => {
     updatedAt: new Date().toISOString(),
     title, content, excerpt, category, author, tags, image, published
   };
-  data.posts.push(post);
-  writePosts(data);
-  res.status(201).json(post);
+  
+  try {
+    db.prepare('INSERT INTO posts (id, createdAt, data) VALUES (?, ?, ?)').run(post.id, post.createdAt, JSON.stringify(post));
+    res.status(201).json(post);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create post.' });
+  }
 });
 
-// PUT /api/posts/:id — edit existing post (whitelisted fields only)
+// PUT /api/posts/:id - edit existing post (whitelisted fields only)
 app.put('/api/posts/:id', requireAuth, (req, res) => {
-  const data = readPosts();
-  const idx  = data.posts.findIndex(p => p.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Post not found.' });
-  const { title, content, excerpt, category, author, tags, image, published } = req.body || {};
-  data.posts[idx] = {
-    ...data.posts[idx],
-    title, content, excerpt, category, author, tags, image, published,
-    id:        req.params.id,
-    createdAt: data.posts[idx].createdAt,
-    updatedAt: new Date().toISOString()
-  };
-  writePosts(data);
-  res.json(data.posts[idx]);
+  try {
+    const row = db.prepare('SELECT data FROM posts WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ error: 'Post not found.' });
+    
+    const existingPost = JSON.parse(row.data);
+    const { title, content, excerpt, category, author, tags, image, published } = req.body || {};
+    
+    const updatedPost = {
+      ...existingPost,
+      title, content, excerpt, category, author, tags, image, published,
+      id:        req.params.id,
+      createdAt: existingPost.createdAt,
+      updatedAt: new Date().toISOString()
+    };
+    
+    db.prepare('UPDATE posts SET data = ? WHERE id = ?').run(JSON.stringify(updatedPost), req.params.id);
+    res.json(updatedPost);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update post.' });
+  }
 });
 
 // DELETE /api/posts/:id
 app.delete('/api/posts/:id', requireAuth, (req, res) => {
-  const data = readPosts();
-  const idx  = data.posts.findIndex(p => p.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Post not found.' });
-  data.posts.splice(idx, 1);
-  writePosts(data);
-  res.json({ success: true });
+  try {
+    const result = db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
+    if (result.changes === 0) return res.status(404).json({ error: 'Post not found.' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete post.' });
+  }
 });
 
 // ── Subscribers API ──────────────────────────────────────────────────────────
@@ -306,15 +306,13 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
     return res.status(400).json({ error: 'Please enter a valid email address.' });
   }
 
-  let data = { subscribers: [] };
   try {
-    data = JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8'));
+    const existing = db.prepare('SELECT id FROM subscribers WHERE email = ?').get(email.trim().toLowerCase());
+    if (existing) {
+      return res.status(400).json({ error: 'This email is already on the invite list.' });
+    }
   } catch (err) {
-    console.error('Error reading subscribers file:', err);
-  }
-
-  if (data.subscribers.some(sub => sub.email.toLowerCase() === email.toLowerCase())) {
-    return res.status(400).json({ error: 'This email is already on the invite list.' });
+    console.error('DB read error:', err);
   }
 
   const newSubscriber = {
@@ -324,10 +322,10 @@ app.post('/api/subscribe', subscribeLimiter, (req, res) => {
     subscribedAt: new Date().toISOString()
   };
 
-  data.subscribers.push(newSubscriber);
-
   try {
-    fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(data, null, 2), 'utf8');
+    db.prepare('INSERT INTO subscribers (id, name, email, subscribedAt) VALUES (?, ?, ?, ?)').run(
+      newSubscriber.id, newSubscriber.name, newSubscriber.email, newSubscriber.subscribedAt
+    );
 
     if (resend) {
       resend.emails.send({
@@ -364,18 +362,18 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
     return res.status(500).json({ error: 'Resend API key is not configured or invalid.' });
   }
 
-  let data = { subscribers: [] };
+  let subscribers = [];
   try {
-    data = JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8'));
+    subscribers = db.prepare('SELECT * FROM subscribers').all();
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to read subscribers list.' });
+    return res.status(500).json({ error: 'Failed to fetch subscribers from DB.' });
   }
 
-  if (data.subscribers.length === 0) {
+  if (subscribers.length === 0) {
     return res.status(400).json({ error: 'No subscribers to email.' });
   }
 
-  const emails = data.subscribers.map(sub => ({
+  const emails = subscribers.map(sub => ({
     from: 'Yellow Sky Brewery <nitwits@yellowskybrewery.com>',
     to: sub.email,
     subject: subject,
@@ -401,11 +399,11 @@ app.post('/api/mailshot', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/subscribers — authenticated, returns subscriber list for admin UI
+// GET /api/subscribers - authenticated, returns subscriber list for admin UI
 app.get('/api/subscribers', requireAuth, (req, res) => {
   try {
-    const data = JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8'));
-    res.json({ subscribers: data.subscribers });
+    const subscribers = db.prepare('SELECT * FROM subscribers ORDER BY subscribedAt DESC').all();
+    res.json({ subscribers });
   } catch (err) {
     res.status(500).json({ error: 'Failed to read subscribers list.' });
   }
@@ -423,14 +421,13 @@ app.post('/api/mailshot/single', requireAuth, async (req, res) => {
     return res.status(500).json({ error: 'Resend API key is not configured or invalid.' });
   }
 
-  let data = { subscribers: [] };
+  let sub = null;
   try {
-    data = JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8'));
+    sub = db.prepare('SELECT * FROM subscribers WHERE id = ?').get(subscriberId);
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to read subscribers list.' });
+    return res.status(500).json({ error: 'Failed to fetch subscriber from DB.' });
   }
 
-  const sub = data.subscribers.find(s => s.id === subscriberId);
   if (!sub) {
     return res.status(404).json({ error: 'Subscriber not found.' });
   }
