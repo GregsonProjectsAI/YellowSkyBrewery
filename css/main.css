@@ -2906,7 +2906,7 @@
                 padding: 60px 16px 110px;
             }
             .story-slide--video-bg, .story-slide--fullscreen-bg {
-                justify-content: center;
+                justify-content: center !important;
             }
             .story-slide__title  { font-size: 1.4rem; }
             .story-slide__text   { font-size: 0.9rem; line-height: 1.6; }
