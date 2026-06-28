@@ -1184,9 +1184,16 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.classList.remove('is-open');
             overlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('no-scroll');
-            // Hand logo opacity back to the scroll animation handler
+            // Hand logo opacity back to the scroll animation handler on desktop.
+            // On mobile, the scroll handler is disabled so clearing it makes it vanish permanently.
             const demoElClose = document.getElementById('demo-content');
-            if (demoElClose) demoElClose.style.opacity = '';
+            if (demoElClose) {
+                const isMobile = window.innerWidth < 768 || navigator.maxTouchPoints > 0;
+                if (!isMobile) {
+                    demoElClose.style.opacity = '';
+                    window.dispatchEvent(new Event('scroll')); // force immediate re-calc
+                }
+            }
 
             // Clean up all slide active states and inline styles
             slides.forEach(s => {
