@@ -684,9 +684,16 @@
     <script>
     (function () {
         if (window.innerWidth >= 768 && navigator.maxTouchPoints <= 1) return; // desktop: do nothing
-        document.querySelectorAll('video source[src^="assets/"]').forEach(function (s) {
-            var filename = s.getAttribute('src').split('/').pop();
-            s.setAttribute('src', 'assets/videos_mobile/' + filename);
+        document.querySelectorAll('video').forEach(function(v) {
+            var changed = false;
+            v.querySelectorAll('source[src^="assets/"]').forEach(function (s) {
+                var filename = s.getAttribute('src').split('/').pop();
+                s.setAttribute('src', 'assets/videos_mobile/' + filename);
+                changed = true;
+            });
+            if (changed) {
+                v.load();
+            }
         });
     }());
     </script>
