@@ -2778,6 +2778,11 @@
             /* Dots sit above the arrows */
             .story-dots { bottom: 88px; }
 
+            /* Zoom out the background animation */
+            #story-canvas {
+                transform: scale(0.67);
+            }
+
             /* Close button above everything */
             .story-overlay__close { z-index: 1003; }
         }

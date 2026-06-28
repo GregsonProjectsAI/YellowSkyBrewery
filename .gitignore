@@ -28,7 +28,3 @@ assets/Real Pictures 1 (Chris dump)/
 .env
 
 node_modules/
-
-# Database files
-*.sqlite
-*.sqlite3
